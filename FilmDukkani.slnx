@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/Applications/">
+    <Project Path="Applications/Application/Application.csproj" Id="7a07a9e9-84af-4de1-aebc-4cd77749ca58" />
+  </Folder>
+  <Folder Name="/Core/">
+    <Project Path="Core/Domain/Domain.csproj" Id="6f8b42fb-ca0e-4f61-b831-c9ad2b8ad471" />
+  </Folder>
+  <Folder Name="/Infrastructures/">
+    <Project Path="Infrastructures/Infrastructure/Infrastructure.csproj" Id="b807bda4-b54a-4e0a-923d-39b1510b12fd" />
+  </Folder>
+  <Folder Name="/Presentations/">
+    <Project Path="Presentations/API/API.csproj" Id="3117d91a-51dc-40bf-94c9-e0838cc73167" />
+    <Project Path="Presentations/MVC/MVC.csproj" Id="c3607d56-cf88-466e-95fa-1ffd71021895" />
+  </Folder>
+</Solution>
