@@ -1,16 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Application.DTOs.CategoryDTOs
 {
-    public class CreateCategoryDto
+    public class CategoryDto
     {
-        [Required]
+        public int Id { get; set; }
         public string CategoryName { get; set; }
-
     }
 }

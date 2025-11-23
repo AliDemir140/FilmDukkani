@@ -1,5 +1,5 @@
-﻿using Application.Repositories;
-using Application.DTOs.CategoryDTOs;
+﻿using Application.DTOs.CategoryDTOs;
+using Application.Repositories;
 using Domain.Entities;
 
 namespace Application.ServiceManager
@@ -13,14 +13,15 @@ namespace Application.ServiceManager
             _categoryRepository = categoryRepository;
         }
 
-        public async Task<List<CreateCategoryDto>> GetCategoriesAsync()
+        public async Task<List<CategoryDto>> GetCategoriesAsync()
         {
             var categories = await _categoryRepository.GetAllAsync();
 
             return categories
-                .Select(x => new CreateCategoryDto
+                .Select(x => new CategoryDto
                 {
-                    Name = x.Name
+                    Id = x.ID,
+                    CategoryName = x.CategoryName
                 })
                 .ToList();
         }
@@ -29,7 +30,7 @@ namespace Application.ServiceManager
         {
             var category = new Category
             {
-                Name = dto.Name
+                CategoryName = dto.CategoryName
             };
 
             await _categoryRepository.AddAsync(category);
@@ -43,14 +44,13 @@ namespace Application.ServiceManager
             return new UpdateCategoryDto
             {
                 Id = category.ID,
-                Name = category.Name
+                CategoryName = category.CategoryName
             };
         }
 
         public async Task DeleteCategory(UpdateCategoryDto dto)
         {
             var category = await _categoryRepository.GetByIdAsync(dto.Id);
-
             if (category != null)
             {
                 await _categoryRepository.DeleteAsync(category);
@@ -62,7 +62,7 @@ namespace Application.ServiceManager
             var category = await _categoryRepository.GetByIdAsync(dto.Id);
             if (category == null) return;
 
-            category.Name = dto.Name;
+            category.CategoryName = dto.CategoryName;
             await _categoryRepository.UpdateAsync(category);
         }
     }
