@@ -1,30 +1,30 @@
 ﻿using Application.Repositories;
-using Infrastructure.Contexts;
+using Application.ServiceManager;
+using Infrastructure.Persistence;
 using Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructure.DependencyResolvers
 {
     public static class DependencyResolver
     {
-        public static void RegisterServices (IServiceCollection services, IConfiguration configuration)
+        public static void RegisterServices(IServiceCollection services, IConfiguration configuration)
         {
             // DATABASE
             services.AddDbContext<FilmDukkaniDbContext>(options =>
-            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
+            // GENERIC REPOSITORY
             services.AddScoped(typeof(IRepository<>), typeof(BaseRepository<>));
 
-            // REPOSITORIES
+            // CONCRETE REPOSITORIES
             services.AddScoped<IMovieRepository, MovieRepository>();
             services.AddScoped<ICategoryRepository, CategoryRepository>();
+
+            // SERVICE MANAGERS
+            services.AddScoped<CategoryServiceManager>();
         }
     }
 }

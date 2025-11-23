@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace Infrastructure.Contexts
+namespace Infrastructure.Persistence
 {
     public class FilmDukkaniDbContext : DbContext
     {
