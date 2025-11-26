@@ -4,6 +4,7 @@ using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(FilmDukkaniDbContext))]
-    partial class FilmDukkaniDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251126082853_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -49,110 +52,72 @@ namespace Infrastructure.Migrations
                         {
                             ID = 1,
                             CategoryName = "Aksiyon",
-                            CreatedDate = new DateTime(2025, 10, 8, 16, 38, 44, 329, DateTimeKind.Local).AddTicks(4029),
-                            ModifiedDate = new DateTime(2025, 11, 26, 11, 39, 13, 937, DateTimeKind.Local).AddTicks(1492)
+                            CreatedDate = new DateTime(2025, 10, 8, 16, 28, 23, 525, DateTimeKind.Local).AddTicks(6605),
+                            ModifiedDate = new DateTime(2025, 11, 26, 11, 28, 53, 133, DateTimeKind.Local).AddTicks(4064)
                         },
                         new
                         {
                             ID = 2,
                             CategoryName = "Macera",
-                            CreatedDate = new DateTime(2025, 10, 6, 4, 46, 31, 611, DateTimeKind.Local).AddTicks(5428),
-                            ModifiedDate = new DateTime(2025, 11, 26, 11, 39, 13, 937, DateTimeKind.Local).AddTicks(1497)
+                            CreatedDate = new DateTime(2025, 10, 6, 4, 36, 10, 807, DateTimeKind.Local).AddTicks(8000),
+                            ModifiedDate = new DateTime(2025, 11, 26, 11, 28, 53, 133, DateTimeKind.Local).AddTicks(4069)
                         },
                         new
                         {
                             ID = 3,
                             CategoryName = "Dram",
-                            CreatedDate = new DateTime(2024, 5, 9, 3, 10, 27, 625, DateTimeKind.Local).AddTicks(3029),
-                            ModifiedDate = new DateTime(2025, 11, 26, 11, 39, 13, 937, DateTimeKind.Local).AddTicks(1499)
+                            CreatedDate = new DateTime(2024, 5, 9, 3, 0, 6, 821, DateTimeKind.Local).AddTicks(5601),
+                            ModifiedDate = new DateTime(2025, 11, 26, 11, 28, 53, 133, DateTimeKind.Local).AddTicks(4071)
                         },
                         new
                         {
                             ID = 4,
                             CategoryName = "Korku",
-                            CreatedDate = new DateTime(2024, 11, 17, 20, 13, 35, 545, DateTimeKind.Local).AddTicks(1466),
-                            ModifiedDate = new DateTime(2025, 11, 26, 11, 39, 13, 937, DateTimeKind.Local).AddTicks(1501)
+                            CreatedDate = new DateTime(2024, 11, 17, 20, 3, 14, 741, DateTimeKind.Local).AddTicks(4038),
+                            ModifiedDate = new DateTime(2025, 11, 26, 11, 28, 53, 133, DateTimeKind.Local).AddTicks(4073)
                         },
                         new
                         {
                             ID = 5,
                             CategoryName = "Bilim Kurgu",
-                            CreatedDate = new DateTime(2024, 4, 22, 12, 28, 46, 247, DateTimeKind.Local).AddTicks(6440),
-                            ModifiedDate = new DateTime(2025, 11, 26, 11, 39, 13, 937, DateTimeKind.Local).AddTicks(1503)
+                            CreatedDate = new DateTime(2024, 4, 22, 12, 18, 25, 443, DateTimeKind.Local).AddTicks(9012),
+                            ModifiedDate = new DateTime(2025, 11, 26, 11, 28, 53, 133, DateTimeKind.Local).AddTicks(4075)
                         },
                         new
                         {
                             ID = 6,
                             CategoryName = "Komedi",
-                            CreatedDate = new DateTime(2024, 3, 31, 17, 21, 25, 969, DateTimeKind.Local).AddTicks(3861),
-                            ModifiedDate = new DateTime(2025, 11, 26, 11, 39, 13, 937, DateTimeKind.Local).AddTicks(1505)
+                            CreatedDate = new DateTime(2024, 3, 31, 17, 11, 5, 165, DateTimeKind.Local).AddTicks(6432),
+                            ModifiedDate = new DateTime(2025, 11, 26, 11, 28, 53, 133, DateTimeKind.Local).AddTicks(4077)
                         },
                         new
                         {
                             ID = 7,
                             CategoryName = "Gerilim",
-                            CreatedDate = new DateTime(2025, 7, 28, 4, 4, 21, 959, DateTimeKind.Local).AddTicks(5625),
-                            ModifiedDate = new DateTime(2025, 11, 26, 11, 39, 13, 937, DateTimeKind.Local).AddTicks(1507)
+                            CreatedDate = new DateTime(2025, 7, 28, 3, 54, 1, 155, DateTimeKind.Local).AddTicks(8197),
+                            ModifiedDate = new DateTime(2025, 11, 26, 11, 28, 53, 133, DateTimeKind.Local).AddTicks(4079)
                         },
                         new
                         {
                             ID = 8,
                             CategoryName = "Fantastik",
-                            CreatedDate = new DateTime(2024, 6, 6, 8, 58, 41, 566, DateTimeKind.Local).AddTicks(5402),
-                            ModifiedDate = new DateTime(2025, 11, 26, 11, 39, 13, 937, DateTimeKind.Local).AddTicks(1509)
+                            CreatedDate = new DateTime(2024, 6, 6, 8, 48, 20, 762, DateTimeKind.Local).AddTicks(7973),
+                            ModifiedDate = new DateTime(2025, 11, 26, 11, 28, 53, 133, DateTimeKind.Local).AddTicks(4080)
                         },
                         new
                         {
                             ID = 9,
                             CategoryName = "Belgesel",
-                            CreatedDate = new DateTime(2025, 5, 20, 6, 25, 4, 685, DateTimeKind.Local).AddTicks(2073),
-                            ModifiedDate = new DateTime(2025, 11, 26, 11, 39, 13, 937, DateTimeKind.Local).AddTicks(1510)
+                            CreatedDate = new DateTime(2025, 5, 20, 6, 14, 43, 881, DateTimeKind.Local).AddTicks(4644),
+                            ModifiedDate = new DateTime(2025, 11, 26, 11, 28, 53, 133, DateTimeKind.Local).AddTicks(4082)
                         },
                         new
                         {
                             ID = 10,
                             CategoryName = "Animasyon",
-                            CreatedDate = new DateTime(2024, 11, 21, 14, 18, 17, 150, DateTimeKind.Local).AddTicks(6110),
-                            ModifiedDate = new DateTime(2025, 11, 26, 11, 39, 13, 937, DateTimeKind.Local).AddTicks(1513)
+                            CreatedDate = new DateTime(2024, 11, 21, 14, 7, 56, 346, DateTimeKind.Local).AddTicks(8681),
+                            ModifiedDate = new DateTime(2025, 11, 26, 11, 28, 53, 133, DateTimeKind.Local).AddTicks(4084)
                         });
-                });
-
-            modelBuilder.Entity("Domain.Entities.Member", b =>
-                {
-                    b.Property<int>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("ModifiedDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Password")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Phone")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("ID");
-
-                    b.ToTable("Members");
                 });
 
             modelBuilder.Entity("Domain.Entities.Movie", b =>

@@ -15,8 +15,18 @@ namespace Infrastructure.Persistence
                     
         }
 
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // Seed data
+            SeedData.DatabaseSeeder.SeedData(modelBuilder);
+        }
+
+        //DBSET
         public DbSet<Movie> Movies { get; set; }
         public DbSet<Category> Categories { get; set; }
-        
+        public DbSet<Member> Members { get; set; }
+
     }
 }
