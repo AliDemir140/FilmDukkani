@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
@@ -48,6 +50,23 @@ namespace Infrastructure.Migrations
                         principalTable: "Categories",
                         principalColumn: "ID",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.InsertData(
+                table: "Categories",
+                columns: new[] { "ID", "CategoryName", "CreatedDate", "ModifiedDate" },
+                values: new object[,]
+                {
+                    { 1, "Aksiyon", new DateTime(2025, 10, 8, 16, 28, 23, 525, DateTimeKind.Local).AddTicks(6605), new DateTime(2025, 11, 26, 11, 28, 53, 133, DateTimeKind.Local).AddTicks(4064) },
+                    { 2, "Macera", new DateTime(2025, 10, 6, 4, 36, 10, 807, DateTimeKind.Local).AddTicks(8000), new DateTime(2025, 11, 26, 11, 28, 53, 133, DateTimeKind.Local).AddTicks(4069) },
+                    { 3, "Dram", new DateTime(2024, 5, 9, 3, 0, 6, 821, DateTimeKind.Local).AddTicks(5601), new DateTime(2025, 11, 26, 11, 28, 53, 133, DateTimeKind.Local).AddTicks(4071) },
+                    { 4, "Korku", new DateTime(2024, 11, 17, 20, 3, 14, 741, DateTimeKind.Local).AddTicks(4038), new DateTime(2025, 11, 26, 11, 28, 53, 133, DateTimeKind.Local).AddTicks(4073) },
+                    { 5, "Bilim Kurgu", new DateTime(2024, 4, 22, 12, 18, 25, 443, DateTimeKind.Local).AddTicks(9012), new DateTime(2025, 11, 26, 11, 28, 53, 133, DateTimeKind.Local).AddTicks(4075) },
+                    { 6, "Komedi", new DateTime(2024, 3, 31, 17, 11, 5, 165, DateTimeKind.Local).AddTicks(6432), new DateTime(2025, 11, 26, 11, 28, 53, 133, DateTimeKind.Local).AddTicks(4077) },
+                    { 7, "Gerilim", new DateTime(2025, 7, 28, 3, 54, 1, 155, DateTimeKind.Local).AddTicks(8197), new DateTime(2025, 11, 26, 11, 28, 53, 133, DateTimeKind.Local).AddTicks(4079) },
+                    { 8, "Fantastik", new DateTime(2024, 6, 6, 8, 48, 20, 762, DateTimeKind.Local).AddTicks(7973), new DateTime(2025, 11, 26, 11, 28, 53, 133, DateTimeKind.Local).AddTicks(4080) },
+                    { 9, "Belgesel", new DateTime(2025, 5, 20, 6, 14, 43, 881, DateTimeKind.Local).AddTicks(4644), new DateTime(2025, 11, 26, 11, 28, 53, 133, DateTimeKind.Local).AddTicks(4082) },
+                    { 10, "Animasyon", new DateTime(2024, 11, 21, 14, 7, 56, 346, DateTimeKind.Local).AddTicks(8681), new DateTime(2025, 11, 26, 11, 28, 53, 133, DateTimeKind.Local).AddTicks(4084) }
                 });
 
             migrationBuilder.CreateIndex(

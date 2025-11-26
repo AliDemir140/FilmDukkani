@@ -22,10 +22,12 @@ namespace Infrastructure.DependencyResolvers
             // CONCRETE REPOSITORIES
             services.AddScoped<IMovieRepository, MovieRepository>();
             services.AddScoped<ICategoryRepository, CategoryRepository>();
+            services.AddScoped<IMemberRepository, MemberRepository>();
 
             // SERVICE MANAGERS
             services.AddScoped<CategoryServiceManager>();
             services.AddScoped<MovieServiceManager>();
+            services.AddScoped<MemberServiceManager>();
         }
     }
 }
