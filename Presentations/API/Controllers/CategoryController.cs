@@ -71,8 +71,12 @@ namespace API.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            await _categoryServiceManager.UpdateCategory(updateCategory);
+            var result = await _categoryServiceManager.UpdateCategory(updateCategory);
+            if (!result)
+                return NotFound("Kategori bulunamadı.");
+
             return Ok("Kategori güncellendi.");
         }
+
     }
 }

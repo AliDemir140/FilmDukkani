@@ -9,6 +9,6 @@ namespace Application.Repositories
 {
     public interface IMovieRepository : IRepository<Movie>
     {
-
+        // İleride: En çok izlenen filmler, yıl filtreleme vs. ekleyebiliriz.
     }
 }

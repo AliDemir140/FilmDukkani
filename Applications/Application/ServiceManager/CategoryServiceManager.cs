@@ -57,13 +57,16 @@ namespace Application.ServiceManager
             }
         }
 
-        public async Task UpdateCategory(UpdateCategoryDto dto)
+        public async Task<bool> UpdateCategory(UpdateCategoryDto dto)
         {
             var category = await _categoryRepository.GetByIdAsync(dto.Id);
-            if (category == null) return;
+            if (category == null)
+                return false;
 
             category.CategoryName = dto.CategoryName;
             await _categoryRepository.UpdateAsync(category);
+            return true;
         }
+
     }
 }

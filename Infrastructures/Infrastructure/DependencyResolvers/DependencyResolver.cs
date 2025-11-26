@@ -25,6 +25,7 @@ namespace Infrastructure.DependencyResolvers
 
             // SERVICE MANAGERS
             services.AddScoped<CategoryServiceManager>();
+            services.AddScoped<MovieServiceManager>();
         }
     }
 }
