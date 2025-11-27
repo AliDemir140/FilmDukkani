@@ -24,12 +24,15 @@ namespace Infrastructure.DependencyResolvers
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<IMemberRepository, MemberRepository>();
             services.AddScoped<IMembershipPlanRepository, MembershipPlanRepository>();
+            services.AddScoped<IMemberMovieListRepository, MemberMovieListRepository>();
+            services.AddScoped<IMemberMovieListItemRepository, MemberMovieListItemRepository>();
 
             // SERVICE MANAGERS
             services.AddScoped<CategoryServiceManager>();
             services.AddScoped<MovieServiceManager>();
             services.AddScoped<MemberServiceManager>();
             services.AddScoped<MembershipPlanServiceManager>();
+            services.AddScoped<MemberMovieListServiceManager>();
         }
     }
 }
