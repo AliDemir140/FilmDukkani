@@ -27,6 +27,8 @@ namespace Infrastructure.Persistence
         public DbSet<Movie> Movies { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Member> Members { get; set; }
+        public DbSet<MembershipPlan> MembershipPlans { get; set; }
+
 
     }
 }
