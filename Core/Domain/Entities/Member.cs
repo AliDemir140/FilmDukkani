@@ -7,5 +7,11 @@
         public string Email { get; set; }          // Giriş / iletişim maili
         public string Password { get; set; }       // Şimdilik düz string, ileride hash 
         public string? Phone { get; set; }         // Telefon Numarası
+
+        // Üyelik planı ilişkisi
+        public int MembershipPlanId { get; set; }          // Üyenin planı
+        public MembershipPlan MembershipPlan { get; set; } // Navigation property
+
+        public DateTime MembershipStartDate { get; set; }  // Planın başladığı tarih
     }
 }

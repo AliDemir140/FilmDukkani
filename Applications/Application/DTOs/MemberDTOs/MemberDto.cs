@@ -9,5 +9,10 @@
         public string Email { get; set; }
 
         public string? Phone { get; set; }
+
+        public int MembershipPlanId { get; set; }
+        public DateTime? MembershipStartDate { get; set; }
+
+
     }
 }

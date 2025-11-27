@@ -25,7 +25,9 @@ namespace Application.ServiceManager
                     FirstName = m.FirstName,
                     LastName = m.LastName,
                     Email = m.Email,
-                    Phone = m.Phone
+                    Phone = m.Phone,
+                    MembershipPlanId = m.MembershipPlanId,
+                    MembershipStartDate = m.MembershipStartDate
                 })
                 .ToList();
         }
@@ -43,7 +45,9 @@ namespace Application.ServiceManager
                 LastName = member.LastName,
                 Email = member.Email,
                 Password = member.Password,
-                Phone = member.Phone
+                Phone = member.Phone,
+                MembershipPlanId = member.MembershipPlanId,
+                MembershipStartDate = member.MembershipStartDate
             };
         }
 
@@ -56,13 +60,15 @@ namespace Application.ServiceManager
                 LastName = dto.LastName,
                 Email = dto.Email,
                 Password = dto.Password,
-                Phone = dto.Phone
+                Phone = dto.Phone,
+                MembershipPlanId = dto.MembershipPlanId,
+                MembershipStartDate = DateTime.Now
             };
 
             await _memberRepository.AddAsync(member);
         }
 
-        // GUNCELLEME (bool döndürerek success kontrolü sağlıyoruz)
+        // GUNCELLEME
         public async Task<bool> UpdateMember(UpdateMemberDto dto)
         {
             var member = await _memberRepository.GetByIdAsync(dto.Id);
@@ -75,9 +81,16 @@ namespace Application.ServiceManager
             member.Password = dto.Password;
             member.Phone = dto.Phone;
 
+            if (member.MembershipPlanId != dto.MembershipPlanId)
+            {
+                member.MembershipPlanId = dto.MembershipPlanId;
+                member.MembershipStartDate = DateTime.Now; // sadece plan değişince güncelle
+            }
+
             await _memberRepository.UpdateAsync(member);
             return true;
         }
+
 
         // SILME
         public async Task<bool> DeleteMember(int id)
