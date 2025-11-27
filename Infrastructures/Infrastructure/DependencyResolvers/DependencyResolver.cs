@@ -23,11 +23,13 @@ namespace Infrastructure.DependencyResolvers
             services.AddScoped<IMovieRepository, MovieRepository>();
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<IMemberRepository, MemberRepository>();
+            services.AddScoped<IMembershipPlanRepository, MembershipPlanRepository>();
 
             // SERVICE MANAGERS
             services.AddScoped<CategoryServiceManager>();
             services.AddScoped<MovieServiceManager>();
             services.AddScoped<MemberServiceManager>();
+            services.AddScoped<MembershipPlanServiceManager>();
         }
     }
 }
