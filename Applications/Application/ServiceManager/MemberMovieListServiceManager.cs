@@ -99,5 +99,41 @@ namespace Application.ServiceManager
 
             return items.Count >= minimumCount;
         }
+
+        // Liste adını güncelle
+        public async Task<bool> UpdateListNameAsync(UpdateMemberMovieListNameDto dto)
+        {
+            var list = await _memberMovieListRepository.GetByIdAsync(dto.Id);
+            if (list == null)
+                return false;
+
+            list.Name = dto.Name;
+            await _memberMovieListRepository.UpdateAsync(list);
+            return true;
+        }
+
+        // Liste item'ını sil
+        public async Task<bool> DeleteItemAsync(int itemId)
+        {
+            var item = await _memberMovieListItemRepository.GetByIdAsync(itemId);
+            if (item == null)
+                return false;
+
+            await _memberMovieListItemRepository.DeleteAsync(item);
+            return true;
+        }
+
+        // Liste item'ının önceliğini güncelle
+        public async Task<bool> UpdateItemPriorityAsync(UpdateMemberMovieListItemPriorityDto dto)
+        {
+            var item = await _memberMovieListItemRepository.GetByIdAsync(dto.Id);
+            if (item == null)
+                return false;
+
+            item.Priority = dto.Priority;
+            await _memberMovieListItemRepository.UpdateAsync(item);
+            return true;
+        }
+
     }
 }

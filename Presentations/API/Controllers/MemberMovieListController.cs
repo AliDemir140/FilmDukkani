@@ -56,5 +56,45 @@ namespace API.Controllers
 
             return Ok("Film listeye eklendi.");
         }
+
+        // Liste adını güncelle
+        [HttpPut("update-list-name")]
+        public async Task<IActionResult> UpdateListName([FromBody] UpdateMemberMovieListNameDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _service.UpdateListNameAsync(dto);
+            if (!result)
+                return NotFound("Liste bulunamadı.");
+
+            return Ok("Liste adı güncellendi.");
+        }
+
+        // Liste item'ını sil
+        [HttpDelete("delete-item")]
+        public async Task<IActionResult> DeleteItem(int id)
+        {
+            var result = await _service.DeleteItemAsync(id);
+            if (!result)
+                return NotFound("Liste elemanı bulunamadı.");
+
+            return Ok("Liste elemanı silindi.");
+        }
+
+        // Liste item'ının önceliğini güncelle
+        [HttpPut("update-item-priority")]
+        public async Task<IActionResult> UpdateItemPriority([FromBody] UpdateMemberMovieListItemPriorityDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _service.UpdateItemPriorityAsync(dto);
+            if (!result)
+                return NotFound("Liste elemanı bulunamadı.");
+
+            return Ok("Liste elemanı önceliği güncellendi.");
+        }
+
     }
 }

@@ -31,7 +31,7 @@ namespace Application.ServiceManager
                 })
                 .ToList();
         }
-
+        
         // TEK GETIRME
         public async Task<UpdateMemberDto?> GetMember(int id)
         {
