@@ -38,9 +38,9 @@ namespace Infrastructure.Repositories
            return await _dbSet.AsNoTracking().ToListAsync();
         }
 
-        public async Task<IReadOnlyList<T>> GetAllAsync(Expression<Func<T, bool>> predicate) //koşula bağlı şekilde
+        public async Task<IReadOnlyList<T>> GetAllAsync(Expression<Func<T, bool>> predicate) //koşula bağlı şekilde (price>500 vb.)
         {
-            return await _dbSet.AsNoTracking().Where(predicate).ToListAsync();
+            return await _dbSet.AsNoTracking().Where(predicate).ToListAsync(); //AsNoTracking: Bu methot ReadOnly olduğu için işlem yükünü azaltmak ve performansı arttırmak adına kullanılıyor.
         }
 
         public async Task<T> GetByIdAsync(int id)
