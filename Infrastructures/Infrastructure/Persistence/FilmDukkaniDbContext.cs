@@ -19,8 +19,8 @@ namespace Infrastructure.Persistence
         {
             base.OnModelCreating(modelBuilder);
 
-            // Seed data
-            SeedData.DatabaseSeeder.SeedData(modelBuilder);
+            // Tüm configuration sınıflarını otomatik uygular
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(FilmDukkaniDbContext).Assembly);
         }
 
         //DBSET
