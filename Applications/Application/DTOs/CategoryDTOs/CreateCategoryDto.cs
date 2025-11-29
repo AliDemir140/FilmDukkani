@@ -9,7 +9,8 @@ namespace Application.DTOs.CategoryDTOs
 {
     public class CreateCategoryDto
     {
-        [Required]
+        [Required(ErrorMessage = "Kategori adı zorunludur.")]
+        [MaxLength(100, ErrorMessage = "Kategori adı en fazla 100 karakter olabilir.")]
         public string CategoryName { get; set; }
 
     }

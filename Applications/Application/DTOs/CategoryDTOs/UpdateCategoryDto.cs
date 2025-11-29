@@ -9,8 +9,11 @@ namespace Application.DTOs.CategoryDTOs
 {
     public class UpdateCategoryDto
     {
+        [Required(ErrorMessage = "Kategori ID zorunludur.")]
         public int Id { get; set; }
-        [Required]
+
+        [Required(ErrorMessage = "Kategori adı zorunludur.")]
+        [MaxLength(100, ErrorMessage = "Kategori adı en fazla 100 karakter olabilir.")]
         public string CategoryName { get; set; }
 
     }
