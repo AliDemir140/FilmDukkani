@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(FilmDukkaniDbContext))]
-    [Migration("20251127121329_AddMemberMovieListEntities")]
-    partial class AddMemberMovieListEntities
+    [Migration("20251129121446_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -35,7 +35,8 @@ namespace Infrastructure.Migrations
 
                     b.Property<string>("CategoryName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
@@ -46,78 +47,6 @@ namespace Infrastructure.Migrations
                     b.HasKey("ID");
 
                     b.ToTable("Categories");
-
-                    b.HasData(
-                        new
-                        {
-                            ID = 1,
-                            CategoryName = "Aksiyon",
-                            CreatedDate = new DateTime(2025, 10, 9, 20, 12, 59, 638, DateTimeKind.Local).AddTicks(118),
-                            ModifiedDate = new DateTime(2025, 11, 27, 15, 13, 29, 245, DateTimeKind.Local).AddTicks(7585)
-                        },
-                        new
-                        {
-                            ID = 2,
-                            CategoryName = "Macera",
-                            CreatedDate = new DateTime(2025, 10, 7, 8, 20, 46, 920, DateTimeKind.Local).AddTicks(1521),
-                            ModifiedDate = new DateTime(2025, 11, 27, 15, 13, 29, 245, DateTimeKind.Local).AddTicks(7590)
-                        },
-                        new
-                        {
-                            ID = 3,
-                            CategoryName = "Dram",
-                            CreatedDate = new DateTime(2024, 5, 10, 6, 44, 42, 933, DateTimeKind.Local).AddTicks(9122),
-                            ModifiedDate = new DateTime(2025, 11, 27, 15, 13, 29, 245, DateTimeKind.Local).AddTicks(7591)
-                        },
-                        new
-                        {
-                            ID = 4,
-                            CategoryName = "Korku",
-                            CreatedDate = new DateTime(2024, 11, 18, 23, 47, 50, 853, DateTimeKind.Local).AddTicks(7558),
-                            ModifiedDate = new DateTime(2025, 11, 27, 15, 13, 29, 245, DateTimeKind.Local).AddTicks(7593)
-                        },
-                        new
-                        {
-                            ID = 5,
-                            CategoryName = "Bilim Kurgu",
-                            CreatedDate = new DateTime(2024, 4, 23, 16, 3, 1, 556, DateTimeKind.Local).AddTicks(2532),
-                            ModifiedDate = new DateTime(2025, 11, 27, 15, 13, 29, 245, DateTimeKind.Local).AddTicks(7595)
-                        },
-                        new
-                        {
-                            ID = 6,
-                            CategoryName = "Komedi",
-                            CreatedDate = new DateTime(2024, 4, 1, 20, 55, 41, 277, DateTimeKind.Local).AddTicks(9953),
-                            ModifiedDate = new DateTime(2025, 11, 27, 15, 13, 29, 245, DateTimeKind.Local).AddTicks(7598)
-                        },
-                        new
-                        {
-                            ID = 7,
-                            CategoryName = "Gerilim",
-                            CreatedDate = new DateTime(2025, 7, 29, 7, 38, 37, 268, DateTimeKind.Local).AddTicks(1718),
-                            ModifiedDate = new DateTime(2025, 11, 27, 15, 13, 29, 245, DateTimeKind.Local).AddTicks(7599)
-                        },
-                        new
-                        {
-                            ID = 8,
-                            CategoryName = "Fantastik",
-                            CreatedDate = new DateTime(2024, 6, 7, 12, 32, 56, 875, DateTimeKind.Local).AddTicks(1494),
-                            ModifiedDate = new DateTime(2025, 11, 27, 15, 13, 29, 245, DateTimeKind.Local).AddTicks(7601)
-                        },
-                        new
-                        {
-                            ID = 9,
-                            CategoryName = "Belgesel",
-                            CreatedDate = new DateTime(2025, 5, 21, 9, 59, 19, 993, DateTimeKind.Local).AddTicks(8165),
-                            ModifiedDate = new DateTime(2025, 11, 27, 15, 13, 29, 245, DateTimeKind.Local).AddTicks(7603)
-                        },
-                        new
-                        {
-                            ID = 10,
-                            CategoryName = "Animasyon",
-                            CreatedDate = new DateTime(2024, 11, 22, 17, 52, 32, 459, DateTimeKind.Local).AddTicks(2202),
-                            ModifiedDate = new DateTime(2025, 11, 27, 15, 13, 29, 245, DateTimeKind.Local).AddTicks(7605)
-                        });
                 });
 
             modelBuilder.Entity("Domain.Entities.Member", b =>
@@ -133,15 +62,18 @@ namespace Infrastructure.Migrations
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("LastName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<int>("MembershipPlanId")
                         .HasColumnType("int");
@@ -154,10 +86,12 @@ namespace Infrastructure.Migrations
 
                     b.Property<string>("Password")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("Phone")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.HasKey("ID");
 
@@ -185,7 +119,8 @@ namespace Infrastructure.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("ID");
 
@@ -241,7 +176,8 @@ namespace Infrastructure.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<int>("MaxChangePerMonth")
                         .HasColumnType("int");
@@ -254,10 +190,12 @@ namespace Infrastructure.Migrations
 
                     b.Property<string>("PlanName")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
 
                     b.HasKey("ID");
 
@@ -280,7 +218,8 @@ namespace Infrastructure.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
 
                     b.Property<DateTime>("ModifiedDate")
                         .HasColumnType("datetime2");
@@ -290,7 +229,8 @@ namespace Infrastructure.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
 
                     b.HasKey("ID");
 
@@ -302,9 +242,9 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Domain.Entities.Member", b =>
                 {
                     b.HasOne("Domain.Entities.MembershipPlan", "MembershipPlan")
-                        .WithMany()
+                        .WithMany("Members")
                         .HasForeignKey("MembershipPlanId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("MembershipPlan");
@@ -332,7 +272,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Domain.Entities.Movie", "Movie")
                         .WithMany()
                         .HasForeignKey("MovieId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("MemberMovieList");
@@ -345,7 +285,7 @@ namespace Infrastructure.Migrations
                     b.HasOne("Domain.Entities.Category", "Category")
                         .WithMany("Movies")
                         .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Category");
@@ -359,6 +299,11 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Domain.Entities.MemberMovieList", b =>
                 {
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("Domain.Entities.MembershipPlan", b =>
+                {
+                    b.Navigation("Members");
                 });
 #pragma warning restore 612, 618
         }
