@@ -96,5 +96,27 @@ namespace API.Controllers
             return Ok("Liste elemanı önceliği güncellendi.");
         }
 
+        // Min 5 film kuralını kontrol et
+        [HttpGet("check-minimum")]
+        public async Task<IActionResult> CheckMinimum(int listId)
+        {
+            // Önce liste var mı
+            var exists = await _service.ListExistsAsync(listId);
+            if (!exists)
+                return NotFound("Liste bulunamadı.");
+
+            // Minimum 5 film var mı
+            bool hasMinimum = await _service.HasMinimumItemsAsync(listId, 5);
+
+            // Mevcut film sayısını da döndür
+            int currentCount = await _service.GetItemCountAsync(listId);
+
+            return Ok(new
+            {
+                hasMinimum = hasMinimum,
+                minimumRequired = 5,
+                currentCount = currentCount
+            });
+        }
     }
 }

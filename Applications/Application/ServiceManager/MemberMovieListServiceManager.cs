@@ -100,6 +100,13 @@ namespace Application.ServiceManager
             return items.Count >= minimumCount;
         }
 
+        public async Task<int> GetItemCountAsync(int listId)
+        {
+            var items = await _memberMovieListItemRepository.GetAllAsync(i => i.MemberMovieListId == listId);
+            return items.Count;
+        }
+
+
         // Liste adını güncelle
         public async Task<bool> UpdateListNameAsync(UpdateMemberMovieListNameDto dto)
         {
@@ -134,6 +141,14 @@ namespace Application.ServiceManager
             await _memberMovieListItemRepository.UpdateAsync(item);
             return true;
         }
+
+        // Liste var mı yok mu kontrolü
+        public async Task<bool> ListExistsAsync(int listId)
+        {
+            var list = await _memberMovieListRepository.GetByIdAsync(listId);
+            return list != null;
+        }
+
 
     }
 }
