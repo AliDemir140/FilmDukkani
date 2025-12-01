@@ -23,10 +23,17 @@ namespace Application.ServiceManager
                 {
                     Id = m.ID,
                     Title = m.Title,
+                    OriginalTitle = m.OriginalTitle,
                     Description = m.Description,
                     ReleaseYear = m.ReleaseYear,
+                    TechnicalDetails = m.TechnicalDetails,
+                    AudioFeatures = m.AudioFeatures,
+                    SubtitleLanguages = m.SubtitleLanguages,
+                    TrailerUrl = m.TrailerUrl,
+                    CoverImageUrl = m.CoverImageUrl,
+                    Barcode = m.Barcode,
+                    Supplier = m.Supplier,
                     CategoryId = m.CategoryId,
-
                     CategoryName = m.Category != null
                         ? m.Category.CategoryName
                         : null
@@ -40,8 +47,16 @@ namespace Application.ServiceManager
             var movie = new Movie
             {
                 Title = dto.Title,
+                OriginalTitle = dto.OriginalTitle,
                 Description = dto.Description,
                 ReleaseYear = dto.ReleaseYear,
+                TechnicalDetails = dto.TechnicalDetails,
+                AudioFeatures = dto.AudioFeatures,
+                SubtitleLanguages = dto.SubtitleLanguages,
+                TrailerUrl = dto.TrailerUrl,
+                CoverImageUrl = dto.CoverImageUrl,
+                Barcode = dto.Barcode,
+                Supplier = dto.Supplier,
                 CategoryId = dto.CategoryId
             };
 
@@ -58,8 +73,16 @@ namespace Application.ServiceManager
             {
                 Id = movie.ID,
                 Title = movie.Title,
+                OriginalTitle = movie.OriginalTitle,
                 Description = movie.Description,
                 ReleaseYear = movie.ReleaseYear,
+                TechnicalDetails = movie.TechnicalDetails,
+                AudioFeatures = movie.AudioFeatures,
+                SubtitleLanguages = movie.SubtitleLanguages,
+                TrailerUrl = movie.TrailerUrl,
+                CoverImageUrl = movie.CoverImageUrl,
+                Barcode = movie.Barcode,
+                Supplier = movie.Supplier,
                 CategoryId = movie.CategoryId
             };
         }
@@ -85,14 +108,21 @@ namespace Application.ServiceManager
 
             // Güncelleme
             movie.Title = dto.Title;
+            movie.OriginalTitle = dto.OriginalTitle;
             movie.Description = dto.Description;
             movie.ReleaseYear = dto.ReleaseYear;
+            movie.TechnicalDetails = dto.TechnicalDetails;
+            movie.AudioFeatures = dto.AudioFeatures;
+            movie.SubtitleLanguages = dto.SubtitleLanguages;
+            movie.TrailerUrl = dto.TrailerUrl;
+            movie.CoverImageUrl = dto.CoverImageUrl;
+            movie.Barcode = dto.Barcode;
+            movie.Supplier = dto.Supplier;
             movie.CategoryId = dto.CategoryId;
 
             await _movieRepository.UpdateAsync(movie);
 
             return true; // Başarılı
         }
-
     }
 }
