@@ -8,18 +8,43 @@ namespace Infrastructure.Persistence.Configurations
     {
         public void Configure(EntityTypeBuilder<Movie> builder)
         {
-            builder.HasKey(x => x.ID);
+            builder.HasKey(m => m.ID);
 
-            builder.Property(x => x.Title)
-                   .IsRequired()
-                   .HasMaxLength(200);
+            builder.Property(m => m.Title)
+                .IsRequired()
+                .HasMaxLength(200);
 
-            builder.Property(x => x.Description)
-                   .HasMaxLength(1000);
+            builder.Property(m => m.OriginalTitle)
+                .HasMaxLength(200);
 
-            builder.Property(x => x.ReleaseYear)
-                   .IsRequired();
+            builder.Property(m => m.Description)
+                .HasMaxLength(1000);
 
+            builder.Property(m => m.ReleaseYear)
+                .IsRequired();
+
+            builder.Property(m => m.TechnicalDetails)
+                .HasMaxLength(500);
+
+            builder.Property(m => m.AudioFeatures)
+                .HasMaxLength(300);
+
+            builder.Property(m => m.SubtitleLanguages)
+                .HasMaxLength(300);
+
+            builder.Property(m => m.TrailerUrl)
+                .HasMaxLength(500);
+
+            builder.Property(m => m.CoverImageUrl)
+                .HasMaxLength(500);
+
+            builder.Property(m => m.Barcode)
+                .HasMaxLength(50);
+
+            builder.Property(m => m.Supplier)
+                .HasMaxLength(100);
+
+            // Category ilişkisi
             builder.HasOne(m => m.Category)
                    .WithMany(c => c.Movies)
                    .HasForeignKey(m => m.CategoryId)
