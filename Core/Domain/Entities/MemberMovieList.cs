@@ -8,5 +8,8 @@
         public string Name { get; set; }
 
         public ICollection<MemberMovieListItem> Items { get; set; }
+        public ICollection<DeliveryRequest> DeliveryRequests { get; set; } = new List<DeliveryRequest>();
+
+
     }
 }

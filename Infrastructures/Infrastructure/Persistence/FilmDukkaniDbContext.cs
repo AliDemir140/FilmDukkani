@@ -36,6 +36,8 @@ namespace Infrastructure.Persistence
         public DbSet<MovieActor> MovieActors { get; set; }
         public DbSet<MovieDirector> MovieDirectors { get; set; }
         public DbSet<MovieAward> MovieAwards { get; set; }
+        public DbSet<DeliveryRequest> DeliveryRequests { get; set; }
+        public DbSet<DeliveryRequestItem> DeliveryRequestItems { get; set; }
 
 
 
