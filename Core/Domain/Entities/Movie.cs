@@ -20,6 +20,11 @@ namespace Domain.Entities
         public int CategoryId { get; set; }                // Şimdilik tek kategori
         public Category Category { get; set; }
 
+        public ICollection<MovieActor> MovieActors { get; set; } = new List<MovieActor>();
+        public ICollection<MovieDirector> MovieDirectors { get; set; } = new List<MovieDirector>();
+        public ICollection<MovieAward> MovieAwards { get; set; } = new List<MovieAward>();
+
+
         // Issue #15’te (Oyuncu, Yönetmen, Ödül) koleksiyon navigation’lar eklenecek
     }
 }
