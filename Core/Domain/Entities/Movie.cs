@@ -23,8 +23,8 @@ namespace Domain.Entities
         public ICollection<MovieActor> MovieActors { get; set; } = new List<MovieActor>();
         public ICollection<MovieDirector> MovieDirectors { get; set; } = new List<MovieDirector>();
         public ICollection<MovieAward> MovieAwards { get; set; } = new List<MovieAward>();
+        public ICollection<DeliveryRequestItem> DeliveryRequestItems { get; set; } = new List<DeliveryRequestItem>();
 
 
-        // Issue #15’te (Oyuncu, Yönetmen, Ödül) koleksiyon navigation’lar eklenecek
     }
 }

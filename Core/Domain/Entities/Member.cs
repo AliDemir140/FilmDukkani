@@ -13,5 +13,9 @@
         public MembershipPlan MembershipPlan { get; set; } // Navigation property
 
         public DateTime MembershipStartDate { get; set; }  // Planın başladığı tarih
+
+        public ICollection<DeliveryRequest> DeliveryRequests { get; set; } = new List<DeliveryRequest>();
+
+
     }
 }
