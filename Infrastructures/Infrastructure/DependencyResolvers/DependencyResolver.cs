@@ -36,6 +36,8 @@ namespace Infrastructure.DependencyResolvers
             services.AddScoped<MemberServiceManager>();
             services.AddScoped<MembershipPlanServiceManager>();
             services.AddScoped<MemberMovieListServiceManager>();
+            services.AddScoped<DeliveryRequestServiceManager>();
+
 
         }
     }
