@@ -49,26 +49,65 @@ namespace Application.ServiceManager
         }
 
         // Yarının siparişlerini hazırlamak için skeleton işlem
-        // NOT: Algoritma Issue #19'da yazılacak
         public async Task PrepareTomorrowDeliveriesAsync()
         {
             DateTime tomorrow = DateTime.Today.AddDays(1);
 
-            // YARIN teslimat isteyen tüm request'leri getir
+            // 1) YARIN teslimat isteyen PENDING (0) tüm request'leri getir
             var requests = await _deliveryRequestRepository
                 .GetAllAsync(r => r.DeliveryDate.Date == tomorrow.Date && r.Status == 0);
 
-            // Burada algoritmanın iskeleti kuruluyor
             foreach (var request in requests)
             {
-                // 1. Üyenin listesinde kaç film gönderilebilir? (Membership Plan'a göre)
-                // 2. Listede önceliğe göre sıradaki filmleri bul
-                // 3. Depoda uygun film var mı? (şimdilik kontrol etmiyoruz)
-                // 4. DeliveryRequestItem oluştur
-            }
+                // 2) Üyeyi getir
+                var member = await _memberRepository.GetByIdAsync(request.MemberId);
+                if (member == null)
+                    continue;
 
-            // Algoritmanın kendisi bir sonraki issue'da (#19) hayata geçecek
+                // 3) Üyelik planını getir
+                var plan = await _membershipPlanRepository.GetByIdAsync(member.MembershipPlanId);
+                if (plan == null)
+                    continue;
+
+                int maxMoviesToSend = plan.MaxMoviesPerMonth;
+                // Not: WORLD.doc'ta "bir değişimde X film" geçer — o değer plan tablosunda olacak
+
+                // 4) Üyenin listesini getir
+                var list = await _memberMovieListRepository.GetByIdAsync(request.MemberMovieListId);
+                if (list == null)
+                    continue;
+
+                // 5) Liste itemlarını öncelik doğrultusunda sırala
+                var listItems = await _memberMovieListItemRepository
+                    .GetAllAsync(i => i.MemberMovieListId == list.ID);
+
+                var sortedItems = listItems
+                    .OrderBy(i => i.Priority)       // Öncelik küçük olan önce gelir
+                    .ThenBy(i => i.AddedDate)       // Aynı öncelikte eski olan gider
+                    .Take(maxMoviesToSend)          // Üyelik planına göre gönderilecek film sayısı
+                    .ToList();
+
+                // 6) Bu filmleri DeliveryRequestItem olarak ekle
+                foreach (var item in sortedItems)
+                {
+                    var dri = new DeliveryRequestItem
+                    {
+                        DeliveryRequestId = request.ID,
+                        MovieId = item.MovieId,
+                        MemberMovieListItemId = item.ID,
+                        IsReturned = false,
+                        IsDamaged = false
+                    };
+
+                    await _deliveryRequestItemRepository.AddAsync(dri);
+                }
+
+                // 7) Request durumunu güncelle -> Prepared (1)
+                request.Status = 1;
+                await _deliveryRequestRepository.UpdateAsync(request);
+            }
         }
+
 
         // Request'i getir
         public async Task<DeliveryRequest?> GetRequestAsync(int requestId)
