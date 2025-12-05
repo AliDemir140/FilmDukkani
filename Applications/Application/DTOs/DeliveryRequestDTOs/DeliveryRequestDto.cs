@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using Domain.Enums;
+
 
 namespace Application.DTOs.DeliveryRequestDTOs
 {
@@ -16,8 +18,7 @@ namespace Application.DTOs.DeliveryRequestDTOs
         public DateTime RequestedDate { get; set; }
         public DateTime DeliveryDate { get; set; }
 
-        // Şimdilik byte; Enum entegrasyonu Issue #31'de yapılacak
-        public byte Status { get; set; }
+        public DeliveryStatus Status { get; set; }
 
         public List<DeliveryRequestItemDto> Items { get; set; } = new();
     }

@@ -1,6 +1,8 @@
 ﻿using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Domain.Enums;
+
 
 namespace Infrastructure.Persistence.Configurations
 {
@@ -31,6 +33,9 @@ namespace Infrastructure.Persistence.Configurations
 
             builder.Property(x => x.MembershipStartDate)
                    .IsRequired();
+
+            builder.Property(m => m.Status)
+                    .HasDefaultValue(MovieStatus.Available);
 
             builder.HasOne(m => m.MembershipPlan)
                    .WithMany(p => p.Members)

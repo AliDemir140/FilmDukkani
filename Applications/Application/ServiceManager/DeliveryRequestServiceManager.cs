@@ -1,7 +1,7 @@
 ﻿using Application.Repositories;
 using Domain.Entities;
 using Application.DTOs.DeliveryRequestDTOs;
-
+using Domain.Enums;
 
 namespace Application.ServiceManager
 {
@@ -42,7 +42,8 @@ namespace Application.ServiceManager
                 MemberMovieListId = listId,
                 RequestedDate = DateTime.Now,
                 DeliveryDate = deliveryDate,
-                Status = 0 // Pending
+                Status = DeliveryStatus.Pending
+
             };
 
             await _deliveryRequestRepository.AddAsync(request);
@@ -65,7 +66,7 @@ namespace Application.ServiceManager
 
             // 1) YARIN teslimat isteyen PENDING (0) tüm request'leri getir
             var requests = await _deliveryRequestRepository
-                .GetAllAsync(r => r.DeliveryDate.Date == tomorrow.Date && r.Status == 0);
+                .GetAllAsync(r => r.DeliveryDate.Date == tomorrow.Date && r.Status == DeliveryStatus.Pending);
 
             foreach (var request in requests)
             {
@@ -113,7 +114,7 @@ namespace Application.ServiceManager
                 }
 
                 // 7) Request durumunu güncelle -> Prepared (1)
-                request.Status = 1;
+                request.Status = DeliveryStatus.Prepared;
                 await _deliveryRequestRepository.UpdateAsync(request);
             }
         }
@@ -179,7 +180,7 @@ namespace Application.ServiceManager
             if (request == null)
                 return false;
 
-            request.Status = 5; // Cancelled
+            request.Status = DeliveryStatus.Cancelled;   // Cancelled
             await _deliveryRequestRepository.UpdateAsync(request);
 
             return true;
@@ -192,7 +193,7 @@ namespace Application.ServiceManager
             if (request == null)
                 return false;
 
-            request.Status = 4; // Completed
+            request.Status = DeliveryStatus.Completed;
             await _deliveryRequestRepository.UpdateAsync(request);
 
             return true;

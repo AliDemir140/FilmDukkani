@@ -1,6 +1,7 @@
 ﻿using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Domain.Enums;
 
 namespace Infrastructure.Persistence.Configurations
 {
@@ -43,6 +44,9 @@ namespace Infrastructure.Persistence.Configurations
 
             builder.Property(m => m.Supplier)
                 .HasMaxLength(100);
+
+            builder.Property(m => m.Status)
+                .HasDefaultValue(MovieStatus.Available);
 
             // Category ilişkisi
             builder.HasOne(m => m.Category)
