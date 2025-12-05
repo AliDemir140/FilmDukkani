@@ -1,4 +1,5 @@
 ﻿using Domain.Entities;
+using Domain.Enums;
 
 namespace Domain.Entities
 {
@@ -19,6 +20,8 @@ namespace Domain.Entities
 
         public int CategoryId { get; set; }                // Şimdilik tek kategori
         public Category Category { get; set; }
+
+        public MovieStatus Status { get; set; } = MovieStatus.Available;
 
         public ICollection<MovieActor> MovieActors { get; set; } = new List<MovieActor>();
         public ICollection<MovieDirector> MovieDirectors { get; set; } = new List<MovieDirector>();

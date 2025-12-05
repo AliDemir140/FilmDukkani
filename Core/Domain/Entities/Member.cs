@@ -1,4 +1,7 @@
-﻿namespace Domain.Entities
+﻿using Domain.Enums;
+
+
+namespace Domain.Entities
 {
     public class Member : BaseEntity
     {
@@ -10,9 +13,11 @@
 
         // Üyelik planı ilişkisi
         public int MembershipPlanId { get; set; }          // Üyenin planı
+
         public MembershipPlan MembershipPlan { get; set; } // Navigation property
 
         public DateTime MembershipStartDate { get; set; }  // Planın başladığı tarih
+        public MemberStatus Status { get; set; } = MemberStatus.Active;
 
         public ICollection<DeliveryRequest> DeliveryRequests { get; set; } = new List<DeliveryRequest>();
 

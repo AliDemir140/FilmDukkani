@@ -1,6 +1,8 @@
 ﻿using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Domain.Enums;
+
 
 namespace Infrastructure.Persistence.Configurations
 {
@@ -16,9 +18,8 @@ namespace Infrastructure.Persistence.Configurations
             builder.Property(dr => dr.DeliveryDate)
                    .IsRequired();
 
-            // Şimdilik Status küçük bir byte olarak kullanılacak
             builder.Property(dr => dr.Status)
-                   .HasDefaultValue((byte)0); // Pending
+                   .HasDefaultValue(DeliveryStatus.Pending);
 
             builder.HasOne(dr => dr.Member)
                    .WithMany(m => m.DeliveryRequests)

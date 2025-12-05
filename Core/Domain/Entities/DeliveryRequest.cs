@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using Domain.Enums;
+
 
 namespace Domain.Entities
 {
@@ -20,7 +22,7 @@ namespace Domain.Entities
 
         // Şimdilik byte tutuyoruz, #19’da enum’a bağlayacağız
         // 0: Pending, 1: Prepared, 2: OnTheWay, 3: Delivered, 4: Completed, 5: Cancelled
-        public byte Status { get; set; }
+        public DeliveryStatus Status { get; set; }
 
         public ICollection<DeliveryRequestItem> Items { get; set; } = new List<DeliveryRequestItem>();
     }
