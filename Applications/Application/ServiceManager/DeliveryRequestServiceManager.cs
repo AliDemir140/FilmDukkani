@@ -1,5 +1,7 @@
 ﻿using Application.Repositories;
 using Domain.Entities;
+using Application.DTOs.DeliveryRequestDTOs;
+
 
 namespace Application.ServiceManager
 {
@@ -48,7 +50,15 @@ namespace Application.ServiceManager
             return request.ID;
         }
 
-        // Yarının siparişlerini hazırlamak için skeleton işlem
+        // DTO ile teslimat isteği oluşturma
+        public async Task<int> CreateDeliveryRequestAsync(CreateDeliveryRequestDto dto)
+        {
+            return await CreateDeliveryRequestAsync(dto.MemberId, dto.MemberMovieListId, dto.DeliveryDate);
+        }
+
+
+        // Yarının teslimatlarını hazırlayan sipariş hazırlama algoritması
+
         public async Task PrepareTomorrowDeliveriesAsync()
         {
             DateTime tomorrow = DateTime.Today.AddDays(1);
@@ -114,6 +124,53 @@ namespace Application.ServiceManager
         {
             return await _deliveryRequestRepository.GetByIdAsync(requestId);
         }
+
+        // Request'i detay DTO olarak getir
+        public async Task<DeliveryRequestDto?> GetRequestDetailAsync(int requestId)
+        {
+            var request = await _deliveryRequestRepository.GetByIdAsync(requestId);
+            if (request == null)
+                return null;
+
+            var member = await _memberRepository.GetByIdAsync(request.MemberId);
+            var list = await _memberMovieListRepository.GetByIdAsync(request.MemberMovieListId);
+
+            var items = await _deliveryRequestItemRepository
+                .GetAllAsync(i => i.DeliveryRequestId == request.ID);
+
+            var itemDtos = new List<DeliveryRequestItemDto>();
+
+            foreach (var item in items)
+            {
+                var movie = await _movieRepository.GetByIdAsync(item.MovieId);
+
+                itemDtos.Add(new DeliveryRequestItemDto
+                {
+                    Id = item.ID,
+                    MovieId = item.MovieId,
+                    MovieTitle = movie?.Title, // film bulunamazsa null kalır
+                    IsReturned = item.IsReturned,
+                    IsDamaged = item.IsDamaged,
+                    ReturnDate = null // ileride iade tarihi eklenecekse doldurulabilir
+                });
+            }
+
+            return new DeliveryRequestDto
+            {
+                Id = request.ID,
+                MemberId = request.MemberId,
+                MemberFullName = member != null
+                    ? $"{member.FirstName} {member.LastName}"
+                    : string.Empty,
+                MemberMovieListId = request.MemberMovieListId,
+                ListName = list?.Name,
+                RequestedDate = request.RequestedDate,
+                DeliveryDate = request.DeliveryDate,
+                Status = request.Status,
+                Items = itemDtos
+            };
+        }
+
 
         // Request iptal et
         public async Task<bool> CancelRequestAsync(int requestId)
