@@ -87,6 +87,47 @@ namespace Application.ServiceManager
             };
         }
 
+        // Film detayını (MovieDetailDto) dönen metot
+        public async Task<MovieDetailDto?> GetMovieDetailAsync(int id)
+        {
+            var movie = await _movieRepository.GetByIdAsync(id);
+            if (movie == null)
+                return null;
+
+            // Kategori adı dolu gelmeyebilir, varsa dolduruyoruz
+            var categoryName = movie.Category != null
+                ? movie.Category.CategoryName
+                : string.Empty;
+
+            var dto = new MovieDetailDto
+            {
+                Id = movie.ID,
+                Title = movie.Title,
+                Description = movie.Description,
+                ReleaseYear = movie.ReleaseYear,
+                CategoryId = movie.CategoryId,
+                CategoryName = categoryName,
+
+                // Bu alanlar Movie entity’sinde henüz olmayabilir,
+                // ileride Movie genişletildiğinde dolduracağız.
+                OriginalTitle = null,
+                TechnicalDetails = null,
+                AudioFeatures = null,
+                SubtitleLanguages = null,
+                TrailerUrl = null,
+                CoverImageUrl = null,
+
+                // Oyuncu, Yönetmen, Ödül listeleri şu an boş kalıyor.
+                // Metadata entity’leri ve ilişkileri tamamlandığında dolduracağız.
+                Actors = new List<string>(),
+                Directors = new List<string>(),
+                Awards = new List<MovieAwardInfoDto>()
+            };
+
+            return dto;
+        }
+
+
         // SILME
         public async Task DeleteMovie(UpdateMovieDto dto)
         {
@@ -124,5 +165,7 @@ namespace Application.ServiceManager
 
             return true; // Başarılı
         }
+
+
     }
 }
