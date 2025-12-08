@@ -1,6 +1,7 @@
 ﻿using Application.Repositories;
 using Application.ServiceManager;
 using Infrastructure.Persistence;
+using Infrastructure.Persistence.SeedData;
 using Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -18,6 +19,9 @@ namespace Infrastructure.DependencyResolvers
 
             // GENERIC REPOSITORY
             services.AddScoped(typeof(IRepository<>), typeof(BaseRepository<>));
+
+            //SEED DATA
+            services.AddScoped<DatabaseSeeder>();
 
             // CONCRETE REPOSITORIES
             services.AddScoped<IMovieRepository, MovieRepository>();

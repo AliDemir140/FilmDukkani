@@ -35,7 +35,7 @@ namespace Infrastructure.Persistence.Configurations
                    .IsRequired();
 
             builder.Property(m => m.Status)
-                    .HasDefaultValue(MovieStatus.Available);
+                    .HasDefaultValue(MemberStatus.Active);
 
             builder.HasOne(m => m.MembershipPlan)
                    .WithMany(p => p.Members)
