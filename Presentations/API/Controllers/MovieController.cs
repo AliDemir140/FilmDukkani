@@ -72,5 +72,16 @@ namespace API.Controllers
             return Ok("Film güncellendi.");
         }
 
+        // GET api/Movie/{id}/detail
+        [HttpGet("{id}/detail")]
+        public async Task<IActionResult> GetMovieDetail(int id)
+        {
+            var movieDetail = await _movieServiceManager.GetMovieDetailAsync(id);
+            if (movieDetail == null)
+                return NotFound("Film bulunamadı.");
+
+            return Ok(movieDetail);
+        }
+
     }
 }
