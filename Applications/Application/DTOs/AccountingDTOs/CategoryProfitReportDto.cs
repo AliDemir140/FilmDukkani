@@ -1,0 +1,14 @@
+﻿namespace Application.DTOs.AccountingDTOs
+{
+    public class CategoryProfitReportDto
+    {
+        public int CategoryId { get; set; }
+        public string CategoryName { get; set; }
+
+        public decimal TotalRevenue { get; set; }
+        public decimal TotalCost { get; set; }
+        public decimal Profit { get; set; }
+
+        public int RentalCount { get; set; }
+    }
+}
