@@ -19,6 +19,9 @@ namespace Infrastructure.Persistence.Configurations
                    .WithMany(d => d.MovieDirectors)
                    .HasForeignKey(md => md.DirectorId)
                    .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasIndex(md => new { md.MovieId, md.DirectorId })
+                   .IsUnique();
         }
     }
 }

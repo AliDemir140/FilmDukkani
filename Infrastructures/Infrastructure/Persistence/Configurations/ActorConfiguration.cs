@@ -20,6 +20,10 @@ namespace Infrastructure.Persistence.Configurations
 
             builder.Property(a => a.Biography)
                    .HasMaxLength(1000);
+
+            // İsteğe bağlı: Aynı isim-soyisimden sadece 1 tane olsun
+            builder.HasIndex(a => new { a.FirstName, a.LastName })
+                   .IsUnique(false);
         }
     }
 }

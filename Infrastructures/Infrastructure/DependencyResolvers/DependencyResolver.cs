@@ -32,7 +32,9 @@ namespace Infrastructure.DependencyResolvers
             services.AddScoped<IMemberMovieListItemRepository, MemberMovieListItemRepository>();
             services.AddScoped<IDeliveryRequestRepository, DeliveryRequestRepository>();
             services.AddScoped<IDeliveryRequestItemRepository, DeliveryRequestItemRepository>();
-
+            services.AddScoped<IActorRepository, ActorRepository>();
+            services.AddScoped<IDirectorRepository, DirectorRepository>();
+            services.AddScoped<IAwardRepository, AwardRepository>();
 
             // SERVICE MANAGERS
             services.AddScoped<CategoryServiceManager>();
@@ -41,7 +43,9 @@ namespace Infrastructure.DependencyResolvers
             services.AddScoped<MembershipPlanServiceManager>();
             services.AddScoped<MemberMovieListServiceManager>();
             services.AddScoped<DeliveryRequestServiceManager>();
-
+            services.AddScoped<ActorServiceManager>();
+            services.AddScoped<DirectorServiceManager>();
+            services.AddScoped<AwardServiceManager>();
 
         }
     }
