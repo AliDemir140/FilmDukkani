@@ -50,6 +50,7 @@ namespace Infrastructure.DependencyResolvers
             services.AddScoped<ActorServiceManager>();
             services.AddScoped<DirectorServiceManager>();
             services.AddScoped<AwardServiceManager>();
+            services.AddScoped<AccountingServiceManager>();
 
         }
     }
