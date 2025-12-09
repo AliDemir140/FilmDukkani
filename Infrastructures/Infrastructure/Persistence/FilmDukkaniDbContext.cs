@@ -38,6 +38,10 @@ namespace Infrastructure.Persistence
         public DbSet<MovieAward> MovieAwards { get; set; }
         public DbSet<DeliveryRequest> DeliveryRequests { get; set; }
         public DbSet<DeliveryRequestItem> DeliveryRequestItems { get; set; }
+        public DbSet<Shelf> Shelves { get; set; }
+        public DbSet<MovieCopy> MovieCopies { get; set; }
+        public DbSet<DamagedMovie> DamagedMovies { get; set; }
+
 
 
 

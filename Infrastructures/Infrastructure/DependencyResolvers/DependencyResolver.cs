@@ -23,7 +23,7 @@ namespace Infrastructure.DependencyResolvers
             //SEED DATA
             services.AddScoped<DatabaseSeeder>();
 
-            // CONCRETE REPOSITORIES
+            // REPOSITORIES
             services.AddScoped<IMovieRepository, MovieRepository>();
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<IMemberRepository, MemberRepository>();
@@ -35,6 +35,10 @@ namespace Infrastructure.DependencyResolvers
             services.AddScoped<IActorRepository, ActorRepository>();
             services.AddScoped<IDirectorRepository, DirectorRepository>();
             services.AddScoped<IAwardRepository, AwardRepository>();
+            services.AddScoped<IShelfRepository, ShelfRepository>();
+            services.AddScoped<IMovieCopyRepository, MovieCopyRepository>();
+            services.AddScoped<IDamagedMovieRepository, DamagedMovieRepository>();
+
 
             // SERVICE MANAGERS
             services.AddScoped<CategoryServiceManager>();
