@@ -22,6 +22,17 @@ namespace Infrastructure.Persistence.Configurations
                    .WithMany(a => a.MovieAwards)
                    .HasForeignKey(ma => ma.AwardId)
                    .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Property(ma => ma.IsWinner)
+                   .IsRequired()
+                   .HasDefaultValue(false);
+
+            builder.Property(ma => ma.Year)
+                   .IsRequired(false);
+
+            // Aynı film, aynı ödül, aynı yıl kombinasyonu tekil olsun
+            builder.HasIndex(ma => new { ma.MovieId, ma.AwardId, ma.Year })
+                   .IsUnique(false);
         }
     }
 }

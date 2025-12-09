@@ -20,6 +20,9 @@ namespace Infrastructure.Persistence.Configurations
 
             builder.Property(d => d.Biography)
                    .HasMaxLength(1000);
+
+            builder.HasIndex(d => new { d.FirstName, d.LastName })
+                   .IsUnique(false);
         }
     }
 }

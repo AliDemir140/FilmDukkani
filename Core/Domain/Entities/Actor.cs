@@ -8,6 +8,7 @@
         // İleride ihtiyaç olursa doldururuz (Doğum tarihi, ülke vs.)
         public string? Biography { get; set; }
 
+        // İlişki: Bir oyuncu birçok filmde oynayabilir (M:N)
         public ICollection<MovieActor> MovieActors { get; set; } = new List<MovieActor>();
     }
 }

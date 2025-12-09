@@ -22,6 +22,10 @@ namespace Infrastructure.Persistence.Configurations
                    .WithMany(a => a.MovieActors)
                    .HasForeignKey(ma => ma.ActorId)
                    .OnDelete(DeleteBehavior.Cascade);
+
+            // Aynı filmde aynı oyuncu birden fazla kez görünmesin
+            builder.HasIndex(ma => new { ma.MovieId, ma.ActorId })
+                   .IsUnique();
         }
     }
 }

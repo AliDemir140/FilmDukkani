@@ -7,6 +7,7 @@
 
         public string? Biography { get; set; }
 
+        // İlişki: Bir yönetmen birçok film yönetebilir (M:N)
         public ICollection<MovieDirector> MovieDirectors { get; set; } = new List<MovieDirector>();
     }
 }
