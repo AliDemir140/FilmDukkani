@@ -51,6 +51,8 @@ namespace Infrastructure.DependencyResolvers
             services.AddScoped<DirectorServiceManager>();
             services.AddScoped<AwardServiceManager>();
             services.AddScoped<AccountingServiceManager>();
+            services.AddScoped<ShelfServiceManager>();
+
 
         }
     }
