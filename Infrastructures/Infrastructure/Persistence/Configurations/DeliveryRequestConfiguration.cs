@@ -18,8 +18,11 @@ namespace Infrastructure.Persistence.Configurations
             builder.Property(dr => dr.DeliveryDate)
                    .IsRequired();
 
+            // ENUM mapping
             builder.Property(dr => dr.Status)
-                   .HasDefaultValue(DeliveryStatus.Pending);
+                   .HasConversion<byte>()
+                   .HasDefaultValue(DeliveryStatus.Pending)
+                   .IsRequired();
 
             builder.HasOne(dr => dr.Member)
                    .WithMany(m => m.DeliveryRequests)

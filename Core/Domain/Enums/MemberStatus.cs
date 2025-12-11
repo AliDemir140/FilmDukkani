@@ -2,7 +2,7 @@
 {
     public enum MemberStatus : byte
     {
-        Active = 0,
+        Active = 0, // varsayılan
         Suspended = 1,
         PaymentDue = 2,
         Deleted = 3

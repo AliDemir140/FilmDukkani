@@ -45,8 +45,11 @@ namespace Infrastructure.Persistence.Configurations
             builder.Property(m => m.Supplier)
                 .HasMaxLength(100);
 
+            // ENUM mapping
             builder.Property(m => m.Status)
-                .HasDefaultValue(MovieStatus.Available);
+                   .HasConversion<byte>()
+                   .HasDefaultValue(MovieStatus.Available)
+                   .IsRequired();
 
             // Category ilişkisi
             builder.HasOne(m => m.Category)

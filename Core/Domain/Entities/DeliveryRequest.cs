@@ -20,9 +20,8 @@ namespace Domain.Entities
         // Teslimatın planlandığı gün (WORLD: 12.10.2006 vs.)
         public DateTime DeliveryDate { get; set; }
 
-        // Şimdilik byte tutuyoruz, #19’da enum’a bağlayacağız
-        // 0: Pending, 1: Prepared, 2: OnTheWay, 3: Delivered, 4: Completed, 5: Cancelled
-        public DeliveryStatus Status { get; set; }
+        // Enum status
+        public DeliveryStatus Status { get; set; } = DeliveryStatus.Pending;
 
         public ICollection<DeliveryRequestItem> Items { get; set; } = new List<DeliveryRequestItem>();
     }
