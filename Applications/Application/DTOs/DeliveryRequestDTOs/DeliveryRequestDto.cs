@@ -19,6 +19,7 @@ namespace Application.DTOs.DeliveryRequestDTOs
         public DateTime DeliveryDate { get; set; }
 
         public DeliveryStatus Status { get; set; }
+        public string StatusText => Status.ToString();
 
         public List<DeliveryRequestItemDto> Items { get; set; } = new();
     }

@@ -13,5 +13,8 @@ namespace Application.DTOs.DeliveryRequestDTOs
         public DateTime? ReturnDate { get; set; }
 
         public bool IsDamaged { get; set; }
+
+        public string ReturnedText => IsReturned ? "İade Edildi" : "İade Edilmedi";
+        public string DamagedText => IsDamaged ? "Hasarlı" : "Hasarsız";
     }
 }

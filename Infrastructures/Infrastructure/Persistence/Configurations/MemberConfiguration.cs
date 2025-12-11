@@ -1,8 +1,7 @@
 ﻿using Domain.Entities;
+using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Domain.Enums;
-
 
 namespace Infrastructure.Persistence.Configurations
 {
@@ -10,32 +9,35 @@ namespace Infrastructure.Persistence.Configurations
     {
         public void Configure(EntityTypeBuilder<Member> builder)
         {
-            builder.HasKey(x => x.ID);
+            builder.HasKey(m => m.ID);
 
-            builder.Property(x => x.FirstName)
+            builder.Property(m => m.FirstName)
                    .IsRequired()
                    .HasMaxLength(50);
 
-            builder.Property(x => x.LastName)
+            builder.Property(m => m.LastName)
                    .IsRequired()
                    .HasMaxLength(50);
 
-            builder.Property(x => x.Email)
+            builder.Property(m => m.Email)
                    .IsRequired()
                    .HasMaxLength(100);
 
-            builder.Property(x => x.Password)
+            builder.Property(m => m.Password)
                    .IsRequired()
                    .HasMaxLength(200);
 
-            builder.Property(x => x.Phone)
+            builder.Property(m => m.Phone)
                    .HasMaxLength(20);
 
-            builder.Property(x => x.MembershipStartDate)
+            builder.Property(m => m.MembershipStartDate)
                    .IsRequired();
 
+            // 🔹 ENUM mapping
             builder.Property(m => m.Status)
-                    .HasDefaultValue(MemberStatus.Active);
+                   .HasConversion<byte>()                  // DB’de tinyint
+                   .HasDefaultValue(MemberStatus.Active)   // varsayılan
+                   .IsRequired();
 
             builder.HasOne(m => m.MembershipPlan)
                    .WithMany(p => p.Members)
