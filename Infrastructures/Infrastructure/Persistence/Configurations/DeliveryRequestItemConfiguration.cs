@@ -30,6 +30,13 @@ namespace Infrastructure.Persistence.Configurations
                    .WithMany()
                    .HasForeignKey(dri => dri.MemberMovieListItemId)
                    .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasOne(dri => dri.MovieCopy)
+                   .WithMany()
+                   .HasForeignKey(dri => dri.MovieCopyId)
+                   .OnDelete(DeleteBehavior.Restrict);
+
+
         }
     }
 }

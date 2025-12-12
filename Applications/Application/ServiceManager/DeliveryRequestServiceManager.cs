@@ -14,6 +14,9 @@ namespace Application.ServiceManager
         private readonly IMovieRepository _movieRepository;
         private readonly IMemberRepository _memberRepository;
         private readonly IMembershipPlanRepository _membershipPlanRepository;
+        private readonly IMovieCopyRepository _movieCopyRepository;
+        private readonly IDamagedMovieRepository _damagedMovieRepository;
+
 
         public DeliveryRequestServiceManager(
             IDeliveryRequestRepository deliveryRequestRepository,
@@ -22,7 +25,11 @@ namespace Application.ServiceManager
             IMemberMovieListItemRepository memberMovieListItemRepository,
             IMovieRepository movieRepository,
             IMemberRepository memberRepository,
-            IMembershipPlanRepository membershipPlanRepository)
+            IMembershipPlanRepository membershipPlanRepository,
+            IMovieCopyRepository movieCopyRepository,
+            IDamagedMovieRepository damagedMovieRepository)
+
+
         {
             _deliveryRequestRepository = deliveryRequestRepository;
             _deliveryRequestItemRepository = deliveryRequestItemRepository;
@@ -31,6 +38,9 @@ namespace Application.ServiceManager
             _movieRepository = movieRepository;
             _memberRepository = memberRepository;
             _membershipPlanRepository = membershipPlanRepository;
+            _movieCopyRepository = movieCopyRepository;
+            _damagedMovieRepository = damagedMovieRepository;
+
         }
 
         // Bir üyenin teslimat isteği oluşturması
@@ -70,6 +80,7 @@ namespace Application.ServiceManager
 
             foreach (var request in requests)
             {
+                bool anyItemAdded = false;
                 // 2) Üyeyi getir
                 var member = await _memberRepository.GetByIdAsync(request.MemberId);
                 if (member == null)
@@ -81,7 +92,6 @@ namespace Application.ServiceManager
                     continue;
 
                 int maxMoviesToSend = plan.MaxMoviesPerMonth;
-                // Not: WORLD.doc'ta "bir değişimde X film" geçer — o değer plan tablosunda olacak
 
                 // 4) Üyenin listesini getir
                 var list = await _memberMovieListRepository.GetByIdAsync(request.MemberMovieListId);
@@ -101,21 +111,41 @@ namespace Application.ServiceManager
                 // 6) Bu filmleri DeliveryRequestItem olarak ekle
                 foreach (var item in sortedItems)
                 {
+
+                    // 1) Bu MovieId için depoda uygun bir kopya bul
+                    var copies = await _movieCopyRepository
+                        .GetAllAsync(c => c.MovieId == item.MovieId && c.IsAvailable && !c.IsDamaged);
+
+                    var selectedCopy = copies.FirstOrDefault();
+                    if (selectedCopy == null)
+                        continue; // stok yoksa bu filmi atla
+
+                    // 2) Kopyayı rezerve et (başkasına gitmesin)
+                    selectedCopy.IsAvailable = false;
+                    await _movieCopyRepository.UpdateAsync(selectedCopy);
+
+                    // 3) DeliveryRequestItem oluştur
                     var dri = new DeliveryRequestItem
                     {
                         DeliveryRequestId = request.ID,
                         MovieId = item.MovieId,
+                        MovieCopyId = selectedCopy.ID,
                         MemberMovieListItemId = item.ID,
                         IsReturned = false,
                         IsDamaged = false
                     };
 
                     await _deliveryRequestItemRepository.AddAsync(dri);
+                    anyItemAdded = true;
                 }
 
+
                 // 7) Request durumunu güncelle -> Prepared (1)
-                request.Status = DeliveryStatus.Prepared;
-                await _deliveryRequestRepository.UpdateAsync(request);
+                if (anyItemAdded)
+                {
+                    request.Status = DeliveryStatus.Prepared;
+                    await _deliveryRequestRepository.UpdateAsync(request);
+                }
             }
         }
 
@@ -152,7 +182,7 @@ namespace Application.ServiceManager
                     MovieTitle = movie?.Title, // film bulunamazsa null kalır
                     IsReturned = item.IsReturned,
                     IsDamaged = item.IsDamaged,
-                    ReturnDate = null // ileride iade tarihi eklenecekse doldurulabilir
+                    ReturnDate = item.ReturnDate
                 });
             }
 
@@ -198,5 +228,45 @@ namespace Application.ServiceManager
 
             return true;
         }
+        public async Task<bool> ReturnDeliveryItemAsync(ReturnDeliveryItemDto dto)
+        {
+            var item = await _deliveryRequestItemRepository.GetByIdAsync(dto.DeliveryRequestItemId);
+            if (item == null)
+                return false;
+
+            if (item.IsReturned)
+                return true;
+
+            item.IsReturned = true;
+            item.IsDamaged = dto.IsDamaged;
+            item.ReturnDate = DateTime.Now;
+
+            await _deliveryRequestItemRepository.UpdateAsync(item);
+
+            // MovieCopy stok durumunu geri aç / bozuksa işaretle
+            var copy = await _movieCopyRepository.GetByIdAsync(item.MovieCopyId);
+            if (copy != null)
+            {
+                copy.IsDamaged = dto.IsDamaged;
+                copy.IsAvailable = !dto.IsDamaged;
+                await _movieCopyRepository.UpdateAsync(copy);
+            }
+
+            // Bozuksa DamagedMovie kaydı aç
+            if (dto.IsDamaged)
+            {
+                var damaged = new DamagedMovie
+                {
+                    MovieCopyId = item.MovieCopyId,
+                    Note = dto.Note,
+                    IsSentToPurchase = false
+                };
+
+                await _damagedMovieRepository.AddAsync(damaged);
+            }
+
+            return true;
+        }
+
     }
 }
