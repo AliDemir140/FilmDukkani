@@ -54,6 +54,7 @@ namespace Infrastructure.DependencyResolvers
             services.AddScoped<ShelfServiceManager>();
             services.AddScoped<MovieCopyServiceManager>();
             services.AddScoped<DamagedMovieServiceManager>();
+            services.AddScoped<WarehouseServiceManager>();
 
 
         }
