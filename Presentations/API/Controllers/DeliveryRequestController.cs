@@ -78,7 +78,7 @@ namespace API.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var result = await _service.ReturnDeliveryItemAsync(dto);
+            var result = await _deliveryService.ReturnDeliveryItemAsync(dto);
             if (!result)
                 return NotFound("DeliveryRequestItem bulunamadı.");
 
