@@ -71,5 +71,19 @@ namespace API.Controllers
 
             return Ok("Teslimat isteği tamamlandı olarak işaretlendi.");
         }
+
+        [HttpPost("return-item")]
+        public async Task<IActionResult> ReturnItem([FromBody] ReturnDeliveryItemDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _service.ReturnDeliveryItemAsync(dto);
+            if (!result)
+                return NotFound("DeliveryRequestItem bulunamadı.");
+
+            return Ok("İade işlendi.");
+        }
+
     }
 }
