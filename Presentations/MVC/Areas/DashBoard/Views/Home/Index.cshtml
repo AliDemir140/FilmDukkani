@@ -1,6 +1,58 @@
 ﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml"; // Root layout'u zorla (bootstrap burada)
     ViewData["Title"] = "DashBoard";
 }
 
-<h1>DashBoard</h1>
-<p>Admin/DashBoard alanı çalışıyor.</p>
+<div class="row">
+    <div class="col-12 col-md-3 mb-3">
+        @await Html.PartialAsync("_DashBoardSidebar")
+    </div>
+
+    <div class="col-12 col-md-9">
+        <div class="p-3 border rounded bg-light">
+            <h3 class="mb-3">DashBoard</h3>
+            <p>Admin/DashBoard alanı çalışıyor.</p>
+
+            <hr />
+
+            <div class="row g-3">
+                <div class="col-12 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Kategoriler</h5>
+                            <p class="card-text">Kategori yönetim ekranı (sonraki issue).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Filmler</h5>
+                            <p class="card-text">Film yönetim ekranı (sonraki issue).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Üyeler</h5>
+                            <p class="card-text">Üye yönetimi (sonraki issue).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Teslimatlar</h5>
+                            <p class="card-text">Teslimat işlemleri (sonraki issue).</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
