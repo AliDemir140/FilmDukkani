@@ -12,4 +12,8 @@
     <ProjectReference Include="..\..\Infrastructures\Infrastructure\Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Areas\NewFolder\" />
+  </ItemGroup>
+
 </Project>
