@@ -1,23 +1,31 @@
-﻿@* MVC/Views/Shared/_DashBoardSidebar.cshtml *@
-<div class="list-group">
+﻿<div class="list-group">
     <a class="list-group-item list-group-item-action active"
        asp-area="DashBoard" asp-controller="Home" asp-action="Index">
         DashBoard Anasayfa
     </a>
 
-    <a class="list-group-item list-group-item-action" href="#">
+    <a class="list-group-item list-group-item-action"
+       asp-area="DashBoard" asp-controller="Category" asp-action="Index">
         Kategoriler
     </a>
-    <a class="list-group-item list-group-item-action" href="#">
+
+    <a class="list-group-item list-group-item-action"
+       asp-area="DashBoard" asp-controller="Movie" asp-action="Index">
         Filmler
     </a>
-    <a class="list-group-item list-group-item-action" href="#">
+
+    <a class="list-group-item list-group-item-action"
+       asp-area="DashBoard" asp-controller="Member" asp-action="Index">
         Üyeler
     </a>
-    <a class="list-group-item list-group-item-action" href="#">
+
+    <a class="list-group-item list-group-item-action"
+       asp-area="DashBoard" asp-controller="DeliveryRequest" asp-action="Index">
         Teslimatlar
     </a>
-    <a class="list-group-item list-group-item-action" href="#">
+
+    <a class="list-group-item list-group-item-action"
+       asp-area="DashBoard" asp-controller="Accounting" asp-action="Index">
         Muhasebe/Raporlar
     </a>
 </div>
