@@ -1,0 +1,52 @@
+﻿@using Application.DTOs.MovieDTOs
+@model CreateMovieDto
+
+@{
+    ViewData["Title"] = "Yeni Film";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="row">
+    <div class="col-12 col-md-3 mb-3">
+        @await Html.PartialAsync("_DashBoardSidebar")
+    </div>
+
+    <div class="col-12 col-md-9">
+        <h3>Yeni Film</h3>
+
+        <form asp-area="DashBoard" asp-controller="Movie" asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+
+            <div class="mb-3">
+                <label class="form-label">Başlık</label>
+                <input asp-for="Title" class="form-control" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Açıklama</label>
+                <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Yıl</label>
+                <input asp-for="ReleaseYear" class="form-control" />
+                <span asp-validation-for="ReleaseYear" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Kategori Id</label>
+                <input asp-for="CategoryId" class="form-control" />
+                <span asp-validation-for="CategoryId" class="text-danger"></span>
+            </div>
+
+            <button class="btn btn-success" type="submit">Kaydet</button>
+            <a class="btn btn-secondary" asp-area="DashBoard" asp-controller="Movie" asp-action="Index">Geri</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

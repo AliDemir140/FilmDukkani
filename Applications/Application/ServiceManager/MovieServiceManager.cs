@@ -7,10 +7,12 @@ namespace Application.ServiceManager
     public class MovieServiceManager
     {
         private readonly IMovieRepository _movieRepository;
+        private readonly ICategoryRepository _categoryRepository;
 
-        public MovieServiceManager(IMovieRepository movieRepository)
+        public MovieServiceManager(IMovieRepository movieRepository, ICategoryRepository categoryRepository)
         {
             _movieRepository = movieRepository;
+            _categoryRepository = categoryRepository;
         }
 
         // LISTELEME
@@ -34,16 +36,18 @@ namespace Application.ServiceManager
                     Barcode = m.Barcode,
                     Supplier = m.Supplier,
                     CategoryId = m.CategoryId,
-                    CategoryName = m.Category != null
-                        ? m.Category.CategoryName
-                        : null
+                    CategoryName = m.Category != null ? m.Category.CategoryName : null
                 })
                 .ToList();
         }
 
-        // EKLEME
-        public async Task AddMovie(CreateMovieDto dto)
+        // EKLEME (Kategori yoksa patlatma -> false)
+        public async Task<bool> AddMovie(CreateMovieDto dto)
         {
+            var category = await _categoryRepository.GetByIdAsync(dto.CategoryId);
+            if (category == null)
+                return false;
+
             var movie = new Movie
             {
                 Title = dto.Title,
@@ -61,9 +65,10 @@ namespace Application.ServiceManager
             };
 
             await _movieRepository.AddAsync(movie);
+            return true;
         }
 
-        // TEK GETIRME (Api de güncel versiyonu çağırmak için UpdateMovieDto kullanıyoruz)
+        // TEK GETIRME (Update için)
         public async Task<UpdateMovieDto?> GetMovie(int id)
         {
             var movie = await _movieRepository.GetByIdAsync(id);
@@ -87,19 +92,18 @@ namespace Application.ServiceManager
             };
         }
 
-        // Film detayını (MovieDetailDto) dönen metot
+        // FILM DETAYI
         public async Task<MovieDetailDto?> GetMovieDetailAsync(int id)
         {
             var movie = await _movieRepository.GetByIdAsync(id);
             if (movie == null)
                 return null;
 
-            // Kategori adı dolu gelmeyebilir, varsa dolduruyoruz
-            var categoryName = movie.Category != null
-                ? movie.Category.CategoryName
-                : string.Empty;
+            // Category navigation null gelebileceği için garanti dolduralım
+            var category = await _categoryRepository.GetByIdAsync(movie.CategoryId);
+            var categoryName = category?.CategoryName ?? string.Empty;
 
-            var dto = new MovieDetailDto
+            return new MovieDetailDto
             {
                 Id = movie.ID,
                 Title = movie.Title,
@@ -108,46 +112,41 @@ namespace Application.ServiceManager
                 CategoryId = movie.CategoryId,
                 CategoryName = categoryName,
 
-                // Bu alanlar Movie entity’sinde henüz olmayabilir,
-                // ileride Movie genişletildiğinde dolduracağız.
-                OriginalTitle = null,
-                TechnicalDetails = null,
-                AudioFeatures = null,
-                SubtitleLanguages = null,
-                TrailerUrl = null,
-                CoverImageUrl = null,
+                OriginalTitle = movie.OriginalTitle,
+                TechnicalDetails = movie.TechnicalDetails,
+                AudioFeatures = movie.AudioFeatures,
+                SubtitleLanguages = movie.SubtitleLanguages,
+                TrailerUrl = movie.TrailerUrl,
+                CoverImageUrl = movie.CoverImageUrl,
 
-                // Oyuncu, Yönetmen, Ödül listeleri şu an boş kalıyor.
-                // Metadata entity’leri ve ilişkileri tamamlandığında dolduracağız.
                 Actors = new List<string>(),
                 Directors = new List<string>(),
                 Awards = new List<MovieAwardInfoDto>()
             };
-
-            return dto;
         }
 
-
-        // SILME
-        public async Task DeleteMovie(UpdateMovieDto dto)
+        // SILME (Controller: Delete(int id) ile uyumlu)
+        public async Task<bool> DeleteMovie(int id)
         {
-            var movie = await _movieRepository.GetByIdAsync(dto.Id);
-            if (movie != null)
-            {
-                await _movieRepository.DeleteAsync(movie);
-            }
-        }
-
-        // GUNCELLEME
-        public async Task<bool> UpdateMovie(UpdateMovieDto dto)
-        {
-            var movie = await _movieRepository.GetByIdAsync(dto.Id);
-
-            // Film bulunamadıysa false dön
+            var movie = await _movieRepository.GetByIdAsync(id);
             if (movie == null)
                 return false;
 
-            // Güncelleme
+            await _movieRepository.DeleteAsync(movie);
+            return true;
+        }
+
+        // GUNCELLEME (Kategori yoksa patlatma -> false)
+        public async Task<bool> UpdateMovie(UpdateMovieDto dto)
+        {
+            var movie = await _movieRepository.GetByIdAsync(dto.Id);
+            if (movie == null)
+                return false;
+
+            var category = await _categoryRepository.GetByIdAsync(dto.CategoryId);
+            if (category == null)
+                return false;
+
             movie.Title = dto.Title;
             movie.OriginalTitle = dto.OriginalTitle;
             movie.Description = dto.Description;
@@ -162,10 +161,7 @@ namespace Application.ServiceManager
             movie.CategoryId = dto.CategoryId;
 
             await _movieRepository.UpdateAsync(movie);
-
-            return true; // Başarılı
+            return true;
         }
-
-
     }
 }
