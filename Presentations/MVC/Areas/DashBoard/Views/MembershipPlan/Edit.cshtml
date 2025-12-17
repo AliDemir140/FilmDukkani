@@ -1,0 +1,54 @@
+﻿@using Application.DTOs.MembershipPlanDTOs
+@model UpdateMembershipPlanDto
+
+@{
+    ViewData["Title"] = "Üyelik Planı Düzenle";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h3>Üyelik Planı Düzenle</h3>
+
+<form asp-area="DashBoard" asp-controller="MembershipPlan" asp-action="Edit" method="post">
+    @Html.AntiForgeryToken()
+
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+    <input asp-for="Id" type="hidden" />
+
+    <div class="mb-3">
+        <label asp-for="PlanName" class="form-label"></label>
+        <input asp-for="PlanName" class="form-control" />
+        <span asp-validation-for="PlanName" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Price" class="form-label"></label>
+        <input asp-for="Price" class="form-control" />
+        <span asp-validation-for="Price" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="MaxMoviesPerMonth" class="form-label"></label>
+        <input asp-for="MaxMoviesPerMonth" class="form-control" />
+        <span asp-validation-for="MaxMoviesPerMonth" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="MaxChangePerMonth" class="form-label"></label>
+        <input asp-for="MaxChangePerMonth" class="form-control" />
+        <span asp-validation-for="MaxChangePerMonth" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Güncelle</button>
+    <a asp-area="DashBoard" asp-controller="MembershipPlan" asp-action="Index" class="btn btn-secondary">İptal</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
