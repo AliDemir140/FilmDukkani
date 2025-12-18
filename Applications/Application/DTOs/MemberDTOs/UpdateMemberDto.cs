@@ -21,18 +21,17 @@ namespace Application.DTOs.MemberDTOs
         [MaxLength(100, ErrorMessage = "Email en fazla 100 karakter olabilir.")]
         public string Email { get; set; }
 
-        // Şifrenin güncellenmesi isteğe bağlı, o yüzden Required koymadık
+        // Edit ekranında boş bırakılabilir => nullable olmalı
         [MaxLength(200, ErrorMessage = "Şifre en fazla 200 karakter olabilir.")]
-        public string Password { get; set; }
+        public string? Password { get; set; }
 
         [Phone(ErrorMessage = "Geçerli bir telefon numarası giriniz.")]
         [MaxLength(20, ErrorMessage = "Telefon en fazla 20 karakter olabilir.")]
         public string? Phone { get; set; }
 
-        [Required(ErrorMessage = "Üyelik planı seçimi zorunludur.")]
+        [Range(1, int.MaxValue, ErrorMessage = "Lütfen bir üyelik planı seçiniz.")]
         public int MembershipPlanId { get; set; }
 
-        // Plan değiştirirken MembershipStartDate güncellenebilsin diye isteğe bağlı bıraktık
-        public DateTime? MembershipStartDate { get; set; } // Plan değiştirmek isterse
+        public DateTime? MembershipStartDate { get; set; }
     }
 }

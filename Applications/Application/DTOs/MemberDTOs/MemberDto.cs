@@ -1,4 +1,6 @@
-﻿namespace Application.DTOs.MemberDTOs
+﻿using System;
+
+namespace Application.DTOs.MemberDTOs
 {
     public class MemberDto
     {
@@ -11,8 +13,8 @@
         public string? Phone { get; set; }
 
         public int MembershipPlanId { get; set; }
+        public string MembershipPlanName { get; set; }
+
         public DateTime? MembershipStartDate { get; set; }
-
-
     }
 }

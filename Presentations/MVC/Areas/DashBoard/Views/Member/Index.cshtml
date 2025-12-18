@@ -1,0 +1,65 @@
+﻿@using Application.DTOs.MemberDTOs
+@model List<MemberDto>
+
+@{
+    ViewData["Title"] = "Üyeler";
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<div class="d-flex justify-content-between mb-3">
+    <h3>Üyeler</h3>
+
+    <a class="btn btn-primary"
+       asp-area="DashBoard"
+       asp-controller="Member"
+       asp-action="Create">
+        Yeni Üye
+    </a>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Ad Soyad</th>
+            <th>Email</th>
+            <th>Plan</th>
+            <th class="text-end">İşlemler</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var m in Model)
+        {
+            <tr>
+                <td>@m.FirstName @m.LastName</td>
+                <td>@m.Email</td>
+                <td>@m.MembershipPlanName</td>
+
+                <td class="text-end">
+                    <a class="btn btn-sm btn-outline-secondary me-1"
+                       asp-area="DashBoard"
+                       asp-controller="Member"
+                       asp-action="Edit"
+                       asp-route-id="@m.Id">
+                        Düzenle
+                    </a>
+
+                    <a class="btn btn-sm btn-outline-danger"
+                       asp-area="DashBoard"
+                       asp-controller="Member"
+                       asp-action="Delete"
+                       asp-route-id="@m.Id">
+                        Sil
+                    </a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

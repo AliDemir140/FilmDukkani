@@ -1,0 +1,62 @@
+﻿@using Application.DTOs.MemberDTOs
+@model CreateMemberDto
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Yeni Üye";
+}
+
+<h3>Yeni Üye</h3>
+
+<form asp-area="DashBoard" asp-controller="Member" asp-action="Create" method="post">
+    <div asp-validation-summary="All" class="text-danger mb-2"></div>
+
+    <div class="mb-2">
+        <label asp-for="FirstName" class="form-label"></label>
+        <input asp-for="FirstName" class="form-control" />
+        <span asp-validation-for="FirstName" class="text-danger"></span>
+    </div>
+
+    <div class="mb-2">
+        <label asp-for="LastName" class="form-label"></label>
+        <input asp-for="LastName" class="form-control" />
+        <span asp-validation-for="LastName" class="text-danger"></span>
+    </div>
+
+    <div class="mb-2">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <div class="mb-2">
+        <label asp-for="Password" class="form-label"></label>
+        <input asp-for="Password" type="password" class="form-control" />
+        <span asp-validation-for="Password" class="text-danger"></span>
+    </div>
+
+    <div class="mb-2">
+        <label asp-for="Phone" class="form-label"></label>
+        <input asp-for="Phone" class="form-control" />
+        <span asp-validation-for="Phone" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="MembershipPlanId" class="form-label"></label>
+        <select asp-for="MembershipPlanId" class="form-select">
+            <option value="0">Plan Seç</option>
+            @foreach (var p in ViewBag.Plans)
+            {
+                <option value="@p.Id">@p.PlanName</option>
+            }
+        </select>
+        <span asp-validation-for="MembershipPlanId" class="text-danger"></span>
+    </div>
+
+    <button class="btn btn-primary">Kaydet</button>
+    <a class="btn btn-secondary" asp-area="DashBoard" asp-controller="Member" asp-action="Index">Geri</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -25,8 +25,7 @@ namespace Application.DTOs.MemberDTOs
         [MaxLength(20, ErrorMessage = "Telefon en fazla 20 karakter olabilir.")]
         public string? Phone { get; set; }
 
-        [Required(ErrorMessage = "Üyelik planı seçimi zorunludur.")]
+        [Range(1, int.MaxValue, ErrorMessage = "Lütfen bir üyelik planı seçiniz.")]
         public int MembershipPlanId { get; set; }
-
     }
 }

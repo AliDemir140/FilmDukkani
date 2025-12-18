@@ -1,0 +1,18 @@
+﻿@model Application.DTOs.MemberDTOs.UpdateMemberDto
+
+@{
+    ViewData["Title"] = "Üye Sil";
+}
+
+<h3>Üye Sil</h3>
+
+<div class="alert alert-warning">
+    <strong>@Model.FirstName @Model.LastName</strong> adlı üyeyi silmek istediğine emin misin?
+</div>
+
+<form asp-area="DashBoard" asp-controller="Member" asp-action="Delete" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <button class="btn btn-danger">Sil</button>
+    <a class="btn btn-secondary" asp-area="DashBoard" asp-controller="Member" asp-action="Index">Vazgeç</a>
+</form>
