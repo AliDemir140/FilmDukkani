@@ -1,0 +1,91 @@
+﻿@model Application.DTOs.MovieCopyDTOs.UpdateMovieCopyDto
+@{
+    ViewData["Title"] = "Film Kopyası Düzenle";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h3>Film Kopyası Düzenle</h3>
+
+<form asp-area="DashBoard" asp-controller="MovieCopy" asp-action="Edit" method="post">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <input type="hidden" asp-for="Id" />
+
+    <div class="mb-3">
+        <label asp-for="MovieId" class="form-label">Film</label>
+        <select asp-for="MovieId" class="form-select">
+            @foreach (var m in (IEnumerable<SelectListItem>)ViewBag.Movies)
+            {
+                <option value="@m.Value">@m.Text</option>
+            }
+        </select>
+        <span asp-validation-for="MovieId" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="ShelfId" class="form-label">Raf</label>
+        <select asp-for="ShelfId" class="form-select">
+            <option value="">Raf Seç (Opsiyonel)</option>
+            @foreach (var s in (IEnumerable<SelectListItem>)ViewBag.Shelves)
+            {
+                <option value="@s.Value">@s.Text</option>
+            }
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Barcode" class="form-label"></label>
+        <input asp-for="Barcode" class="form-control" />
+        <span asp-validation-for="Barcode" class="text-danger"></span>
+    </div>
+
+    <!-- Durum seçimi (tek seçim) -->
+    <div class="mb-3">
+        <label class="form-label">Durum</label>
+
+        <!-- Post'a gidecek gerçek alanlar -->
+        <input type="hidden" id="IsAvailable" name="IsAvailable" value="@(Model.IsAvailable ? "true" : "false")" />
+        <input type="hidden" id="IsDamaged" name="IsDamaged" value="@(Model.IsDamaged ? "true" : "false")" />
+
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="copyStatus" id="statusAvailable"
+                   @(Model.IsDamaged ? "" : "checked") />
+            <label class="form-check-label" for="statusAvailable">Uygun</label>
+        </div>
+
+        <div class="form-check">
+            <input class="form-check-input" type="radio" name="copyStatus" id="statusDamaged"
+                   @(Model.IsDamaged ? "checked" : "") />
+            <label class="form-check-label" for="statusDamaged">Hasarlı</label>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Güncelle</button>
+    <a class="btn btn-secondary" asp-area="DashBoard" asp-controller="MovieCopy" asp-action="Index">Geri</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        const availableRadio = document.getElementById('statusAvailable');
+        const damagedRadio = document.getElementById('statusDamaged');
+        const isAvailable = document.getElementById('IsAvailable');
+        const isDamaged = document.getElementById('IsDamaged');
+
+        function syncStatus() {
+            if (damagedRadio.checked) {
+                isAvailable.value = "false";
+                isDamaged.value = "true";
+            } else {
+                isAvailable.value = "true";
+                isDamaged.value = "false";
+            }
+        }
+
+        availableRadio.addEventListener('change', syncStatus);
+        damagedRadio.addEventListener('change', syncStatus);
+        syncStatus();
+    </script>
+}

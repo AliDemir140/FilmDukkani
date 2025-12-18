@@ -1,0 +1,31 @@
+﻿@model UpdateShelfDto
+@{
+    ViewData["Title"] = "Raf Düzenle";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h3>Raf Düzenle</h3>
+
+<form asp-area="DashBoard" asp-controller="Shelf" asp-action="Edit" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <input type="hidden" asp-for="Id" />
+
+    <div class="mb-2">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="LocationCode" class="form-label"></label>
+        <input asp-for="LocationCode" class="form-control" />
+        <span asp-validation-for="LocationCode" class="text-danger"></span>
+    </div>
+
+    <button class="btn btn-primary">Güncelle</button>
+    <a class="btn btn-secondary" asp-area="DashBoard" asp-controller="Shelf" asp-action="Index">Geri</a>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

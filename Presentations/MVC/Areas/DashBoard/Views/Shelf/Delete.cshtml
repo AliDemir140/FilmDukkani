@@ -1,0 +1,25 @@
+﻿@model UpdateShelfDto
+@{
+    ViewData["Title"] = "Raf Sil";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h3>Raf Sil</h3>
+
+<div class="alert alert-warning">
+    Bu rafı silmek istediğine emin misin?
+</div>
+
+<dl class="row">
+    <dt class="col-sm-2">Ad</dt>
+    <dd class="col-sm-10">@Model.Name</dd>
+
+    <dt class="col-sm-2">Konum</dt>
+    <dd class="col-sm-10">@Model.LocationCode</dd>
+</dl>
+
+<form asp-area="DashBoard" asp-controller="Shelf" asp-action="Delete" method="post">
+    <input type="hidden" asp-for="Id" />
+    <button class="btn btn-danger">Sil</button>
+    <a class="btn btn-secondary" asp-area="DashBoard" asp-controller="Shelf" asp-action="Index">Vazgeç</a>
+</form>

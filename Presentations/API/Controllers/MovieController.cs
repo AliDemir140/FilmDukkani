@@ -49,13 +49,14 @@ namespace API.Controllers
         [HttpDelete("delete-movie")]
         public async Task<IActionResult> DeleteMovie(int id)
         {
-            var movie = await _movieServiceManager.GetMovie(id);
-            if (movie == null)
+            var result = await _movieServiceManager.DeleteMovie(id);
+
+            if (!result)
                 return NotFound("Film bulunamadı.");
 
-            await _movieServiceManager.DeleteMovie(movie);
             return Ok("Film silindi.");
         }
+
 
         // PUT: api/movie/update-movie
         [HttpPut("update-movie")]
