@@ -1,0 +1,18 @@
+﻿@model Application.DTOs.MovieCopyDTOs.UpdateMovieCopyDto
+@{
+    ViewData["Title"] = "Film Kopyası Sil";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h3>Film Kopyası Sil</h3>
+
+<div class="alert alert-warning">
+    Bu film kopyasını silmek istediğine emin misin?
+</div>
+
+<form asp-area="DashBoard" asp-controller="MovieCopy" asp-action="Delete" method="post">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Sil</button>
+    <a class="btn btn-secondary" asp-area="DashBoard" asp-controller="MovieCopy" asp-action="Index">Vazgeç</a>
+</form>

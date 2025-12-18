@@ -12,5 +12,8 @@ namespace Application.DTOs.MovieCopyDTOs
         public string Barcode { get; set; }
 
         public int? ShelfId { get; set; }
+
+        public bool IsAvailable { get; set; } = true;
+        public bool IsDamaged { get; set; } = false;
     }
 }

@@ -16,7 +16,6 @@ namespace API.Controllers
             _movieCopyService = movieCopyService;
         }
 
-        // GET api/MovieCopy/movie-copies
         [HttpGet("movie-copies")]
         public async Task<IActionResult> GetMovieCopies()
         {
@@ -24,7 +23,6 @@ namespace API.Controllers
             return Ok(copies);
         }
 
-        // GET api/MovieCopy/get-movie-copy?id=1
         [HttpGet("get-movie-copy")]
         public async Task<IActionResult> GetMovieCopy(int id)
         {
@@ -35,23 +33,36 @@ namespace API.Controllers
             return Ok(copy);
         }
 
-        // POST api/MovieCopy/add-movie-copy
         [HttpPost("add-movie-copy")]
         public async Task<IActionResult> AddMovieCopy([FromBody] CreateMovieCopyDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            // İkisi aynı anda true gelirse: veri hatası
+            if (dto.IsAvailable && dto.IsDamaged)
+                return BadRequest("Film kopyası aynı anda hem Uygun hem Hasarlı olamaz.");
+
+            // 🔒 KURAL: Hasarlıysa uygun olamaz (garanti)
+            if (dto.IsDamaged)
+                dto.IsAvailable = false;
+
             await _movieCopyService.AddMovieCopyAsync(dto);
+
             return Ok("Film kopyası eklendi.");
         }
 
-        // PUT api/MovieCopy/update-movie-copy
         [HttpPut("update-movie-copy")]
         public async Task<IActionResult> UpdateMovieCopy([FromBody] UpdateMovieCopyDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            if (dto.IsAvailable && dto.IsDamaged)
+                return BadRequest("Film kopyası aynı anda hem Uygun hem Hasarlı olamaz.");
+
+            if (dto.IsDamaged)
+                dto.IsAvailable = false;
 
             var result = await _movieCopyService.UpdateMovieCopyAsync(dto);
             if (!result)
@@ -60,7 +71,6 @@ namespace API.Controllers
             return Ok("Film kopyası güncellendi.");
         }
 
-        // DELETE api/MovieCopy/delete-movie-copy?id=1
         [HttpDelete("delete-movie-copy")]
         public async Task<IActionResult> DeleteMovieCopy(int id)
         {
@@ -68,6 +78,7 @@ namespace API.Controllers
             if (!result)
                 return NotFound("Film kopyası bulunamadı.");
 
+            // API sadece mesaj döner. Kırmızı/yeşil MVC'de yapılır.
             return Ok("Film kopyası silindi.");
         }
     }
