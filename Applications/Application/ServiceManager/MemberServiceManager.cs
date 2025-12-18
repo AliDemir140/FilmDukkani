@@ -7,10 +7,12 @@ namespace Application.ServiceManager
     public class MemberServiceManager
     {
         private readonly IMemberRepository _memberRepository;
+        private readonly IMembershipPlanRepository _membershipPlanRepository;
 
-        public MemberServiceManager(IMemberRepository memberRepository)
+        public MemberServiceManager(IMemberRepository memberRepository , IMembershipPlanRepository membershipPlanRepository)
         {
             _memberRepository = memberRepository;
+            _membershipPlanRepository = membershipPlanRepository;
         }
 
         // LISTELEME
@@ -75,21 +77,29 @@ namespace Application.ServiceManager
             if (member == null)
                 return false;
 
+            // Plan var mı kontrol (istersen)
+            var plan = await _membershipPlanRepository.GetByIdAsync(dto.MembershipPlanId);
+            if (plan == null)
+                return false;
+
             member.FirstName = dto.FirstName;
             member.LastName = dto.LastName;
             member.Email = dto.Email;
-            member.Password = dto.Password;
             member.Phone = dto.Phone;
+            member.MembershipPlanId = dto.MembershipPlanId;
 
-            if (member.MembershipPlanId != dto.MembershipPlanId)
-            {
-                member.MembershipPlanId = dto.MembershipPlanId;
-                member.MembershipStartDate = DateTime.Now; // sadece plan değişince güncelle
-            }
+            // Şifre sadece doluysa güncellensin
+            if (!string.IsNullOrWhiteSpace(dto.Password))
+                member.Password = dto.Password;
+
+            // MembershipStartDate isteğe bağlı
+            if (dto.MembershipStartDate.HasValue)
+                member.MembershipStartDate = dto.MembershipStartDate.Value;
 
             await _memberRepository.UpdateAsync(member);
             return true;
         }
+
 
 
         // SILME
