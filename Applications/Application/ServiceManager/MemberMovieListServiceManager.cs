@@ -8,13 +8,16 @@ namespace Application.ServiceManager
     {
         private readonly IMemberMovieListRepository _memberMovieListRepository;
         private readonly IMemberMovieListItemRepository _memberMovieListItemRepository;
+        private readonly IMovieRepository _moviesRepository;
 
         public MemberMovieListServiceManager(
             IMemberMovieListRepository memberMovieListRepository,
-            IMemberMovieListItemRepository memberMovieListItemRepository)
+            IMemberMovieListItemRepository memberMovieListItemRepository,
+            IMovieRepository moviesRepository)
         {
             _memberMovieListRepository = memberMovieListRepository;
             _memberMovieListItemRepository = memberMovieListItemRepository;
+            _moviesRepository = moviesRepository;
         }
 
         // Bir üyenin listelerini getir
@@ -51,17 +54,28 @@ namespace Application.ServiceManager
         {
             var items = await _memberMovieListItemRepository.GetAllAsync(i => i.MemberMovieListId == listId);
 
+            // Film isimleri için gerekli
+            var movieIds = items.Select(x => x.MovieId).Distinct().ToList();
+
+            // IMovieRepository yoksa eklemen gerekir (aşağıda verdim)
+            var movies = await _moviesRepository.GetAllAsync(m => movieIds.Contains(m.ID));
+            var movieMap = movies.ToDictionary(m => m.ID, m => m.Title);
+
             return items
+                .OrderBy(i => i.Priority)
+                .ThenBy(i => i.AddedDate)
                 .Select(i => new MemberMovieListItemDto
                 {
                     Id = i.ID,
                     MemberMovieListId = i.MemberMovieListId,
                     MovieId = i.MovieId,
+                    MovieTitle = movieMap.ContainsKey(i.MovieId) ? movieMap[i.MovieId] : null,
                     Priority = i.Priority,
                     AddedDate = i.AddedDate
                 })
                 .ToList();
         }
+
 
         // Aynı filmi aynı listeye iki kez eklemeyi önlemek için kontrol
         private async Task<bool> IsMovieAlreadyInList(int listId, int movieId)
@@ -149,6 +163,26 @@ namespace Application.ServiceManager
             return list != null;
         }
 
+        public async Task<bool> ReorderItemsAsync(int listId, List<int> orderedItemIds)
+        {
+            var items = await _memberMovieListItemRepository.GetAllAsync(i => i.MemberMovieListId == listId);
+
+            // Güvenlik: sadece o listenin item'ları
+            var itemMap = items.ToDictionary(x => x.ID, x => x);
+
+            int pr = 1;
+            foreach (var itemId in orderedItemIds)
+            {
+                if (!itemMap.ContainsKey(itemId))
+                    continue;
+
+                itemMap[itemId].Priority = pr;
+                await _memberMovieListItemRepository.UpdateAsync(itemMap[itemId]);
+                pr++;
+            }
+
+            return true;
+        }
 
     }
 }

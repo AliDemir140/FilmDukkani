@@ -1,0 +1,107 @@
+﻿@using Application.DTOs.MemberMovieListDTOs
+@model List<MemberMovieListDto>
+
+@{
+    ViewData["Title"] = "Üye Film Listeleri";
+
+    int? selectedMemberId = null;
+    if (ViewBag.SelectedMemberId != null)
+    {
+        selectedMemberId = (int)ViewBag.SelectedMemberId;
+    }
+}
+
+<h3>Üye Film Listeleri</h3>
+
+<form method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-12 col-md-6">
+        <label class="form-label">Üye Seç</label>
+        <select class="form-select" name="memberId" asp-items="ViewBag.Members">
+            <option value="">Seçiniz</option>
+        </select>
+    </div>
+
+    <div class="col-12 col-md-6 d-flex gap-2">
+        <button class="btn btn-primary" type="submit">Getir</button>
+
+        <a class="btn btn-outline-success"
+           asp-area="DashBoard" asp-controller="MemberMovieList" asp-action="Create"
+           asp-route-memberId="@(selectedMemberId ?? 0)">
+            Yeni Liste
+        </a>
+    </div>
+</form>
+
+@if (selectedMemberId == null || selectedMemberId <= 0)
+{
+    <div class="alert alert-info">Liste görmek için önce üye seç.</div>
+}
+else if (Model == null || !Model.Any())
+{
+    <div class="alert alert-warning">Bu üyeye ait liste yok.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+            <thead>
+                <tr>
+                    <th style="width:90px;">ID</th>
+                    <th>Liste Adı</th>
+                    <th style="width:220px;" class="text-end">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var l in Model)
+                {
+                    <tr>
+                        <td>@l.Id</td>
+                        <td>@l.Name</td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-primary me-1"
+                               asp-area="DashBoard" asp-controller="MemberMovieList" asp-action="Items"
+                               asp-route-id="@l.Id" asp-route-memberId="@l.MemberId">
+                                İçerik
+                            </a>
+
+                            <button class="btn btn-sm btn-outline-secondary"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#renameModal_@l.Id">
+                                Ad Değiştir
+                            </button>
+
+                            <div class="modal fade" id="renameModal_@l.Id" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <form asp-area="DashBoard" asp-controller="MemberMovieList" asp-action="EditName" method="post">
+                                            @Html.AntiForgeryToken()
+
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Liste Adı Güncelle</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+
+                                            <div class="modal-body">
+                                                <input type="hidden" name="memberId" value="@l.MemberId" />
+                                                <input type="hidden" name="Id" value="@l.Id" />
+
+                                                <label class="form-label">Yeni Ad</label>
+                                                <input class="form-control" name="Name" value="@l.Name" />
+                                            </div>
+
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat</button>
+                                                <button type="submit" class="btn btn-primary">Kaydet</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
