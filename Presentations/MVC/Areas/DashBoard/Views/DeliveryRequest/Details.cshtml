@@ -1,4 +1,5 @@
 ﻿@using Domain.Enums
+@using Application.DTOs.DeliveryRequestDTOs
 @model DeliveryRequestDto
 
 @{
@@ -28,10 +29,28 @@
 
     @if (Model.Status == DeliveryStatus.Prepared)
     {
+        <form asp-action="MarkShipped" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+            <button type="submit" class="btn btn-warning">Kurye Çıktı</button>
+        </form>
+    }
+
+    @if (Model.Status == DeliveryStatus.Shipped)
+    {
         <form asp-action="MarkDelivered" method="post">
             @Html.AntiForgeryToken()
             <input type="hidden" name="id" value="@Model.Id" />
             <button type="submit" class="btn btn-success">Teslim Edildi</button>
+        </form>
+    }
+
+    @if (Model.Status == DeliveryStatus.Delivered)
+    {
+        <form asp-action="MarkCompleted" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+            <button type="submit" class="btn btn-primary">Süreci Bitir</button>
         </form>
     }
 

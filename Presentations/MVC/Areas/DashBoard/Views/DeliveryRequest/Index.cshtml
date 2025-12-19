@@ -1,9 +1,11 @@
 ﻿@using Domain.Enums
-@model List<Application.DTOs.DeliveryRequestDTOs.DeliveryRequestDto>
+@using Application.DTOs.DeliveryRequestDTOs
+@model List<DeliveryRequestDto>
 
 @{
     ViewData["Title"] = "Teslimat İstekleri";
     var selected = (string)(ViewBag.SelectedStatus ?? "");
+    string IsActive(string key) => string.Equals(selected, key, StringComparison.OrdinalIgnoreCase) ? "active" : "";
 }
 
 <h2>Teslimat İstekleri</h2>
@@ -13,25 +15,38 @@
     <button type="submit" class="btn btn-primary">Yarını Hazırla</button>
 </form>
 
-<div class="mb-3">
-    <a class="btn btn-outline-secondary btn-sm" asp-action="Index">Hepsi</a>
-    <a class="btn btn-outline-secondary btn-sm" asp-action="Index" asp-route-status="Pending">Pending</a>
-    <a class="btn btn-outline-secondary btn-sm" asp-action="Index" asp-route-status="Prepared">Prepared</a>
-    <a class="btn btn-outline-secondary btn-sm" asp-action="Index" asp-route-status="Delivered">Delivered</a>
-    <a class="btn btn-outline-secondary btn-sm" asp-action="Index" asp-route-status="Completed">Completed</a>
-    <a class="btn btn-outline-secondary btn-sm" asp-action="Index" asp-route-status="Cancelled">Cancelled</a>
+<div class="mb-3 d-flex gap-2 flex-wrap">
+    <a class="btn btn-outline-secondary btn-sm @IsActive("")" asp-action="Index">Hepsi</a>
+
+    <a class="btn btn-outline-secondary btn-sm @IsActive("Pending")"
+       asp-action="Index" asp-route-status="Pending">Beklemede</a>
+
+    <a class="btn btn-outline-secondary btn-sm @IsActive("Prepared")"
+       asp-action="Index" asp-route-status="Prepared">Hazırlandı</a>
+
+    <a class="btn btn-outline-secondary btn-sm @IsActive("Shipped")"
+       asp-action="Index" asp-route-status="Shipped">Kurye Çıktı</a>
+
+    <a class="btn btn-outline-secondary btn-sm @IsActive("Delivered")"
+       asp-action="Index" asp-route-status="Delivered">Teslim Edildi</a>
+
+    <a class="btn btn-outline-secondary btn-sm @IsActive("Completed")"
+       asp-action="Index" asp-route-status="Completed">Tamamlandı</a>
+
+    <a class="btn btn-outline-secondary btn-sm @IsActive("Cancelled")"
+       asp-action="Index" asp-route-status="Cancelled">İptal</a>
 </div>
 
-<table class="table table-striped">
+<table class="table table-striped table-hover align-middle">
     <thead>
         <tr>
-            <th>#</th>
+            <th style="width:90px;">#</th>
             <th>Üye</th>
             <th>Liste</th>
-            <th>İstek Tarihi</th>
-            <th>Teslimat Tarihi</th>
-            <th>Durum</th>
-            <th></th>
+            <th style="width:170px;">İstek Tarihi</th>
+            <th style="width:140px;">Teslimat Tarihi</th>
+            <th style="width:150px;">Durum</th>
+            <th style="width:120px;"></th>
         </tr>
     </thead>
     <tbody>
@@ -45,9 +60,35 @@
                     <td>@r.ListName</td>
                     <td>@r.RequestedDate.ToString("dd.MM.yyyy HH:mm")</td>
                     <td>@r.DeliveryDate.ToString("dd.MM.yyyy")</td>
-                    <td>@r.Status</td>
                     <td>
-                        <a class="btn btn-sm btn-info" asp-action="Details" asp-route-id="@r.Id">Detay</a>
+                        @switch (r.Status)
+                        {
+                            case DeliveryStatus.Pending:
+                                <span class="badge bg-secondary">Beklemede</span>
+                                break;
+                            case DeliveryStatus.Prepared:
+                                <span class="badge bg-primary">Hazırlandı</span>
+                                break;
+                            case DeliveryStatus.Shipped:
+                                <span class="badge bg-warning text-dark">Kurye Çıktı</span>
+                                break;
+                            case DeliveryStatus.Delivered:
+                                <span class="badge bg-success">Teslim Edildi</span>
+                                break;
+                            case DeliveryStatus.Completed:
+                                <span class="badge bg-dark">Tamamlandı</span>
+                                break;
+                            case DeliveryStatus.Cancelled:
+                                <span class="badge bg-danger">İptal</span>
+                                break;
+                            default:
+                                <span class="badge bg-light text-dark">@r.Status</span>
+                                break;
+                        }
+                    </td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-info"
+                           asp-action="Details" asp-route-id="@r.Id">Detay</a>
                     </td>
                 </tr>
             }

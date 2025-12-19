@@ -1,9 +1,7 @@
-﻿// DOSYA YOLU:
-// Presentations/MVC/Areas/DashBoard/Controllers/MovieController.cs
-
-using Application.DTOs.MovieDTOs;
+﻿using Application.DTOs.MovieDTOs;
 using Application.ServiceManager;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace MVC.Areas.DashBoard.Controllers
 {
@@ -11,102 +9,100 @@ namespace MVC.Areas.DashBoard.Controllers
     public class MovieController : Controller
     {
         private readonly MovieServiceManager _movieService;
+        private readonly CategoryServiceManager _categoryService;
 
-        public MovieController(MovieServiceManager movieService)
+        public MovieController(MovieServiceManager movieService, CategoryServiceManager categoryService)
         {
             _movieService = movieService;
+            _categoryService = categoryService;
         }
 
-        // GET: /DashBoard/Movie
+        private async Task LoadCategoriesAsync(int? selectedId = null)
+        {
+            var categories = await _categoryService.GetCategoriesAsync();
+            ViewBag.Categories = new SelectList(categories, "Id", "CategoryName", selectedId);
+        }
+
         public async Task<IActionResult> Index()
         {
             var movies = await _movieService.GetMoviesAsync();
             return View(movies);
         }
 
-        // GET: /DashBoard/Movie/Create
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            return View();
+            await LoadCategoriesAsync();
+            return View(new CreateMovieDto());
         }
 
-        // POST: /DashBoard/Movie/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateMovieDto dto)
         {
             if (!ModelState.IsValid)
+            {
+                await LoadCategoriesAsync(dto.CategoryId);
                 return View(dto);
+            }
 
             var ok = await _movieService.AddMovie(dto);
             if (!ok)
             {
-                ModelState.AddModelError(nameof(dto.CategoryId), "Böyle bir kategori bulunamadı.");
+                ModelState.AddModelError("", "Kategori bulunamadı.");
+                await LoadCategoriesAsync(dto.CategoryId);
                 return View(dto);
             }
 
-            TempData["Success"] = "Film eklendi.";
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: /DashBoard/Movie/Edit/5
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
             var dto = await _movieService.GetMovie(id);
-            if (dto == null)
-                return NotFound();
+            if (dto == null) return NotFound();
 
+            await LoadCategoriesAsync(dto.CategoryId);
             return View(dto);
         }
 
-        // POST: /DashBoard/Movie/Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(UpdateMovieDto dto)
         {
             if (!ModelState.IsValid)
+            {
+                await LoadCategoriesAsync(dto.CategoryId);
                 return View(dto);
+            }
 
             var ok = await _movieService.UpdateMovie(dto);
             if (!ok)
             {
-                ModelState.AddModelError(nameof(dto.CategoryId), "Böyle bir kategori bulunamadı.");
+                ModelState.AddModelError("", "Güncelleme yapılamadı. Film veya kategori bulunamadı.");
+                await LoadCategoriesAsync(dto.CategoryId);
                 return View(dto);
             }
 
-            TempData["Success"] = "Film güncellendi.";
             return RedirectToAction(nameof(Index));
         }
 
-        // GET: /DashBoard/Movie/Delete/5
         [HttpGet]
         public async Task<IActionResult> Delete(int id)
         {
-            var dto = await _movieService.GetMovie(id);
-            if (dto == null)
-                return NotFound();
+            var dto = await _movieService.GetMovieDetailAsync(id);
+            if (dto == null) return NotFound();
 
             return View(dto);
         }
 
-        // POST: /DashBoard/Movie/Delete/5
-        [HttpPost, ActionName("Delete")]
+        [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var ok = await _movieService.DeleteMovie(id);
-
-            if (!ok)
-            {
-                TempData["Error"] = "Film bulunamadı.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            TempData["Success"] = "Film silindi.";
+            await _movieService.DeleteMovie(id);
             return RedirectToAction(nameof(Index));
         }
-
     }
 }

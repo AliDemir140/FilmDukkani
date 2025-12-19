@@ -59,12 +59,30 @@ namespace MVC.Areas.DashBoard.Controllers
             return RedirectToAction(nameof(Details), new { id });
         }
 
+        // Kurye çıktı
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkShipped(int id)
+        {
+            await _deliveryService.MarkShippedAsync(id);
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
         // Teslim edildi
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkDelivered(int id)
         {
             await _deliveryService.MarkDeliveredAsync(id);
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        // Süreci bitir
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkCompleted(int id)
+        {
+            await _deliveryService.MarkCompletedAsync(id);
             return RedirectToAction(nameof(Details), new { id });
         }
 

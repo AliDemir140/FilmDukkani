@@ -1,10 +1,6 @@
-﻿// =======================================================
-// DOSYA: Application/ServiceManager/DeliveryRequestServiceManager.cs
-// (Mevcut dosyanın TAMAMI - Index için liste metotları eklendi)
-// =======================================================
+﻿using Application.DTOs.DeliveryRequestDTOs;
 using Application.Repositories;
 using Domain.Entities;
-using Application.DTOs.DeliveryRequestDTOs;
 using Domain.Enums;
 
 namespace Application.ServiceManager
@@ -55,7 +51,7 @@ namespace Application.ServiceManager
             return true;
         }
 
-        // İptal/değişiklik: en geç 1 gün öncesine kadar
+        // İptal: en geç 1 gün öncesine kadar
         private static bool IsCancelAllowed(DateTime deliveryDate)
         {
             return DateTime.Today <= deliveryDate.Date.AddDays(-1);
@@ -80,7 +76,7 @@ namespace Application.ServiceManager
             return request.ID;
         }
 
-        // DTO ile oluşturma
+        // DTO ile oluştur
         public async Task<int> CreateDeliveryRequestAsync(CreateDeliveryRequestDto dto)
         {
             return await CreateDeliveryRequestAsync(dto.MemberId, dto.MemberMovieListId, dto.DeliveryDate);
@@ -126,6 +122,7 @@ namespace Application.ServiceManager
                     var selectedCopy = copies.FirstOrDefault();
                     if (selectedCopy == null) continue;
 
+                    // Kopyayı rezerve et
                     selectedCopy.IsAvailable = false;
                     await _movieCopyRepository.UpdateAsync(selectedCopy);
 
@@ -194,7 +191,7 @@ namespace Application.ServiceManager
             };
         }
 
-        // Index için: tüm requestleri getir (detay DTO döner)
+        // Index: tüm requestler
         public async Task<List<DeliveryRequestDto>> GetAllRequestsAsync()
         {
             var requests = await _deliveryRequestRepository.GetAllAsync();
@@ -209,7 +206,7 @@ namespace Application.ServiceManager
             return result;
         }
 
-        // Index için: status filtreli liste
+        // Index: status filtre
         public async Task<List<DeliveryRequestDto>> GetRequestsByStatusAsync(DeliveryStatus status)
         {
             var requests = await _deliveryRequestRepository.GetAllAsync(r => r.Status == status);
@@ -224,7 +221,7 @@ namespace Application.ServiceManager
             return result;
         }
 
-        // Teslimat iptal (kopyaları geri açar)
+        // İptal: sadece Pending / Prepared (kopyaları geri açar)
         public async Task<bool> CancelRequestAsync(int requestId)
         {
             var request = await _deliveryRequestRepository.GetByIdAsync(requestId);
@@ -260,8 +257,8 @@ namespace Application.ServiceManager
             return true;
         }
 
-        // Teslim edildi + süreç kapandı (listeden düşürür)
-        public async Task<bool> MarkDeliveredAsync(int requestId)
+        // Kurye çıktı: Prepared -> Shipped
+        public async Task<bool> MarkShippedAsync(int requestId)
         {
             var request = await _deliveryRequestRepository.GetByIdAsync(requestId);
             if (request == null) return false;
@@ -269,18 +266,52 @@ namespace Application.ServiceManager
             if (request.Status != DeliveryStatus.Prepared)
                 return false;
 
+            request.Status = DeliveryStatus.Shipped;
+            await _deliveryRequestRepository.UpdateAsync(request);
+
+            return true;
+        }
+
+        // Teslim edildi: Shipped -> Delivered (listeden düşürür)
+        public async Task<bool> MarkDeliveredAsync(int requestId)
+        {
+            var request = await _deliveryRequestRepository.GetByIdAsync(requestId);
+            if (request == null) return false;
+
+            if (request.Status != DeliveryStatus.Shipped)
+                return false;
+
             var items = await _deliveryRequestItemRepository
                 .GetAllAsync(i => i.DeliveryRequestId == request.ID);
 
-            request.Status = DeliveryStatus.Delivered;
-            await _deliveryRequestRepository.UpdateAsync(request);
-
+            // Teslim edilen filmleri listeden düş
             foreach (var item in items)
             {
                 var listItem = await _memberMovieListItemRepository.GetByIdAsync(item.MemberMovieListItemId);
                 if (listItem != null)
                     await _memberMovieListItemRepository.DeleteAsync(listItem);
             }
+
+            request.Status = DeliveryStatus.Delivered;
+            await _deliveryRequestRepository.UpdateAsync(request);
+
+            return true;
+        }
+
+        // Süreci bitir: Delivered -> Completed (tüm item'lar iade edilmiş olmalı)
+        public async Task<bool> MarkCompletedAsync(int requestId)
+        {
+            var request = await _deliveryRequestRepository.GetByIdAsync(requestId);
+            if (request == null) return false;
+
+            if (request.Status != DeliveryStatus.Delivered)
+                return false;
+
+            var items = await _deliveryRequestItemRepository
+                .GetAllAsync(i => i.DeliveryRequestId == request.ID);
+
+            if (items.Any(i => !i.IsReturned))
+                return false;
 
             request.Status = DeliveryStatus.Completed;
             await _deliveryRequestRepository.UpdateAsync(request);
@@ -319,6 +350,20 @@ namespace Application.ServiceManager
                 };
 
                 await _damagedMovieRepository.AddAsync(damaged);
+            }
+
+            // Delivered durumundaysa ve tüm item'lar iade olduysa otomatik Completed yap
+            var request = await _deliveryRequestRepository.GetByIdAsync(item.DeliveryRequestId);
+            if (request != null && request.Status == DeliveryStatus.Delivered)
+            {
+                var allItems = await _deliveryRequestItemRepository
+                    .GetAllAsync(i => i.DeliveryRequestId == request.ID);
+
+                if (allItems.All(i => i.IsReturned))
+                {
+                    request.Status = DeliveryStatus.Completed;
+                    await _deliveryRequestRepository.UpdateAsync(request);
+                }
             }
 
             return true;
