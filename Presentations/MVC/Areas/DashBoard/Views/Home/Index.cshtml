@@ -1,48 +1,223 @@
-﻿@{
-    ViewData["Title"] = "DashBoard";
+﻿@using Domain.Enums
+@using MVC.Areas.DashBoard.Models
+@model DashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard Ana Sayfa";
 }
 
-<div class="p-3 border rounded bg-light">
-    <h3 class="mb-3">DashBoard</h3>
-    <p>Admin/DashBoard alanı çalışıyor.</p>
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+        <h3 class="mb-1">Dashboard</h3>
+        <div class="text-muted">Genel durum ve hızlı yönetim</div>
+    </div>
 
-    <hr />
+    <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-outline-secondary btn-sm" asp-area="DashBoard" asp-controller="Movie" asp-action="Index">Filmler</a>
+        <a class="btn btn-outline-secondary btn-sm" asp-area="DashBoard" asp-controller="Category" asp-action="Index">Kategoriler</a>
+        <a class="btn btn-outline-secondary btn-sm" asp-area="DashBoard" asp-controller="DeliveryRequest" asp-action="Index">Teslimatlar</a>
+    </div>
+</div>
 
-    <div class="row g-3">
-        <div class="col-12 col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Kategoriler</h5>
-                    <p class="card-text">Kategori yönetim ekranı (sonraki issue).</p>
+<div class="row g-3">
+    <div class="col-xl-3 col-md-6">
+        <a class="card shadow-sm text-decoration-none h-100 dashboard-card"
+           asp-area="DashBoard" asp-controller="Movie" asp-action="Index">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-uppercase text-muted small">Toplam Film</div>
+                    <div class="h4 mb-0">@Model.TotalMovies</div>
+                </div>
+                <div class="fs-3 text-muted"><i class="fa-solid fa-film"></i></div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <a class="card shadow-sm text-decoration-none h-100 dashboard-card"
+           asp-area="DashBoard" asp-controller="Category" asp-action="Index">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-uppercase text-muted small">Toplam Kategori</div>
+                    <div class="h4 mb-0">@Model.TotalCategories</div>
+                </div>
+                <div class="fs-3 text-muted"><i class="fa-solid fa-layer-group"></i></div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <a class="card shadow-sm text-decoration-none h-100 dashboard-card"
+           asp-area="DashBoard" asp-controller="Member" asp-action="Index">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-uppercase text-muted small">Toplam Üye</div>
+                    <div class="h4 mb-0">@Model.TotalMembers</div>
+                </div>
+                <div class="fs-3 text-muted"><i class="fa-solid fa-users"></i></div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <a class="card shadow-sm text-decoration-none h-100 dashboard-card"
+           asp-area="DashBoard" asp-controller="MovieCopy" asp-action="Index">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-uppercase text-muted small">Hasarlı Kopya</div>
+                    <div class="h4 mb-0">@Model.DamagedCopies</div>
+                </div>
+                <div class="fs-3 text-muted"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<div class="row mt-4 g-3">
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <b>Teslimat Durumları</b>
+            </div>
+            <div class="card-body">
+                <div style="height:300px;">
+                    <canvas id="deliveryChart"></canvas>
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="col-12 col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Filmler</h5>
-                    <p class="card-text">Film yönetim ekranı (sonraki issue).</p>
-                </div>
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <b>Film / Kategori / Üye Dağılımı</b>
             </div>
-        </div>
-
-        <div class="col-12 col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Üyeler</h5>
-                    <p class="card-text">Üye yönetimi (sonraki issue).</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-12 col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Teslimatlar</h5>
-                    <p class="card-text">Teslimat işlemleri (sonraki issue).</p>
+            <div class="card-body">
+                <div style="height:300px;">
+                    <canvas id="summaryChart"></canvas>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <b>Son Teslimat İstekleri</b>
+                <a class="btn btn-sm btn-primary" asp-area="DashBoard" asp-controller="DeliveryRequest" asp-action="Index">
+                    Tümünü Gör
+                </a>
+            </div>
+
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th style="width:90px;">#</th>
+                                <th>Üye</th>
+                                <th>Liste</th>
+                                <th style="width:140px;">Teslimat</th>
+                                <th style="width:160px;">Durum</th>
+                                <th style="width:120px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.LastRequests != null && Model.LastRequests.Any())
+                            {
+                                foreach (var r in Model.LastRequests)
+                                {
+                                    <tr>
+                                        <td>@r.Id</td>
+                                        <td>@r.MemberFullName</td>
+                                        <td>@r.ListName</td>
+                                        <td>@r.DeliveryDate.ToString("dd.MM.yyyy")</td>
+                                        <td>
+                                            @switch (r.Status)
+                                            {
+                                                case DeliveryStatus.Pending:
+                                                    <span class="badge bg-secondary">Beklemede</span>
+                                                    break;
+                                                case DeliveryStatus.Prepared:
+                                                    <span class="badge bg-primary">Hazırlandı</span>
+                                                    break;
+                                                case DeliveryStatus.Shipped:
+                                                    <span class="badge bg-warning text-dark">Kurye Çıktı</span>
+                                                    break;
+                                                case DeliveryStatus.Delivered:
+                                                    <span class="badge bg-success">Teslim Edildi</span>
+                                                    break;
+                                                case DeliveryStatus.Completed:
+                                                    <span class="badge bg-dark">Tamamlandı</span>
+                                                    break;
+                                                case DeliveryStatus.Cancelled:
+                                                    <span class="badge bg-danger">İptal</span>
+                                                    break;
+                                                default:
+                                                    <span class="badge bg-light text-dark">@r.Status</span>
+                                                    break;
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            <a class="btn btn-sm btn-outline-info"
+                                               asp-area="DashBoard" asp-controller="DeliveryRequest" asp-action="Details"
+                                               asp-route-id="@r.Id">
+                                                Detay
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr><td colspan="6">Kayıt bulunamadı.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const pending = @Model.PendingDeliveries;
+        const prepared = @Model.PreparedDeliveries;
+        const shipped = @Model.ShippedDeliveries;
+        const delivered = @Model.DeliveredDeliveries;
+
+        const totalMovies = @Model.TotalMovies;
+        const totalCategories = @Model.TotalCategories;
+        const totalMembers = @Model.TotalMembers;
+
+        const dctx = document.getElementById('deliveryChart').getContext('2d');
+        new Chart(dctx, {
+            type: 'bar',
+            data: {
+                labels: ['Beklemede', 'Hazırlandı', 'Kurye Çıktı', 'Teslim Edildi'],
+                datasets: [{
+                    label: 'Teslimat',
+                    data: [pending, prepared, shipped, delivered]
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        const sctx = document.getElementById('summaryChart').getContext('2d');
+        new Chart(sctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Filmler', 'Kategoriler', 'Üyeler'],
+                datasets: [{
+                    data: [totalMovies, totalCategories, totalMembers]
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    </script>
+}
