@@ -15,7 +15,7 @@ namespace API.Controllers
             _deliveryService = deliveryService;
         }
 
-        // POST api/DeliveryRequest/create
+        // Teslimat isteği oluştur
         [HttpPost("create")]
         public async Task<IActionResult> Create([FromBody] CreateDeliveryRequestDto dto)
         {
@@ -24,6 +24,9 @@ namespace API.Controllers
 
             var newId = await _deliveryService.CreateDeliveryRequestAsync(dto);
 
+            if (newId == 0)
+                return BadRequest("Geçersiz teslimat tarihi. Teslimat en az 2 gün sonrası olmalı ve Pazar günü seçilemez.");
+
             return Ok(new
             {
                 Message = "Teslimat isteği oluşturuldu.",
@@ -31,7 +34,7 @@ namespace API.Controllers
             });
         }
 
-        // POST api/DeliveryRequest/prepare-tomorrow
+        // Yarının teslimatlarını hazırla
         [HttpPost("prepare-tomorrow")]
         public async Task<IActionResult> PrepareTomorrow()
         {
@@ -39,7 +42,7 @@ namespace API.Controllers
             return Ok("Yarının teslimatları hazırlandı.");
         }
 
-        // GET api/DeliveryRequest/{id}
+        // Teslimat isteği detay
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)
         {
@@ -50,28 +53,29 @@ namespace API.Controllers
             return Ok(request);
         }
 
-        // PUT api/DeliveryRequest/{id}/cancel
+        // Teslimat iptal
         [HttpPut("{id}/cancel")]
         public async Task<IActionResult> Cancel(int id)
         {
             var result = await _deliveryService.CancelRequestAsync(id);
             if (!result)
-                return NotFound("Teslimat isteği bulunamadı.");
+                return BadRequest("Teslimat isteği iptal edilemedi.");
 
             return Ok("Teslimat isteği iptal edildi.");
         }
 
-        // PUT api/DeliveryRequest/{id}/mark-delivered
+        // Teslim edildi (listeden düşer, süreç kapanır)
         [HttpPut("{id}/mark-delivered")]
         public async Task<IActionResult> MarkDelivered(int id)
         {
             var result = await _deliveryService.MarkDeliveredAsync(id);
             if (!result)
-                return NotFound("Teslimat isteği bulunamadı.");
+                return BadRequest("Teslimat isteği teslim edildi olarak işaretlenemedi.");
 
-            return Ok("Teslimat isteği tamamlandı olarak işaretlendi.");
+            return Ok("Teslimat teslim edildi ve süreç tamamlandı.");
         }
 
+        // Film iade işlemi
         [HttpPost("return-item")]
         public async Task<IActionResult> ReturnItem([FromBody] ReturnDeliveryItemDto dto)
         {
@@ -80,10 +84,9 @@ namespace API.Controllers
 
             var result = await _deliveryService.ReturnDeliveryItemAsync(dto);
             if (!result)
-                return NotFound("DeliveryRequestItem bulunamadı.");
+                return NotFound("Teslimat kalemi bulunamadı.");
 
-            return Ok("İade işlendi.");
+            return Ok("İade işlemi tamamlandı.");
         }
-
     }
 }

@@ -10,9 +10,23 @@
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        @{
+            var area = ViewContext.RouteData.Values["area"]?.ToString() ?? "";
+            var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+
+            string NavActive(string a, string c)
+            {
+                bool areaOk = string.Equals(a ?? "", area, StringComparison.OrdinalIgnoreCase);
+                bool ctrlOk = string.Equals(c ?? "", controller, StringComparison.OrdinalIgnoreCase);
+                return (areaOk && ctrlOk) ? "active" : "";
+            }
+        }
+
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
             <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">FilmDukkani</a>
+                <a class="navbar-brand fw-semibold" asp-area="" asp-controller="Home" asp-action="Index">
+                    🎞️ FilmDukkani
+                </a>
 
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
                         aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -22,15 +36,24 @@
                 <div class="collapse navbar-collapse" id="mainNav">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                         <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Home" asp-action="Index">Ana Sayfa</a>
+                            <a class="nav-link @NavActive("", "Home")"
+                               asp-area="" asp-controller="Home" asp-action="Index">
+                                🏠 Ana Sayfa
+                            </a>
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link" asp-area="DashBoard" asp-controller="Home" asp-action="Index">DashBoard</a>
+                            <a class="nav-link @NavActive("DashBoard", "Home")"
+                               asp-area="DashBoard" asp-controller="Home" asp-action="Index">
+                                🧰 DashBoard
+                            </a>
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link" asp-area="" asp-controller="Cart" asp-action="Index">Sepet</a>
+                            <a class="nav-link @NavActive("", "Cart")"
+                               asp-area="" asp-controller="Cart" asp-action="Index">
+                                🛒 Sepet
+                            </a>
                         </li>
                     </ul>
 
@@ -40,8 +63,30 @@
         </nav>
     </header>
 
-    <main class="container py-4">
-        @RenderBody()
+    <main class="container-fluid py-4">
+        @{
+            var currentArea = ViewContext.RouteData.Values["area"]?.ToString();
+            bool isDashBoard = string.Equals(currentArea, "DashBoard", StringComparison.OrdinalIgnoreCase);
+        }
+
+        @if (isDashBoard)
+        {
+            <div class="row">
+                <div class="col-12 col-md-3 col-lg-2 mb-3">
+                    <partial name="~/Views/Shared/_DashBoardSidebar.cshtml" />
+                </div>
+
+                <div class="col-12 col-md-9 col-lg-10">
+                    @RenderBody()
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="container">
+                @RenderBody()
+            </div>
+        }
     </main>
 
     <footer class="border-top footer text-muted py-3">
