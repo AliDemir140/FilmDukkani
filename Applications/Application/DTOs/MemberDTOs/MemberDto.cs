@@ -16,5 +16,7 @@ namespace Application.DTOs.MemberDTOs
         public string MembershipPlanName { get; set; }
 
         public DateTime? MembershipStartDate { get; set; }
+
+        public string FullName => $"{FirstName} {LastName}";
     }
 }

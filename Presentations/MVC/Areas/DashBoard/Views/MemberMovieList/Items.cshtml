@@ -1,0 +1,111 @@
+﻿@using Application.DTOs.MemberMovieListDTOs
+@model List<MemberMovieListItemDto>
+
+@{
+    ViewData["Title"] = "Liste İçeriği";
+    var memberId = (int)ViewBag.MemberId;
+    var listId = (int)ViewBag.ListId;
+    var itemCount = (int)ViewBag.ItemCount;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <div>
+        <h3 class="mb-0">Liste İçeriği</h3>
+        <div class="text-muted">Toplam Film: @itemCount</div>
+        <div class="text-muted">Sıralamayı satırları sürükleyerek değiştir.</div>
+    </div>
+
+    <a class="btn btn-secondary"
+       asp-area="DashBoard" asp-controller="MemberMovieList" asp-action="Index"
+       asp-route-memberId="@memberId">
+        Geri
+    </a>
+</div>
+
+@if (Model == null || !Model.Any())
+{
+    <div class="alert alert-warning">Liste boş.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+            <thead>
+                <tr>
+                    <th style="width:70px;">#</th>
+                    <th style="width:90px;">ID</th>
+                    <th style="width:120px;">MovieId</th>
+                    <th>Film</th>
+                    <th style="width:180px;">Eklenme</th>
+                    <th style="width:140px;" class="text-end">İşlemler</th>
+                </tr>
+            </thead>
+
+            <tbody id="sortableBody">
+                @for (int i = 0; i < Model.Count; i++)
+                {
+                    var it = Model[i];
+                    <tr data-item-id="@it.Id" class="drag-row">
+                        <td class="text-muted fw-bold">@(i + 1)</td>
+                        <td>@it.Id</td>
+                        <td>@it.MovieId</td>
+                        <td>@(string.IsNullOrWhiteSpace(it.MovieTitle) ? "-" : it.MovieTitle)</td>
+                        <td>@it.AddedDate.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td class="text-end">
+                            <form asp-action="DeleteItem" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="itemId" value="@it.Id" />
+                                <input type="hidden" name="memberId" value="@memberId" />
+                                <input type="hidden" name="listId" value="@listId" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+
+        </table>
+    </div>
+
+    <div class="alert alert-success mt-3 d-none" id="savedMsg">
+        Sıralama kaydedildi.
+    </div>
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    <script>
+        const body = document.getElementById("sortableBody");
+        const savedMsg = document.getElementById("savedMsg");
+
+        function showSaved() {
+            if (!savedMsg) return;
+            savedMsg.classList.remove("d-none");
+            setTimeout(() => savedMsg.classList.add("d-none"), 1200);
+        }
+
+        new Sortable(body, {
+            animation: 150,
+            onEnd: async function () {
+                const ids = Array.from(body.querySelectorAll("tr"))
+                    .map(tr => parseInt(tr.getAttribute("data-item-id")));
+
+                const res = await fetch("@Url.Action("Reorder", "MemberMovieList", new { area = "DashBoard" })", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ listId: @listId, orderedItemIds: ids })
+                });
+
+                if (res.ok) {
+                    // Görsel sıra numaraları 1..X güncellensin
+                    const rows = body.querySelectorAll("tr");
+                    rows.forEach((r, idx) => {
+                        const firstCell = r.querySelector("td");
+                        if (firstCell) firstCell.innerText = (idx + 1);
+                    });
+                    showSaved();
+                }
+            }
+        });
+    </script>
+}
