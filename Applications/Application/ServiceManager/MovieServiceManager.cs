@@ -1,4 +1,7 @@
-﻿using Application.DTOs.MovieDTOs;
+﻿// =======================================================
+// DOSYA: Application/ServiceManager/MovieServiceManager.cs
+// =======================================================
+using Application.DTOs.MovieDTOs;
 using Application.Repositories;
 using Domain.Entities;
 
@@ -18,7 +21,7 @@ namespace Application.ServiceManager
         // LISTELEME
         public async Task<List<MovieDto>> GetMoviesAsync()
         {
-            var movies = await _movieRepository.GetAllAsync();
+            var movies = await _movieRepository.GetMoviesWithCategoryAsync();
 
             return movies
                 .Select(m => new MovieDto
@@ -95,13 +98,11 @@ namespace Application.ServiceManager
         // FILM DETAYI
         public async Task<MovieDetailDto?> GetMovieDetailAsync(int id)
         {
-            var movie = await _movieRepository.GetByIdAsync(id);
+            var movie = await _movieRepository.GetMovieWithCategoryAsync(id);
             if (movie == null)
                 return null;
 
-            // Category navigation null gelebileceği için garanti dolduralım
-            var category = await _categoryRepository.GetByIdAsync(movie.CategoryId);
-            var categoryName = category?.CategoryName ?? string.Empty;
+            var categoryName = movie.Category?.CategoryName ?? string.Empty;
 
             return new MovieDetailDto
             {

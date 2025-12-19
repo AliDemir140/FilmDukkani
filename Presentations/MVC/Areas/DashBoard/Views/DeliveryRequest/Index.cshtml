@@ -1,0 +1,60 @@
+﻿@using Domain.Enums
+@model List<Application.DTOs.DeliveryRequestDTOs.DeliveryRequestDto>
+
+@{
+    ViewData["Title"] = "Teslimat İstekleri";
+    var selected = (string)(ViewBag.SelectedStatus ?? "");
+}
+
+<h2>Teslimat İstekleri</h2>
+
+<form asp-action="PrepareTomorrow" method="post" class="mb-3">
+    @Html.AntiForgeryToken()
+    <button type="submit" class="btn btn-primary">Yarını Hazırla</button>
+</form>
+
+<div class="mb-3">
+    <a class="btn btn-outline-secondary btn-sm" asp-action="Index">Hepsi</a>
+    <a class="btn btn-outline-secondary btn-sm" asp-action="Index" asp-route-status="Pending">Pending</a>
+    <a class="btn btn-outline-secondary btn-sm" asp-action="Index" asp-route-status="Prepared">Prepared</a>
+    <a class="btn btn-outline-secondary btn-sm" asp-action="Index" asp-route-status="Delivered">Delivered</a>
+    <a class="btn btn-outline-secondary btn-sm" asp-action="Index" asp-route-status="Completed">Completed</a>
+    <a class="btn btn-outline-secondary btn-sm" asp-action="Index" asp-route-status="Cancelled">Cancelled</a>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Üye</th>
+            <th>Liste</th>
+            <th>İstek Tarihi</th>
+            <th>Teslimat Tarihi</th>
+            <th>Durum</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Any())
+        {
+            foreach (var r in Model)
+            {
+                <tr>
+                    <td>@r.Id</td>
+                    <td>@r.MemberFullName</td>
+                    <td>@r.ListName</td>
+                    <td>@r.RequestedDate.ToString("dd.MM.yyyy HH:mm")</td>
+                    <td>@r.DeliveryDate.ToString("dd.MM.yyyy")</td>
+                    <td>@r.Status</td>
+                    <td>
+                        <a class="btn btn-sm btn-info" asp-action="Details" asp-route-id="@r.Id">Detay</a>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr><td colspan="7">Kayıt bulunamadı.</td></tr>
+        }
+    </tbody>
+</table>

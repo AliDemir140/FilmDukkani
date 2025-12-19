@@ -1,4 +1,8 @@
-﻿using Application.Repositories;
+﻿// =======================================================
+// DOSYA: Application/ServiceManager/DeliveryRequestServiceManager.cs
+// (Mevcut dosyanın TAMAMI - Index için liste metotları eklendi)
+// =======================================================
+using Application.Repositories;
 using Domain.Entities;
 using Application.DTOs.DeliveryRequestDTOs;
 using Domain.Enums;
@@ -17,7 +21,6 @@ namespace Application.ServiceManager
         private readonly IMovieCopyRepository _movieCopyRepository;
         private readonly IDamagedMovieRepository _damagedMovieRepository;
 
-
         public DeliveryRequestServiceManager(
             IDeliveryRequestRepository deliveryRequestRepository,
             IDeliveryRequestItemRepository deliveryRequestItemRepository,
@@ -28,8 +31,6 @@ namespace Application.ServiceManager
             IMembershipPlanRepository membershipPlanRepository,
             IMovieCopyRepository movieCopyRepository,
             IDamagedMovieRepository damagedMovieRepository)
-
-
         {
             _deliveryRequestRepository = deliveryRequestRepository;
             _deliveryRequestItemRepository = deliveryRequestItemRepository;
@@ -40,91 +41,94 @@ namespace Application.ServiceManager
             _membershipPlanRepository = membershipPlanRepository;
             _movieCopyRepository = movieCopyRepository;
             _damagedMovieRepository = damagedMovieRepository;
-
         }
 
-        // Bir üyenin teslimat isteği oluşturması
+        // Teslimat tarihi: en az 2 gün sonrası, pazar olamaz
+        private static bool IsValidDeliveryDate(DateTime deliveryDate)
+        {
+            var today = DateTime.Today;
+            var target = deliveryDate.Date;
+
+            if (target < today.AddDays(2)) return false;
+            if (target.DayOfWeek == DayOfWeek.Sunday) return false;
+
+            return true;
+        }
+
+        // İptal/değişiklik: en geç 1 gün öncesine kadar
+        private static bool IsCancelAllowed(DateTime deliveryDate)
+        {
+            return DateTime.Today <= deliveryDate.Date.AddDays(-1);
+        }
+
+        // Teslimat isteği oluştur
         public async Task<int> CreateDeliveryRequestAsync(int memberId, int listId, DateTime deliveryDate)
         {
+            if (!IsValidDeliveryDate(deliveryDate))
+                return 0;
+
             var request = new DeliveryRequest
             {
                 MemberId = memberId,
                 MemberMovieListId = listId,
                 RequestedDate = DateTime.Now,
-                DeliveryDate = deliveryDate,
+                DeliveryDate = deliveryDate.Date,
                 Status = DeliveryStatus.Pending
-
             };
 
             await _deliveryRequestRepository.AddAsync(request);
-
             return request.ID;
         }
 
-        // DTO ile teslimat isteği oluşturma
+        // DTO ile oluşturma
         public async Task<int> CreateDeliveryRequestAsync(CreateDeliveryRequestDto dto)
         {
             return await CreateDeliveryRequestAsync(dto.MemberId, dto.MemberMovieListId, dto.DeliveryDate);
         }
 
-
-        // Yarının teslimatlarını hazırlayan sipariş hazırlama algoritması
-
+        // Yarının teslimatlarını hazırla
         public async Task PrepareTomorrowDeliveriesAsync()
         {
             DateTime tomorrow = DateTime.Today.AddDays(1);
 
-            // 1) YARIN teslimat isteyen PENDING (0) tüm request'leri getir
             var requests = await _deliveryRequestRepository
                 .GetAllAsync(r => r.DeliveryDate.Date == tomorrow.Date && r.Status == DeliveryStatus.Pending);
 
             foreach (var request in requests)
             {
                 bool anyItemAdded = false;
-                // 2) Üyeyi getir
-                var member = await _memberRepository.GetByIdAsync(request.MemberId);
-                if (member == null)
-                    continue;
 
-                // 3) Üyelik planını getir
+                var member = await _memberRepository.GetByIdAsync(request.MemberId);
+                if (member == null) continue;
+
                 var plan = await _membershipPlanRepository.GetByIdAsync(member.MembershipPlanId);
-                if (plan == null)
-                    continue;
+                if (plan == null) continue;
 
                 int maxMoviesToSend = plan.MaxMoviesPerMonth;
 
-                // 4) Üyenin listesini getir
                 var list = await _memberMovieListRepository.GetByIdAsync(request.MemberMovieListId);
-                if (list == null)
-                    continue;
+                if (list == null) continue;
 
-                // 5) Liste itemlarını öncelik doğrultusunda sırala
                 var listItems = await _memberMovieListItemRepository
                     .GetAllAsync(i => i.MemberMovieListId == list.ID);
 
                 var sortedItems = listItems
-                    .OrderBy(i => i.Priority)       // Öncelik küçük olan önce gelir
-                    .ThenBy(i => i.AddedDate)       // Aynı öncelikte eski olan gider
-                    .Take(maxMoviesToSend)          // Üyelik planına göre gönderilecek film sayısı
+                    .OrderBy(i => i.Priority)
+                    .ThenBy(i => i.AddedDate)
+                    .Take(maxMoviesToSend)
                     .ToList();
 
-                // 6) Bu filmleri DeliveryRequestItem olarak ekle
                 foreach (var item in sortedItems)
                 {
-
-                    // 1) Bu MovieId için depoda uygun bir kopya bul
                     var copies = await _movieCopyRepository
                         .GetAllAsync(c => c.MovieId == item.MovieId && c.IsAvailable && !c.IsDamaged);
 
                     var selectedCopy = copies.FirstOrDefault();
-                    if (selectedCopy == null)
-                        continue; // stok yoksa bu filmi atla
+                    if (selectedCopy == null) continue;
 
-                    // 2) Kopyayı rezerve et (başkasına gitmesin)
                     selectedCopy.IsAvailable = false;
                     await _movieCopyRepository.UpdateAsync(selectedCopy);
 
-                    // 3) DeliveryRequestItem oluştur
                     var dri = new DeliveryRequestItem
                     {
                         DeliveryRequestId = request.ID,
@@ -139,8 +143,6 @@ namespace Application.ServiceManager
                     anyItemAdded = true;
                 }
 
-
-                // 7) Request durumunu güncelle -> Prepared (1)
                 if (anyItemAdded)
                 {
                     request.Status = DeliveryStatus.Prepared;
@@ -149,19 +151,11 @@ namespace Application.ServiceManager
             }
         }
 
-
-        // Request'i getir
-        public async Task<DeliveryRequest?> GetRequestAsync(int requestId)
-        {
-            return await _deliveryRequestRepository.GetByIdAsync(requestId);
-        }
-
-        // Request'i detay DTO olarak getir
+        // Tek request detay
         public async Task<DeliveryRequestDto?> GetRequestDetailAsync(int requestId)
         {
             var request = await _deliveryRequestRepository.GetByIdAsync(requestId);
-            if (request == null)
-                return null;
+            if (request == null) return null;
 
             var member = await _memberRepository.GetByIdAsync(request.MemberId);
             var list = await _memberMovieListRepository.GetByIdAsync(request.MemberMovieListId);
@@ -179,7 +173,7 @@ namespace Application.ServiceManager
                 {
                     Id = item.ID,
                     MovieId = item.MovieId,
-                    MovieTitle = movie?.Title, // film bulunamazsa null kalır
+                    MovieTitle = movie?.Title,
                     IsReturned = item.IsReturned,
                     IsDamaged = item.IsDamaged,
                     ReturnDate = item.ReturnDate
@@ -190,9 +184,7 @@ namespace Application.ServiceManager
             {
                 Id = request.ID,
                 MemberId = request.MemberId,
-                MemberFullName = member != null
-                    ? $"{member.FirstName} {member.LastName}"
-                    : string.Empty,
+                MemberFullName = member != null ? $"{member.FirstName} {member.LastName}" : string.Empty,
                 MemberMovieListId = request.MemberMovieListId,
                 ListName = list?.Name,
                 RequestedDate = request.RequestedDate,
@@ -202,48 +194,113 @@ namespace Application.ServiceManager
             };
         }
 
+        // Index için: tüm requestleri getir (detay DTO döner)
+        public async Task<List<DeliveryRequestDto>> GetAllRequestsAsync()
+        {
+            var requests = await _deliveryRequestRepository.GetAllAsync();
+            var result = new List<DeliveryRequestDto>();
 
-        // Request iptal et
+            foreach (var r in requests.OrderByDescending(x => x.ID))
+            {
+                var dto = await GetRequestDetailAsync(r.ID);
+                if (dto != null) result.Add(dto);
+            }
+
+            return result;
+        }
+
+        // Index için: status filtreli liste
+        public async Task<List<DeliveryRequestDto>> GetRequestsByStatusAsync(DeliveryStatus status)
+        {
+            var requests = await _deliveryRequestRepository.GetAllAsync(r => r.Status == status);
+            var result = new List<DeliveryRequestDto>();
+
+            foreach (var r in requests.OrderByDescending(x => x.ID))
+            {
+                var dto = await GetRequestDetailAsync(r.ID);
+                if (dto != null) result.Add(dto);
+            }
+
+            return result;
+        }
+
+        // Teslimat iptal (kopyaları geri açar)
         public async Task<bool> CancelRequestAsync(int requestId)
         {
             var request = await _deliveryRequestRepository.GetByIdAsync(requestId);
-            if (request == null)
+            if (request == null) return false;
+
+            if (request.Status != DeliveryStatus.Pending && request.Status != DeliveryStatus.Prepared)
                 return false;
 
-            request.Status = DeliveryStatus.Cancelled;   // Cancelled
+            if (!IsCancelAllowed(request.DeliveryDate))
+                return false;
+
+            if (request.Status == DeliveryStatus.Prepared)
+            {
+                var items = await _deliveryRequestItemRepository
+                    .GetAllAsync(i => i.DeliveryRequestId == request.ID);
+
+                foreach (var item in items)
+                {
+                    var copy = await _movieCopyRepository.GetByIdAsync(item.MovieCopyId);
+                    if (copy != null && !copy.IsDamaged)
+                    {
+                        copy.IsAvailable = true;
+                        await _movieCopyRepository.UpdateAsync(copy);
+                    }
+
+                    await _deliveryRequestItemRepository.DeleteAsync(item);
+                }
+            }
+
+            request.Status = DeliveryStatus.Cancelled;
             await _deliveryRequestRepository.UpdateAsync(request);
 
             return true;
         }
 
-        // Request tamamlandı olarak işaretle
+        // Teslim edildi + süreç kapandı (listeden düşürür)
         public async Task<bool> MarkDeliveredAsync(int requestId)
         {
             var request = await _deliveryRequestRepository.GetByIdAsync(requestId);
-            if (request == null)
+            if (request == null) return false;
+
+            if (request.Status != DeliveryStatus.Prepared)
                 return false;
+
+            var items = await _deliveryRequestItemRepository
+                .GetAllAsync(i => i.DeliveryRequestId == request.ID);
+
+            request.Status = DeliveryStatus.Delivered;
+            await _deliveryRequestRepository.UpdateAsync(request);
+
+            foreach (var item in items)
+            {
+                var listItem = await _memberMovieListItemRepository.GetByIdAsync(item.MemberMovieListItemId);
+                if (listItem != null)
+                    await _memberMovieListItemRepository.DeleteAsync(listItem);
+            }
 
             request.Status = DeliveryStatus.Completed;
             await _deliveryRequestRepository.UpdateAsync(request);
 
             return true;
         }
+
+        // Film iade
         public async Task<bool> ReturnDeliveryItemAsync(ReturnDeliveryItemDto dto)
         {
             var item = await _deliveryRequestItemRepository.GetByIdAsync(dto.DeliveryRequestItemId);
-            if (item == null)
-                return false;
+            if (item == null) return false;
 
-            if (item.IsReturned)
-                return true;
+            if (item.IsReturned) return true;
 
             item.IsReturned = true;
             item.IsDamaged = dto.IsDamaged;
             item.ReturnDate = DateTime.Now;
-
             await _deliveryRequestItemRepository.UpdateAsync(item);
 
-            // MovieCopy stok durumunu geri aç / bozuksa işaretle
             var copy = await _movieCopyRepository.GetByIdAsync(item.MovieCopyId);
             if (copy != null)
             {
@@ -252,7 +309,6 @@ namespace Application.ServiceManager
                 await _movieCopyRepository.UpdateAsync(copy);
             }
 
-            // Bozuksa DamagedMovie kaydı aç
             if (dto.IsDamaged)
             {
                 var damaged = new DamagedMovie
@@ -267,6 +323,5 @@ namespace Application.ServiceManager
 
             return true;
         }
-
     }
 }

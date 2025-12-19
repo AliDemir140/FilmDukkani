@@ -20,3 +20,29 @@ html {
 body {
   margin-bottom: 60px;
 }
+/* Navbar link hover */
+.navbar .nav-link {
+    border-radius: 10px;
+    transition: 0.15s ease-in-out;
+}
+
+    .navbar .nav-link:hover {
+        background: rgba(255,255,255,0.12);
+    }
+
+/* Sidebar menü hover */
+.dashboard-menu .list-group-item {
+    transition: 0.15s ease-in-out;
+}
+
+    .dashboard-menu .list-group-item:hover {
+        background: #f2f6ff;
+        transform: translateX(2px);
+    }
+
+    /* Sidebar aktif menü */
+    .dashboard-menu .list-group-item.active {
+        background: #0d6efd;
+        border-color: #0d6efd;
+        color: #fff;
+    }
