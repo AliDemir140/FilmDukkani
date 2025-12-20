@@ -1,12 +1,50 @@
-﻿@model dynamic
+﻿@using Application.DTOs.MovieDTOs
+@model MovieDto
 
-<div class="card h-100 shadow-sm">
-    <div class="card-body">
-        <h5 class="card-title">@Model?.Title</h5>
-        <p class="card-text text-muted">@Model?.Description</p>
+@{
+    var cover = !string.IsNullOrWhiteSpace(Model.CoverImageUrl)
+        ? Model.CoverImageUrl
+        : $"https://picsum.photos/400/600?random={Model.Id}";
+}
+
+<div class="card h-100 border-0 product-card">
+    <div class="ratio ratio-4x3 overflow-hidden rounded-top">
+        <img src="@cover"
+             alt="@Model.Title"
+             class="w-100 h-100"
+             style="object-fit:cover;" />
     </div>
 
-    <div class="card-footer bg-white border-0">
-        <a class="btn btn-sm btn-primary" href="#">Detay</a>
+    <div class="card-body">
+        <h6 class="card-title mb-1 text-truncate" title="@Model.Title">
+            @Model.Title
+        </h6>
+
+        <div class="small text-muted mb-2">
+            @Model.ReleaseYear
+            @if (!string.IsNullOrWhiteSpace(Model.CategoryName))
+            {
+                <span> • @Model.CategoryName</span>
+            }
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Description))
+        {
+            <p class="card-text small text-muted"
+               style="min-height:40px; max-height:40px; overflow:hidden;">
+                @Model.Description
+            </p>
+        }
+    </div>
+
+    <div class="card-footer bg-transparent border-0 pt-0">
+        <div class="d-grid">
+            <a class="btn btn-outline-dark"
+               asp-controller="Product"
+               asp-action="Details"
+               asp-route-id="@Model.Id">
+                Detay
+            </a>
+        </div>
     </div>
 </div>

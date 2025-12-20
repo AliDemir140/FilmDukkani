@@ -5,61 +5,52 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - FilmDukkani</title>
 
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
+
     <header>
-        @{
-            var area = ViewContext.RouteData.Values["area"]?.ToString() ?? "";
-            var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
-
-            string NavActive(string a, string c)
-            {
-                bool areaOk = string.Equals(a ?? "", area, StringComparison.OrdinalIgnoreCase);
-                bool ctrlOk = string.Equals(c ?? "", controller, StringComparison.OrdinalIgnoreCase);
-                return (areaOk && ctrlOk) ? "active" : "";
-            }
-        }
-
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+        <nav class="navbar navbar-expand-lg navbar-dark fd-navbar">
             <div class="container-fluid">
-                <a class="navbar-brand fw-semibold" asp-area="" asp-controller="Home" asp-action="Index">
-                    🎞️ FilmDukkani
+
+                <!-- Logo -->
+                <a class="navbar-brand fd-logo"
+                   asp-area="" asp-controller="Home" asp-action="Index">
+                    FilmDukkani
                 </a>
 
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
-                        aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                <button class="navbar-toggler" type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#mainNav">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
                 <div class="collapse navbar-collapse" id="mainNav">
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item">
-                            <a class="nav-link @NavActive("", "Home")"
-                               asp-area="" asp-controller="Home" asp-action="Index">
-                                🏠 Ana Sayfa
-                            </a>
-                        </li>
 
+                    <!-- Orta Menü -->
+                    <ul class="navbar-nav mx-auto fd-nav-center">
                         <li class="nav-item">
-                            <a class="nav-link @NavActive("DashBoard", "Home")"
-                               asp-area="DashBoard" asp-controller="Home" asp-action="Index">
-                                🧰 DashBoard
-                            </a>
+                            <a class="nav-link" asp-controller="Home" asp-action="Index">Ana Sayfa</a>
                         </li>
-
                         <li class="nav-item">
-                            <a class="nav-link @NavActive("", "Cart")"
-                               asp-area="" asp-controller="Cart" asp-action="Index">
-                                🛒 Sepet
-                            </a>
+                            <a class="nav-link" asp-controller="Product" asp-action="Index">Filmler</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="DashBoard" asp-controller="Home" asp-action="Index">DashBoard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Cart" asp-action="Index">Sepet</a>
                         </li>
                     </ul>
 
-                    @await Component.InvokeAsync("CartSummary")
+                    <!-- Sağ -->
+                    <div class="d-flex gap-2">
+                        <a class="btn btn-outline-light btn-sm">Giriş</a>
+                        <a class="btn btn-danger btn-sm">Kayıt Ol</a>
+                    </div>
+
                 </div>
             </div>
         </nav>
@@ -67,8 +58,8 @@
 
     <main class="container-fluid py-4">
         @{
-            var currentArea = ViewContext.RouteData.Values["area"]?.ToString();
-            bool isDashBoard = string.Equals(currentArea, "DashBoard", StringComparison.OrdinalIgnoreCase);
+            var area = ViewContext.RouteData.Values["area"]?.ToString();
+            bool isDashBoard = string.Equals(area, "DashBoard", StringComparison.OrdinalIgnoreCase);
         }
 
         @if (isDashBoard)
@@ -77,7 +68,6 @@
                 <div class="col-12 col-md-3 col-lg-2 mb-3">
                     <partial name="~/Views/Shared/_DashBoardSidebar.cshtml" />
                 </div>
-
                 <div class="col-12 col-md-9 col-lg-10">
                     @RenderBody()
                 </div>
@@ -91,16 +81,14 @@
         }
     </main>
 
-    <footer class="border-top footer text-muted py-3">
+    <footer class="footer text-muted py-3 border-top">
         <div class="container">
             &copy; @DateTime.Now.Year - FilmDukkani
         </div>
     </footer>
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
-
     @RenderSection("Scripts", required: false)
+
 </body>
 </html>

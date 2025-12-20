@@ -1,59 +1,52 @@
-html {
-  font-size: 14px;
-}
-
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
-}
-
 body {
-  margin-bottom: 60px;
-}
-/* Navbar link hover */
-.navbar .nav-link {
-    border-radius: 10px;
-    transition: 0.15s ease-in-out;
+    background: #0b0f14;
+    color: #e6e6e6;
 }
 
-    .navbar .nav-link:hover {
-        background: rgba(255,255,255,0.12);
-    }
-
-/* Sidebar menü hover */
-.dashboard-menu .list-group-item {
-    transition: 0.15s ease-in-out;
+/* Navbar */
+.fd-navbar {
+    background: rgba(0,0,0,.6);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,255,255,.08);
 }
 
-    .dashboard-menu .list-group-item:hover {
-        background: #f2f6ff;
-        transform: translateX(2px);
-    }
+.fd-logo {
+    font-weight: 800;
+    letter-spacing: .5px;
+    color: #ff2d2d !important;
+}
 
-    /* Sidebar aktif menü */
-    .dashboard-menu .list-group-item.active {
-        background: #0d6efd;
-        border-color: #0d6efd;
+.fd-nav-center .nav-link {
+    color: rgba(255,255,255,.85);
+    border-radius: .6rem;
+    padding: .5rem .9rem;
+    transition: .15s ease;
+}
+
+    .fd-nav-center .nav-link:hover {
+        background: rgba(255,45,45,.15);
         color: #fff;
     }
 
-.dashboard-card {
-    border-radius: 14px;
-    transition: 0.15s ease-in-out;
-    color: inherit;
+/* Kart */
+.product-card {
+    background: #0f141b;
+    color: #e6e6e6;
+    transition: .15s ease;
 }
 
-    .dashboard-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 .5rem 1rem rgba(0,0,0,.12);
+    .product-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 .8rem 1.6rem rgba(0,0,0,.35);
     }
+
+    .product-card .btn-outline-dark {
+        border-color: rgba(255,255,255,.25);
+        color: rgba(255,255,255,.9);
+    }
+
+        .product-card .btn-outline-dark:hover {
+            background: #ff2d2d;
+            border-color: #ff2d2d;
+            color: #fff;
+        }
