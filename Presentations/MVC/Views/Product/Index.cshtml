@@ -1,0 +1,45 @@
+﻿@using Application.DTOs.MovieDTOs
+@model List<MovieDto>
+
+@{
+    ViewData["Title"] = "Film Kataloğu";
+    var q = (string)(ViewBag.Query ?? "");
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h3 class="mb-0">Film Kataloğu</h3>
+</div>
+
+<form method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-12 col-md-4">
+        <label class="form-label">Kategori</label>
+        <select class="form-select" name="categoryId" asp-items="ViewBag.Categories">
+            <option value="">Hepsi</option>
+        </select>
+    </div>
+
+    <div class="col-12 col-md-6">
+        <label class="form-label">Arama</label>
+        <input class="form-control" type="text" name="q" value="@q" placeholder="Film adı..." />
+    </div>
+
+    <div class="col-12 col-md-2 d-grid">
+        <button class="btn btn-primary" type="submit">Filtrele</button>
+    </div>
+</form>
+
+@if (Model == null || !Model.Any())
+{
+    <div class="alert alert-warning">Film bulunamadı.</div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var m in Model)
+        {
+            <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
+                @await Html.PartialAsync("~/Views/Shared/_ProductCard.cshtml", m)
+            </div>
+        }
+    </div>
+}
