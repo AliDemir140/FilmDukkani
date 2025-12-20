@@ -18,18 +18,14 @@ namespace MVC.Controllers
         // /Product?categoryId=1&q=matrix
         public async Task<IActionResult> Index(int? categoryId, string? q)
         {
-            // Kategori dropdown
             var categories = await _categoryService.GetCategoriesAsync();
             ViewBag.Categories = new SelectList(categories, "Id", "CategoryName", categoryId);
 
-            // Filmleri al
             var movies = await _movieService.GetMoviesAsync();
 
-            // Kategori filtre
             if (categoryId.HasValue && categoryId.Value > 0)
                 movies = movies.Where(m => m.CategoryId == categoryId.Value).ToList();
 
-            // Arama filtre
             if (!string.IsNullOrWhiteSpace(q))
             {
                 var keyword = q.Trim().ToLower();
@@ -44,6 +40,16 @@ namespace MVC.Controllers
             ViewBag.SelectedCategoryId = categoryId;
 
             return View(movies);
+        }
+
+        // /Product/Details/5
+        public async Task<IActionResult> Details(int id)
+        {
+            var movie = await _movieService.GetMovieDetailAsync(id);
+            if (movie == null)
+                return NotFound();
+
+            return View(movie);
         }
     }
 }

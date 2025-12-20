@@ -1,0 +1,80 @@
+﻿@using Application.DTOs.MovieDTOs
+@model MovieDetailDto
+
+@{
+    ViewData["Title"] = "Film Detay";
+
+    var cover = !string.IsNullOrWhiteSpace(Model.CoverImageUrl)
+        ? Model.CoverImageUrl
+        : $"https://picsum.photos/900/600?random={Model.Id}";
+}
+
+<div class="row g-4">
+    <div class="col-12 col-lg-5">
+        <div class="card border-0 product-card">
+            <div class="ratio ratio-4x3 overflow-hidden rounded">
+                <img src="@cover"
+                     class="w-100 h-100"
+                     style="object-fit:cover;"
+                     alt="@Model.Title" />
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-7">
+        <h2 class="mb-1">@Model.Title</h2>
+
+        @if (!string.IsNullOrWhiteSpace(Model.OriginalTitle))
+        {
+            <div class="text-muted mb-2">@Model.OriginalTitle</div>
+        }
+
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <span class="badge bg-danger">@Model.ReleaseYear</span>
+
+            @if (!string.IsNullOrWhiteSpace(Model.CategoryName))
+            {
+                <span class="badge bg-secondary">@Model.CategoryName</span>
+            }
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Description))
+        {
+            <p class="text-muted">@Model.Description</p>
+        }
+
+        <div class="card border-0 product-card p-3">
+            <div class="row g-2">
+                <div class="col-12 col-md-4">
+                    <div class="small text-muted">Altyazı</div>
+                    <div>@(string.IsNullOrWhiteSpace(Model.SubtitleLanguages) ? "-" : Model.SubtitleLanguages)</div>
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <div class="small text-muted">Ses</div>
+                    <div>@(string.IsNullOrWhiteSpace(Model.AudioFeatures) ? "-" : Model.AudioFeatures)</div>
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <div class="small text-muted">Teknik</div>
+                    <div>@(string.IsNullOrWhiteSpace(Model.TechnicalDetails) ? "-" : Model.TechnicalDetails)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-3 flex-wrap">
+            <a class="btn btn-outline-light" asp-action="Index">Geri</a>
+
+            @if (!string.IsNullOrWhiteSpace(Model.TrailerUrl))
+            {
+                <a class="btn btn-danger" href="@Model.TrailerUrl" target="_blank">Fragman</a>
+            }
+
+            <!-- Sepet henüz yok -->
+            <button class="btn btn-outline-secondary" disabled
+                    title="Sepet özelliği bir sonraki aşamada eklenecek">
+                Sepete Ekle (Yakında)
+            </button>
+        </div>
+    </div>
+</div>
