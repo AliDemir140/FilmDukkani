@@ -1,7 +1,4 @@
-﻿// =======================================================
-// DOSYA: Application/ServiceManager/MovieServiceManager.cs
-// =======================================================
-using Application.DTOs.MovieDTOs;
+﻿using Application.DTOs.MovieDTOs;
 using Application.Repositories;
 using Domain.Entities;
 
