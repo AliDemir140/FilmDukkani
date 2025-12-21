@@ -1,0 +1,40 @@
+﻿@model List<MVC.Models.CartItem>
+
+@{
+    ViewData["Title"] = "Sepet";
+}
+
+<h3>Sepetim</h3>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-warning">Sepetiniz boş.</div>
+}
+else
+{
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Film</th>
+                <th>Yıl</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.MovieTitle</td>
+                    <td>@item.ReleaseYear</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-danger"
+                           asp-action="Remove"
+                           asp-route-id="@item.MovieId">
+                            Çıkar
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

@@ -5,7 +5,10 @@ var builder = WebApplication.CreateBuilder(args);
 // MVC
 builder.Services.AddControllersWithViews();
 
-// Onion Infrastructure servislerini kaydet (DbContext, Repo, ServiceManager vs.)
+// Session
+builder.Services.AddSession();
+
+// Onion Infrastructure servislerini kaydet
 DependencyResolver.RegisterServices(builder.Services, builder.Configuration);
 
 var app = builder.Build();
@@ -21,9 +24,12 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+// Session
+app.UseSession();
+
 app.UseAuthorization();
 
-// AREA route (Admin gibi)
+// AREA route
 app.MapControllerRoute(
     name: "areas",
     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
