@@ -82,3 +82,36 @@ body {
     .dashboard-light .badge {
         color: #fff;
     }
+
+/* Checkout & Success için özel koyu kart */
+.dark-card {
+    background-color: #0f141a;
+    color: #eaeaea;
+    border: 1px solid #2a2f36;
+}
+
+    .dark-card .card-header {
+        background-color: #151b22;
+        color: #ffffff;
+        border-bottom: 1px solid #2a2f36;
+    }
+
+/* Koyu tablo */
+.dark-table {
+    background-color: transparent;
+    color: #eaeaea;
+}
+
+    .dark-table thead th {
+        color: #ffffff;
+        border-bottom: 1px solid #2a2f36;
+    }
+
+    .dark-table tbody td {
+        color: #e0e0e0;
+        border-top: 1px solid #2a2f36;
+    }
+
+    .dark-table tbody tr:hover {
+        background-color: rgba(255, 255, 255, 0.04);
+    }
