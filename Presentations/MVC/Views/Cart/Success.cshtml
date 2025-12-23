@@ -1,14 +1,36 @@
-﻿@{
-    ViewData["Title"] = "İstek Alındı";
+﻿@model MVC.Models.CheckoutSuccessViewModel
+
+@{
+    ViewData["Title"] = "Başarılı";
 }
 
-<div class="text-center mt-5">
-    <h2 class="text-success">🎉 Teslimat İsteğiniz Alındı</h2>
-    <p class="text-muted">
-        Seçtiğiniz liste için teslimat isteği oluşturuldu.
+<div class="text-center py-5">
+    <i class="fa-solid fa-circle-check text-success fs-1 mb-3"></i>
+
+    <h3>Checkout Başarılı 🎉</h3>
+
+    <p class="text-muted mt-2">
+        Teslimat isteğiniz başarıyla oluşturuldu.
     </p>
 
-    <a asp-controller="Home" asp-action="Index" class="btn btn-danger mt-3">
-        Ana Sayfa
-    </a>
+    <div class="card mx-auto mt-4" style="max-width:420px;">
+        <div class="card-body">
+            <div><b>İstek No:</b> #@Model.DeliveryRequestId</div>
+            <div><b>Liste:</b> @Model.ListName</div>
+            <div><b>Teslimat Tarihi:</b> @Model.DeliveryDate.ToString("dd.MM.yyyy")</div>
+        </div>
+    </div>
+
+    <div class="mt-4 d-flex justify-content-center gap-2">
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
+            Ana Sayfa
+        </a>
+
+        <a asp-area="DashBoard"
+           asp-controller="DeliveryRequest"
+           asp-action="Index"
+           class="btn btn-danger">
+            Teslimatlarım
+        </a>
+    </div>
 </div>

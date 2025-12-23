@@ -12,12 +12,17 @@ namespace MVC.Controllers
         private readonly MovieServiceManager _movieService;
         private readonly DeliveryRequestServiceManager _deliveryRequestService;
 
-        public CartController(MovieServiceManager movieService, DeliveryRequestServiceManager deliveryRequestService)
+        public CartController(
+            MovieServiceManager movieService,
+            DeliveryRequestServiceManager deliveryRequestService)
         {
             _movieService = movieService;
             _deliveryRequestService = deliveryRequestService;
         }
 
+        // =========================
+        // CART INDEX
+        // =========================
         public IActionResult Index()
         {
             var cart = HttpContext.Session.GetObject<List<CartItem>>(CartKey)
@@ -26,6 +31,9 @@ namespace MVC.Controllers
             return View(cart);
         }
 
+        // =========================
+        // ADD TO CART
+        // =========================
         public async Task<IActionResult> Add(int id)
         {
             var movie = (await _movieService.GetMoviesAsync())
@@ -49,11 +57,12 @@ namespace MVC.Controllers
             }
 
             HttpContext.Session.SetObject(CartKey, cart);
-
-            return RedirectToAction("Index", "Cart");
+            return RedirectToAction("Index");
         }
 
-
+        // =========================
+        // REMOVE FROM CART
+        // =========================
         public IActionResult Remove(int id)
         {
             var cart = HttpContext.Session.GetObject<List<CartItem>>(CartKey)
@@ -67,7 +76,10 @@ namespace MVC.Controllers
             return RedirectToAction("Index");
         }
 
-        public async Task<IActionResult> Checkout()
+        // =========================
+        // CHECKOUT (GET)
+        // =========================
+        public IActionResult Checkout()
         {
             var cart = HttpContext.Session.GetObject<List<CartItem>>(CartKey)
                        ?? new List<CartItem>();
@@ -75,26 +87,26 @@ namespace MVC.Controllers
             if (!cart.Any())
                 return RedirectToAction("Index");
 
-            int memberId = 1; // şimdilik sabit
-
             var lists = new List<SelectListItem>
-    {
-        new SelectListItem { Value = "1", Text = "Ana Liste" },
-        new SelectListItem { Value = "2", Text = "Yedek Liste" }
-    };
+            {
+                new SelectListItem { Value = "1", Text = "Ana Liste" },
+                new SelectListItem { Value = "2", Text = "Yedek Liste" }
+            };
 
             var model = new CheckoutViewModel
             {
                 CartItems = cart,
                 MemberLists = lists,
-                SelectedListId = int.Parse(lists.First().Value), //
+                SelectedListId = int.Parse(lists.First().Value),
                 DeliveryDate = DateTime.Today.AddDays(2)
             };
 
             return View(model);
         }
 
-
+        // =========================
+        // CHECKOUT (POST)
+        // =========================
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Checkout(CheckoutViewModel model)
@@ -105,26 +117,46 @@ namespace MVC.Controllers
             if (!cart.Any())
                 return RedirectToAction("Index");
 
-            if (model.SelectedListId <= 0)
-            {
-                ModelState.AddModelError("", "Film listesi seçilmelidir.");
+            if (!ModelState.IsValid)
                 return View(model);
-            }
 
             int memberId = 1; // auth gelene kadar sabit
 
-            await _deliveryRequestService.CreateDeliveryRequestAsync(
+            var requestId = await _deliveryRequestService.CreateDeliveryRequestAsync(
                 memberId,
                 model.SelectedListId,
                 model.DeliveryDate
             );
 
-            //
+            if (requestId == 0)
+            {
+                ModelState.AddModelError("", "Teslimat isteği oluşturulamadı.");
+                return View(model);
+            }
+
+            // Sepeti temizle
             HttpContext.Session.Remove(CartKey);
 
-            return RedirectToAction("Success");
+            return RedirectToAction("Success", new { id = requestId });
         }
 
+        // =========================
+        // SUCCESS PAGE
+        // =========================
+        public async Task<IActionResult> Success(int id)
+        {
+            var request = await _deliveryRequestService.GetRequestDetailAsync(id);
+            if (request == null)
+                return NotFound();
 
+            var model = new CheckoutSuccessViewModel
+            {
+                DeliveryRequestId = request.Id,
+                DeliveryDate = request.DeliveryDate,
+                ListName = request.ListName
+            };
+
+            return View(model);
+        }
     }
 }
