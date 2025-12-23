@@ -15,13 +15,15 @@
         <nav class="navbar navbar-expand-lg navbar-dark fd-navbar">
             <div class="container-fluid">
 
-                <!-- Logo -->
+                <!-- LOGO -->
                 <a class="navbar-brand fd-logo"
-                   asp-area="" asp-controller="Home" asp-action="Index">
+                   asp-controller="Home"
+                   asp-action="Index">
                     FilmDukkani
                 </a>
 
-                <button class="navbar-toggler" type="button"
+                <button class="navbar-toggler"
+                        type="button"
                         data-bs-toggle="collapse"
                         data-bs-target="#mainNav">
                     <span class="navbar-toggler-icon"></span>
@@ -29,33 +31,72 @@
 
                 <div class="collapse navbar-collapse" id="mainNav">
 
-                    <!-- Orta Menü -->
+                    <!-- ORTA MENÜ -->
                     <ul class="navbar-nav mx-auto fd-nav-center">
                         <li class="nav-item">
-                            <a class="nav-link" asp-controller="Home" asp-action="Index">Ana Sayfa</a>
+                            <a class="nav-link"
+                               asp-controller="Home"
+                               asp-action="Index">
+                                Ana Sayfa
+                            </a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Product" asp-action="Index">Filmler</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-area="DashBoard" asp-controller="Home" asp-action="Index">DashBoard</a>
-                        </li>
+
                         <li class="nav-item">
                             <a class="nav-link"
-                               asp-area=""
+                               asp-controller="Product"
+                               asp-action="Index">
+                                Filmler
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link"
+                               asp-area="DashBoard"
+                               asp-controller="Home"
+                               asp-action="Index">
+                                Dashboard
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link"
                                asp-controller="Cart"
                                asp-action="Index">
                                 Sepet
                             </a>
-
-
                         </li>
                     </ul>
 
-                    <!-- Sağ -->
-                    <div class="d-flex gap-2">
-                        <a class="btn btn-outline-light btn-sm">Giriş</a>
-                        <a class="btn btn-danger btn-sm">Kayıt Ol</a>
+                    <!-- SAĞ TARAF (AUTH) -->
+                    <div class="d-flex gap-2 align-items-center">
+
+                        @if (User.Identity != null && User.Identity.IsAuthenticated)
+                        {
+                            <span class="text-light small me-2">
+                                @User.Identity.Name
+                            </span>
+
+                            <a class="btn btn-outline-light btn-sm"
+                               asp-controller="Auth"
+                               asp-action="Logout">
+                                Çıkış Yap
+                            </a>
+                        }
+                        else
+                        {
+                            <a class="btn btn-outline-light btn-sm"
+                               asp-controller="Auth"
+                               asp-action="Login">
+                                Giriş Yap
+                            </a>
+
+                            <a class="btn btn-danger btn-sm"
+                               asp-controller="Auth"
+                               asp-action="Register">
+                                Kayıt Ol
+                            </a>
+                        }
+
                     </div>
 
                 </div>
@@ -75,6 +116,7 @@
                 <div class="col-12 col-md-3 col-lg-2 mb-3">
                     <partial name="~/Views/Shared/_DashBoardSidebar.cshtml" />
                 </div>
+
                 <div class="col-12 col-md-9 col-lg-10">
                     @RenderBody()
                 </div>
