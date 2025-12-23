@@ -1,8 +1,9 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using MVC.Extensions;
+using MVC.Services.Abstractions;
 
-namespace MVC.Services
+namespace MVC.Services.Implementations
 {
     public class MemberContext : IMemberContext
     {

@@ -1,8 +1,7 @@
-﻿using System.Net.Http;
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using Application.DTOs.UserDTOs;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
+using MVC.Constants;
 
 namespace MVC.Controllers
 {
@@ -19,14 +18,12 @@ namespace MVC.Controllers
             _configuration = configuration;
         }
 
-        // LOGIN SAYFASI
         [HttpGet]
         public IActionResult Login()
         {
             return View();
         }
 
-        // LOGIN POST
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginRequestDTO model)
@@ -35,8 +32,8 @@ namespace MVC.Controllers
                 return View(model);
 
             var client = _httpClientFactory.CreateClient();
-
             var apiBaseUrl = _configuration["ApiSettings:BaseUrl"];
+
             var response = await client.PostAsJsonAsync(
                 $"{apiBaseUrl}/api/auth/login",
                 model
@@ -48,8 +45,8 @@ namespace MVC.Controllers
                 return View(model);
             }
 
-            var loginResponse = await response.Content
-                .ReadFromJsonAsync<LoginResponseDTO>();
+            var loginResponse =
+                await response.Content.ReadFromJsonAsync<LoginResponseDTO>();
 
             if (loginResponse == null || string.IsNullOrEmpty(loginResponse.Token))
             {
@@ -57,18 +54,16 @@ namespace MVC.Controllers
                 return View(model);
             }
 
-            // JWT TOKEN SESSION'A YAZ
-            HttpContext.Session.SetString("JWT", loginResponse.Token);
-            HttpContext.Session.SetString("UserName", loginResponse.UserName);
+            HttpContext.Session.SetString(SessionKeys.JwtToken, loginResponse.Token);
+            HttpContext.Session.SetString(SessionKeys.UserName, loginResponse.UserName);
 
             return RedirectToAction("Index", "Home");
         }
 
-        // LOGOUT
         public IActionResult Logout()
         {
-            HttpContext.Session.Remove("JWT");
-            HttpContext.Session.Remove("UserName");
+            HttpContext.Session.Remove(SessionKeys.JwtToken);
+            HttpContext.Session.Remove(SessionKeys.UserName);
 
             return RedirectToAction("Index", "Home");
         }

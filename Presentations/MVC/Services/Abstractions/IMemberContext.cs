@@ -1,4 +1,4 @@
-﻿namespace MVC.Services
+﻿namespace MVC.Services.Abstractions
 {
     public interface IMemberContext
     {

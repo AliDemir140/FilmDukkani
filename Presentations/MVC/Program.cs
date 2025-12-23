@@ -1,5 +1,6 @@
 using Infrastructure.DependencyResolvers;
-using MVC.Services;
+using MVC.Services.Abstractions;
+using MVC.Services.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
 
