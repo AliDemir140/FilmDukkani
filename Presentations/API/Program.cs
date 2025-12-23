@@ -2,13 +2,35 @@
 using Infrastructure.Persistence;
 using Infrastructure.Persistence.SeedData;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // 🔹 Onion Infrastructure servislerini kaydet
 DependencyResolver.RegisterServices(builder.Services, builder.Configuration);
 
-// Add services to the container.
+// 🔐 JWT Authentication
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])
+            )
+        };
+    });
+
+// Add services
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -23,16 +45,11 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<FilmDukkaniDbContext>();
-
-        // Migration'ları otomatik uygula
         context.Database.Migrate();
 
         var seeder = services.GetRequiredService<DatabaseSeeder>();
-
-        // 1) Her ortamda sabit referans datayı yükle
         await seeder.SeedReferenceDataAsync();
 
-        // 2) Sadece development ortamında fake data yükle
         if (app.Environment.IsDevelopment())
         {
             await seeder.SeedDevDataAsync();
@@ -44,7 +61,7 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// Configure the HTTP request pipeline.
+// Swagger
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -53,8 +70,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
 app.Run();
