@@ -7,7 +7,7 @@ namespace MVC.Areas.DashBoard.Controllers
 {
     [Area("DashBoard")]
     [RequireLogin]
-    public class HomeController : Controller
+    public class HomeController : DashBoardBaseController
     {
         private readonly MovieServiceManager _movieService;
         private readonly CategoryServiceManager _categoryService;
