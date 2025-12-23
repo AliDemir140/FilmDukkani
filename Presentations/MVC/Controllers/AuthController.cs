@@ -1,53 +1,76 @@
-﻿using Application.DTOs.UserDTOs;
+﻿using System.Net.Http;
+using System.Net.Http.Json;
+using Application.DTOs.UserDTOs;
 using Microsoft.AspNetCore.Mvc;
-using MVC.Services;
+using Microsoft.Extensions.Configuration;
 
 namespace MVC.Controllers
 {
     public class AuthController : Controller
     {
-        private readonly AuthApiService _authApiService;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IConfiguration _configuration;
 
-        public AuthController(AuthApiService authApiService)
+        public AuthController(
+            IHttpClientFactory httpClientFactory,
+            IConfiguration configuration)
         {
-            _authApiService = authApiService;
+            _httpClientFactory = httpClientFactory;
+            _configuration = configuration;
         }
 
+        // LOGIN SAYFASI
         [HttpGet]
         public IActionResult Login()
         {
             return View();
         }
 
+        // LOGIN POST
         [HttpPost]
-        public async Task<IActionResult> Login(LoginRequestDTO dto)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Login(LoginRequestDTO model)
         {
             if (!ModelState.IsValid)
-                return View(dto);
+                return View(model);
 
-            var result = await _authApiService.LoginAsync(dto);
+            var client = _httpClientFactory.CreateClient();
 
-            if (result == null)
+            var apiBaseUrl = _configuration["ApiSettings:BaseUrl"];
+            var response = await client.PostAsJsonAsync(
+                $"{apiBaseUrl}/api/auth/login",
+                model
+            );
+
+            if (!response.IsSuccessStatusCode)
             {
-                ModelState.AddModelError("", "Kullanıcı adı veya şifre hatalı");
-                return View(dto);
+                ModelState.AddModelError("", "Kullanıcı adı veya şifre hatalı.");
+                return View(model);
             }
 
-            Response.Cookies.Append("access_token", result.Token, new CookieOptions
+            var loginResponse = await response.Content
+                .ReadFromJsonAsync<LoginResponseDTO>();
+
+            if (loginResponse == null || string.IsNullOrEmpty(loginResponse.Token))
             {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.Lax,
-                Expires = DateTimeOffset.UtcNow.AddMinutes(60)
-            });
+                ModelState.AddModelError("", "Giriş sırasında hata oluştu.");
+                return View(model);
+            }
+
+            // JWT TOKEN SESSION'A YAZ
+            HttpContext.Session.SetString("JWT", loginResponse.Token);
+            HttpContext.Session.SetString("UserName", loginResponse.UserName);
 
             return RedirectToAction("Index", "Home");
         }
 
+        // LOGOUT
         public IActionResult Logout()
         {
-            Response.Cookies.Delete("access_token");
-            return RedirectToAction("Login");
+            HttpContext.Session.Remove("JWT");
+            HttpContext.Session.Remove("UserName");
+
+            return RedirectToAction("Index", "Home");
         }
     }
 }

@@ -6,13 +6,18 @@ var builder = WebApplication.CreateBuilder(args);
 // MVC
 builder.Services.AddControllersWithViews();
 
-// Session
-builder.Services.AddSession();
+// SESSION (JWT burada tutulacak)
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromHours(2);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
-// HTTP CLIENT (JWT için ZORUNLU)
+// HTTP CLIENT (API ile konuþmak için)
 builder.Services.AddHttpClient<AuthApiService>();
 
-// Onion Infrastructure servislerini kaydet
+// Onion Infrastructure servisleri
 DependencyResolver.RegisterServices(builder.Services, builder.Configuration);
 
 var app = builder.Build();
@@ -28,9 +33,10 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// Session
+// SESSION MIDDLEWARE (Authentication YOK)
 app.UseSession();
 
+// Authorization þimdilik boþ, dursun
 app.UseAuthorization();
 
 // AREA route
