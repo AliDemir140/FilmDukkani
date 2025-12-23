@@ -1,10 +1,12 @@
 ﻿using Application.ServiceManager;
 using Microsoft.AspNetCore.Mvc;
 using MVC.Areas.DashBoard.Models;
+using MVC.Filters;
 
 namespace MVC.Areas.DashBoard.Controllers
 {
     [Area("DashBoard")]
+    [RequireLogin]
     public class HomeController : Controller
     {
         private readonly MovieServiceManager _movieService;

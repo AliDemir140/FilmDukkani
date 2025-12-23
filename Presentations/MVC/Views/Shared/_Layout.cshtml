@@ -1,8 +1,8 @@
 ﻿@using Microsoft.AspNetCore.Http
 
 @{
-    var token = Context.Session.GetString("JWT_TOKEN");
-    var userName = Context.Session.GetString("USER_NAME");
+    var token = Context.Session.GetString("JWT");
+    var userName = Context.Session.GetString("UserName");
 }
 
 <!DOCTYPE html>
@@ -43,13 +43,16 @@
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Home" asp-action="Index">Ana Sayfa</a>
                         </li>
+
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Product" asp-action="Index">Filmler</a>
                         </li>
+
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Cart" asp-action="Index">Sepet</a>
                         </li>
 
+                        @* SADECE LOGIN OLANLAR *@
                         @if (!string.IsNullOrEmpty(token))
                         {
                             <li class="nav-item">
