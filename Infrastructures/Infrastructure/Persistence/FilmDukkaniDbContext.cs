@@ -1,29 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Domain.Entities;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Domain.Entities;
 
 namespace Infrastructure.Persistence
 {
-    public class FilmDukkaniDbContext : DbContext
+    public class FilmDukkaniDbContext
+        : IdentityDbContext<IdentityUser>
     {
-        public FilmDukkaniDbContext (DbContextOptions<FilmDukkaniDbContext> options) : base(options) 
-        { 
-                    
+        public FilmDukkaniDbContext(DbContextOptions<FilmDukkaniDbContext> options)
+            : base(options)
+        {
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Tüm configuration sınıflarını otomatik uygular
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(FilmDukkaniDbContext).Assembly);
         }
 
-        //DBSET
+        // DBSET
         public DbSet<Movie> Movies { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Member> Members { get; set; }
@@ -41,9 +38,5 @@ namespace Infrastructure.Persistence
         public DbSet<Shelf> Shelves { get; set; }
         public DbSet<MovieCopy> MovieCopies { get; set; }
         public DbSet<DamagedMovie> DamagedMovies { get; set; }
-
-
-
-
     }
 }

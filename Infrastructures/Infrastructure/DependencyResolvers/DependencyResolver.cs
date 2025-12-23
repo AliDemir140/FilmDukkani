@@ -3,6 +3,7 @@ using Application.ServiceManager;
 using Infrastructure.Persistence;
 using Infrastructure.Persistence.SeedData;
 using Infrastructure.Repositories;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -17,10 +18,22 @@ namespace Infrastructure.DependencyResolvers
             services.AddDbContext<FilmDukkaniDbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
+            // IDENTITY
+            services.AddIdentity<IdentityUser, IdentityRole>(options =>
+            {
+                options.Password.RequireDigit = true;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = true;
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequiredLength = 6;
+            })
+            .AddEntityFrameworkStores<FilmDukkaniDbContext>()
+            .AddDefaultTokenProviders();
+
             // GENERIC REPOSITORY
             services.AddScoped(typeof(IRepository<>), typeof(BaseRepository<>));
 
-            //SEED DATA
+            // SEED DATA
             services.AddScoped<DatabaseSeeder>();
 
             // REPOSITORIES
@@ -39,7 +52,6 @@ namespace Infrastructure.DependencyResolvers
             services.AddScoped<IMovieCopyRepository, MovieCopyRepository>();
             services.AddScoped<IDamagedMovieRepository, DamagedMovieRepository>();
 
-
             // SERVICE MANAGERS
             services.AddScoped<CategoryServiceManager>();
             services.AddScoped<MovieServiceManager>();
@@ -57,7 +69,8 @@ namespace Infrastructure.DependencyResolvers
             services.AddScoped<WarehouseServiceManager>();
             services.AddScoped<AccountingReportServiceManager>();
 
-
+            // AUTH / USER
+            services.AddScoped<UserServiceManager>();
         }
     }
 }
