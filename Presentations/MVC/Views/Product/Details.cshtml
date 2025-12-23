@@ -67,14 +67,18 @@
 
             @if (!string.IsNullOrWhiteSpace(Model.TrailerUrl))
             {
-                <a class="btn btn-danger" href="@Model.TrailerUrl" target="_blank">Fragman</a>
+                <a class="btn btn-danger" href="@Model.TrailerUrl" target="_blank">
+                    Fragman
+                </a>
             }
 
-            <!-- Sepet henüz yok -->
-            <button class="btn btn-outline-secondary" disabled
-                    title="Sepet özelliği bir sonraki aşamada eklenecek">
-                Sepete Ekle (Yakında)
-            </button>
+
+            <a class="btn btn-outline-light"
+               asp-controller="Cart"
+               asp-action="Add"
+               asp-route-id="@Model.Id">
+                Sepete Ekle
+            </a>
         </div>
     </div>
 </div>

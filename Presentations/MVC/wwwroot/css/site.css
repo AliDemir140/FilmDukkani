@@ -3,7 +3,6 @@ body {
     color: #e6e6e6;
 }
 
-/* Navbar */
 .fd-navbar {
     background: rgba(0,0,0,.6);
     backdrop-filter: blur(10px);
@@ -28,7 +27,6 @@ body {
         color: #fff;
     }
 
-/* Kart */
 .product-card {
     background: #0f141b;
     color: #e6e6e6;
@@ -50,3 +48,37 @@ body {
             border-color: #ff2d2d;
             color: #fff;
         }
+
+.table {
+    color: #e5e5e5;
+}
+
+    .table thead th {
+        color: #ffffff;
+        border-color: #333;
+    }
+
+    .table tbody td {
+        color: #dcdcdc;
+    }
+
+.table-hover tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+
+/* Dashboard - Son Teslimat Ýstekleri özel düzeltme */
+.dashboard-light {
+    background-color: #ffffff;
+    color: #212529;
+}
+
+    .dashboard-light table,
+    .dashboard-light td,
+    .dashboard-light th {
+        color: #212529 !important;
+    }
+
+    .dashboard-light .badge {
+        color: #fff;
+    }
