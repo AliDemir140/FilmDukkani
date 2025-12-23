@@ -1,41 +1,76 @@
 ﻿@model MVC.Models.CheckoutViewModel
 
 @{
-    ViewData["Title"] = "Checkout";
+    ViewData["Title"] = "Teslimat Onayı";
 }
 
-<h3 class="mb-3">Checkout</h3>
+<h2 class="mb-4">Teslimat Onayı</h2>
 
-<form method="post" asp-action="CheckoutConfirm">
+<form asp-action="Checkout" method="post">
+    @Html.AntiForgeryToken()
 
-    <div class="card product-card p-3 mb-3">
-        <h6>Sepetteki Filmler</h6>
-
-        <ul class="list-group list-group-flush">
-            @foreach (var item in Model.CartItems)
-            {
-                <li class="list-group-item bg-transparent text-light d-flex justify-content-between">
-                    <span>@item.MovieTitle (@item.ReleaseYear)</span>
-                </li>
-            }
-        </ul>
+    <div class="card dark-card mb-4">
+        <div class="card-header">
+            <b>Sepetteki Filmler</b>
+        </div>
+        <div class="card-body p-0">
+            <table class="table dark-table mb-0">
+                <thead>
+                    <tr>
+                        <th>Film</th>
+                        <th style="width:120px;">Yıl</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.CartItems)
+                    {
+                        <tr>
+                            <td>@item.MovieTitle</td>
+                            <td>@item.ReleaseYear</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <div class="card product-card p-3 mb-3">
-        <div class="mb-3">
-            <label class="form-label">Liste Seç</label>
-            <select asp-for="SelectedListId" asp-items="Model.MemberLists" class="form-select"></select>
+    <div class="card dark-card mb-4">
+        <div class="card-header">
+            <b>Teslimat Bilgileri</b>
         </div>
+        <div class="card-body">
 
-        <div class="mb-3">
-            <label class="form-label">Teslimat Tarihi</label>
-            <input asp-for="DeliveryDate" type="date" class="form-control" />
+            <div class="mb-3">
+                <label class="form-label">Film Listesi</label>
+                <select asp-for="SelectedListId"
+                        asp-items="Model.MemberLists"
+                        class="form-select">
+                </select>
+                <span asp-validation-for="SelectedListId" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Teslimat Tarihi</label>
+                <input asp-for="DeliveryDate"
+                       type="date"
+                       class="form-control" />
+                <span asp-validation-for="DeliveryDate" class="text-danger"></span>
+            </div>
+
         </div>
     </div>
 
     <div class="d-flex gap-2">
-        <a asp-action="Index" class="btn btn-outline-light">Geri</a>
-        <button type="submit" class="btn btn-danger">Onayla</button>
-    </div>
+        <a asp-action="Index" class="btn btn-outline-secondary">
+            Sepete Geri Dön
+        </a>
 
+        <button type="submit" class="btn btn-danger">
+            Teslimatı Onayla
+        </button>
+    </div>
 </form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
