@@ -1,4 +1,5 @@
 using Infrastructure.DependencyResolvers;
+using MVC.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +8,9 @@ builder.Services.AddControllersWithViews();
 
 // Session
 builder.Services.AddSession();
+
+// HTTP CLIENT (JWT için ZORUNLU)
+builder.Services.AddHttpClient<AuthApiService>();
 
 // Onion Infrastructure servislerini kaydet
 DependencyResolver.RegisterServices(builder.Services, builder.Configuration);

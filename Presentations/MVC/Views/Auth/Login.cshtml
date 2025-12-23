@@ -1,0 +1,19 @@
+﻿@model Application.DTOs.UserDTOs.LoginRequestDTO
+
+<h3>Giriş Yap</h3>
+
+<form method="post">
+    <div class="mb-3">
+        <label>Kullanıcı Adı / Email</label>
+        <input asp-for="UserNameOrEmail" class="form-control" />
+        <span asp-validation-for="UserNameOrEmail" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label>Şifre</label>
+        <input asp-for="Password" type="password" class="form-control" />
+        <span asp-validation-for="Password" class="text-danger"></span>
+    </div>
+
+    <button class="btn btn-danger">Giriş Yap</button>
+</form>

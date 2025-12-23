@@ -17,13 +17,31 @@ namespace API.Controllers
             _userServiceManager = userServiceManager;
         }
 
-        [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequestDTO model)
+        // REGISTER
+
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterUserDTO dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var result = await _userServiceManager.LoginAsync(model);
+            var result = await _userServiceManager.RegisterAsync(dto);
+
+            if (!result.Success)
+                return BadRequest(new { message = result.Message });
+
+            return Ok(new { message = result.Message });
+        }
+
+        // LOGIN
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequestDTO dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _userServiceManager.LoginAsync(dto);
 
             if (!result.Success)
                 return Unauthorized(new { message = result.Message });
@@ -31,18 +49,19 @@ namespace API.Controllers
             return Ok(result.Data);
         }
 
-        [HttpGet("validate-token")]
+        // TOKEN TEST (Authorize)
+
+        [HttpGet("me")]
         [Authorize]
-        public IActionResult ValidateToken()
+        public IActionResult Me()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var email = User.Identity?.Name;
+            var userName = User.Identity?.Name;
 
             return Ok(new
             {
-                message = "Token geçerli",
                 userId,
-                email
+                userName
             });
         }
     }

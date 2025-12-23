@@ -5,7 +5,7 @@ namespace Application.DTOs.UserDTOs
     public class LoginRequestDTO
     {
         [Required]
-        public string Email { get; set; }
+        public string UserNameOrEmail { get; set; }
 
         [Required]
         public string Password { get; set; }
