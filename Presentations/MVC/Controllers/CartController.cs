@@ -49,8 +49,10 @@ namespace MVC.Controllers
             }
 
             HttpContext.Session.SetObject(CartKey, cart);
-            return RedirectToAction("Index");
+
+            return RedirectToAction("Index", "Cart");
         }
+
 
         public IActionResult Remove(int id)
         {
