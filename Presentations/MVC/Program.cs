@@ -1,23 +1,22 @@
 using Infrastructure.DependencyResolvers;
-using MVC.Services;
+using MVC.Services.Abstractions;
+using MVC.Services.Implementations;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // MVC
 builder.Services.AddControllersWithViews();
 
-// SESSION (JWT burada tutulacak)
-builder.Services.AddSession(options =>
-{
-    options.IdleTimeout = TimeSpan.FromHours(2);
-    options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
-});
+// Session
+builder.Services.AddSession();
 
-// HTTP CLIENT (API ile konuþmak için)
-builder.Services.AddHttpClient<AuthApiService>();
+// HttpContext
+builder.Services.AddHttpContextAccessor();
 
-// Onion Infrastructure servisleri
+// Member Context
+builder.Services.AddScoped<IMemberContext, MemberContext>();
+
+// Onion Infrastructure
 DependencyResolver.RegisterServices(builder.Services, builder.Configuration);
 
 var app = builder.Build();
@@ -33,10 +32,9 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// SESSION MIDDLEWARE (Authentication YOK)
+// Session
 app.UseSession();
 
-// Authorization þimdilik boþ, dursun
 app.UseAuthorization();
 
 // AREA route
