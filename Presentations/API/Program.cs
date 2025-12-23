@@ -8,10 +8,10 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 🔹 Onion Infrastructure servislerini kaydet
+// Onion Infrastructure servislerini kaydet
 DependencyResolver.RegisterServices(builder.Services, builder.Configuration);
 
-// 🔐 JWT Authentication
+// JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -37,7 +37,7 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// 🔹 Migration + Seed
+// Migration + Seed
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
