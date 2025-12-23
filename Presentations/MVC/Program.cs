@@ -1,22 +1,26 @@
-using Infrastructure.DependencyResolvers;
-using MVC.Services.Abstractions;
-using MVC.Services.Implementations;
+﻿using Infrastructure.DependencyResolvers;
+using MVC.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // MVC
 builder.Services.AddControllersWithViews();
 
-// Session
-builder.Services.AddSession();
+// HTTP CLIENT
+builder.Services.AddHttpClient();
 
-// HttpContext
-builder.Services.AddHttpContextAccessor();
+// SESSION
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(60);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
-// Member Context
-builder.Services.AddScoped<IMemberContext, MemberContext>();
+// FILTER
+builder.Services.AddScoped<RequireLoginAttribute>();
 
-// Onion Infrastructure
+// Onion
 DependencyResolver.RegisterServices(builder.Services, builder.Configuration);
 
 var app = builder.Build();
@@ -32,17 +36,17 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// Session
+// SESSION
 app.UseSession();
 
 app.UseAuthorization();
 
-// AREA route
+// AREA ROUTE
 app.MapControllerRoute(
     name: "areas",
     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
-// Default route
+// DEFAULT ROUTE
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
