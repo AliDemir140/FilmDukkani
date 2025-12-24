@@ -1,10 +1,12 @@
 ﻿using Application.DTOs.MemberDTOs;
 using Application.ServiceManager;
 using Microsoft.AspNetCore.Mvc;
+using MVC.Filters;
 
 namespace MVC.Areas.DashBoard.Controllers
 {
     [Area("DashBoard")]
+    [RequireAdmin]
     public class MemberController : Controller
     {
         private readonly MemberServiceManager _memberService;

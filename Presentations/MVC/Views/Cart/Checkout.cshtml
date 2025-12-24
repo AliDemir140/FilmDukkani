@@ -40,12 +40,30 @@
         </div>
         <div class="card-body">
 
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger">
+                    @TempData["Error"]
+                </div>
+            }
+
             <div class="mb-3">
                 <label class="form-label">Film Listesi</label>
-                <select asp-for="SelectedListId"
-                        asp-items="Model.MemberLists"
-                        class="form-select">
-                </select>
+
+                <div class="d-flex gap-2">
+                    <select asp-for="SelectedListId"
+                            asp-items="Model.MemberLists"
+                            class="form-select">
+                    </select>
+
+                    <a asp-controller="MyLists"
+                       asp-action="Create"
+                       class="btn btn-outline-danger"
+                       style="white-space:nowrap;">
+                        + Yeni Liste
+                    </a>
+                </div>
+
                 <span asp-validation-for="SelectedListId" class="text-danger"></span>
             </div>
 

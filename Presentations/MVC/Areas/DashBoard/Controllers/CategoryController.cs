@@ -1,10 +1,12 @@
 ﻿using Application.DTOs.CategoryDTOs;
 using Application.ServiceManager;
 using Microsoft.AspNetCore.Mvc;
+using MVC.Filters;
 
 namespace MVC.Areas.DashBoard.Controllers
 {
     [Area("DashBoard")]
+    [RequireAdmin]
     public class CategoryController : Controller
     {
         private readonly CategoryServiceManager _categoryService;

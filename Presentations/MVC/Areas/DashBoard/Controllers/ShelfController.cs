@@ -1,10 +1,12 @@
 ﻿using Application.DTOs.ShelfDTOs;
 using Application.ServiceManager;
 using Microsoft.AspNetCore.Mvc;
+using MVC.Filters;
 
 namespace MVC.Areas.DashBoard.Controllers
 {
     [Area("DashBoard")]
+    [RequireAdmin]
     public class ShelfController : Controller
     {
         private readonly ShelfServiceManager _shelfService;
