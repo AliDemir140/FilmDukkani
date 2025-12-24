@@ -1,0 +1,28 @@
+﻿@model Application.DTOs.MemberMovieListDTOs.CreateMemberMovieListDto
+
+@{
+    ViewData["Title"] = "Yeni Liste";
+}
+
+<h2 class="mb-4">Yeni Liste Oluştur</h2>
+
+<form asp-action="Create" method="post">
+    @Html.AntiForgeryToken()
+
+    <div class="mb-3">
+        <label class="form-label">Liste Adı</label>
+        <input asp-for="Name" class="form-control" placeholder="Örn: Favorilerim" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-danger">Kaydet</button>
+    <a asp-action="Index" class="btn btn-outline-secondary ms-2">Geri</a>
+
+    <div class="text-danger mt-3">
+        @Html.ValidationSummary()
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

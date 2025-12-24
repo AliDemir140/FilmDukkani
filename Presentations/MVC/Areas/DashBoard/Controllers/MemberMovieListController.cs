@@ -2,10 +2,12 @@
 using Application.ServiceManager;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using MVC.Filters;
 
 namespace MVC.Areas.DashBoard.Controllers
 {
     [Area("DashBoard")]
+    [RequireAdmin]
     public class MemberMovieListController : Controller
     {
         private readonly MemberMovieListServiceManager _listService;

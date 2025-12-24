@@ -33,17 +33,18 @@
     </div>
 
     <div class="mt-4 d-flex justify-content-center gap-2">
-        <a asp-controller="Home"
+        <a asp-area=""
+           asp-controller="Home"
            asp-action="Index"
            class="btn btn-outline-secondary">
             Ana Sayfa
         </a>
 
-        <a asp-area="DashBoard"
-           asp-controller="DeliveryRequest"
+        <a asp-area=""
+           asp-controller="MyDeliveryRequests"
            asp-action="Index"
            class="btn btn-danger">
-            Teslimatlarım
+            Siparişlerim
         </a>
     </div>
 </div>

@@ -1,0 +1,42 @@
+﻿@model List<Application.DTOs.MemberMovieListDTOs.MemberMovieListDto>
+
+@{
+    ViewData["Title"] = "Listelerim";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Listelerim</h2>
+
+    <a class="btn btn-danger"
+       asp-controller="MyLists"
+       asp-action="Create">
+        + Yeni Liste
+    </a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        Henüz bir listen yok. “Yeni Liste” ile oluşturabilirsin.
+    </div>
+}
+else
+{
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th style="width:80px">#</th>
+                <th>Liste Adı</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var l in Model)
+            {
+                <tr>
+                    <td>@l.Id</td>
+                    <td>@l.Name</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

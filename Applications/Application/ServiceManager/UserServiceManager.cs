@@ -1,5 +1,8 @@
 ﻿using Application.Abstractions;
 using Application.DTOs.UserDTOs;
+using Application.Repositories;
+using Domain.Entities;
+using Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -15,17 +18,20 @@ namespace Application.ServiceManager
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _configuration;
+        private readonly IMemberRepository _memberRepository;
 
         public UserServiceManager(
             UserManager<IdentityUser> userManager,
             SignInManager<IdentityUser> signInManager,
             RoleManager<IdentityRole> roleManager,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IMemberRepository memberRepository)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
             _configuration = configuration;
+            _memberRepository = memberRepository;
         }
 
         // REGISTER
@@ -47,11 +53,25 @@ namespace Application.ServiceManager
             if (!result.Succeeded)
                 return (false, string.Join(", ", result.Errors.Select(e => e.Description)));
 
-            // DEFAULT ROLE = User
+            // DEFAULT ROLE
             if (!await _roleManager.RoleExistsAsync("User"))
                 await _roleManager.CreateAsync(new IdentityRole("User"));
 
             await _userManager.AddToRoleAsync(user, "User");
+
+            // MEMBER OLUŞTUR
+            var member = new Member
+            {
+                FirstName = dto.UserName,
+                LastName = dto.UserName,
+                Email = dto.Email,
+                IdentityUserId = user.Id,
+                MembershipPlanId = 1, // default plan
+                MembershipStartDate = DateTime.Today,
+                Status = MemberStatus.Active
+            };
+
+            await _memberRepository.AddAsync(member);
 
             return (true, "Kullanıcı başarıyla oluşturuldu.");
         }
@@ -75,7 +95,6 @@ namespace Application.ServiceManager
             if (!signInResult.Succeeded)
                 return (false, "Şifre hatalı.", null);
 
-            // ROLE OKUMA
             var roles = await _userManager.GetRolesAsync(user);
             var role = roles.FirstOrDefault() ?? "User";
 
@@ -92,7 +111,6 @@ namespace Application.ServiceManager
             return (true, "Giriş başarılı.", response);
         }
 
-
         // JWT
         private string GenerateToken(IdentityUser user, string role)
         {
@@ -108,12 +126,12 @@ namespace Application.ServiceManager
             );
 
             var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.NameIdentifier, user.Id),
-            new Claim(ClaimTypes.Name, user.UserName ?? ""),
-            new Claim(ClaimTypes.Email, user.Email ?? ""),
-            new Claim(ClaimTypes.Role, role)
-        };
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(ClaimTypes.Name, user.UserName ?? ""),
+                new Claim(ClaimTypes.Email, user.Email ?? ""),
+                new Claim(ClaimTypes.Role, role)
+            };
 
             var token = new JwtSecurityToken(
                 issuer: jwtSection["Issuer"],
@@ -125,6 +143,5 @@ namespace Application.ServiceManager
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
-
     }
 }

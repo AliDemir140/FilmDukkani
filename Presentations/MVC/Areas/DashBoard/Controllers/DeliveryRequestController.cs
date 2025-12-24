@@ -2,10 +2,12 @@
 using Application.ServiceManager;
 using Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
+using MVC.Filters;
 
 namespace MVC.Areas.DashBoard.Controllers
 {
     [Area("DashBoard")]
+    [RequireAdmin]
     public class DeliveryRequestController : Controller
     {
         private readonly DeliveryRequestServiceManager _deliveryService;

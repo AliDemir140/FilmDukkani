@@ -1,10 +1,12 @@
 ﻿using Application.DTOs.MembershipPlanDTOs;
 using Application.ServiceManager;
 using Microsoft.AspNetCore.Mvc;
+using MVC.Filters;
 
 namespace MVC.Areas.DashBoard.Controllers
 {
     [Area("DashBoard")]
+    [RequireAdmin]
     public class MembershipPlanController : Controller
     {
         private readonly MembershipPlanServiceManager _planService;

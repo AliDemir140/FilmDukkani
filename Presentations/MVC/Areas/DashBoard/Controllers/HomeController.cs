@@ -6,7 +6,7 @@ using MVC.Filters;
 namespace MVC.Areas.DashBoard.Controllers
 {
     [Area("DashBoard")]
-    [RequireLogin]
+    [RequireAdmin]
     public class HomeController : DashBoardBaseController
     {
         private readonly MovieServiceManager _movieService;

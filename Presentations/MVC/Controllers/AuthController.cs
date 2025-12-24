@@ -10,9 +10,7 @@ namespace MVC.Controllers
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _configuration;
 
-        public AuthController(
-            IHttpClientFactory httpClientFactory,
-            IConfiguration configuration)
+        public AuthController(IHttpClientFactory httpClientFactory, IConfiguration configuration)
         {
             _httpClientFactory = httpClientFactory;
             _configuration = configuration;
@@ -34,10 +32,8 @@ namespace MVC.Controllers
             var client = _httpClientFactory.CreateClient();
             var apiBaseUrl = _configuration["ApiSettings:BaseUrl"];
 
-            var response = await client.PostAsJsonAsync(
-                $"{apiBaseUrl}/api/auth/login",
-                model
-            );
+            // Login isteği
+            var response = await client.PostAsJsonAsync($"{apiBaseUrl}/api/auth/login", model);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -45,8 +41,7 @@ namespace MVC.Controllers
                 return View(model);
             }
 
-            var loginResponse =
-                await response.Content.ReadFromJsonAsync<LoginResponseDTO>();
+            var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponseDTO>();
 
             if (loginResponse == null || string.IsNullOrEmpty(loginResponse.Token))
             {
@@ -54,9 +49,34 @@ namespace MVC.Controllers
                 return View(model);
             }
 
+            // Session kayıtları
             HttpContext.Session.SetString(SessionKeys.JwtToken, loginResponse.Token);
+            HttpContext.Session.SetString(SessionKeys.UserId, loginResponse.UserId);
             HttpContext.Session.SetString(SessionKeys.UserName, loginResponse.UserName);
             HttpContext.Session.SetString(SessionKeys.Role, loginResponse.Role);
+
+            var memberRes = await client.GetAsync($"{apiBaseUrl}/api/members/by-user/{loginResponse.UserId}");
+
+            if (!memberRes.IsSuccessStatusCode)
+            {
+                HttpContext.Session.Clear();
+
+                ModelState.AddModelError("",
+                    "Üye kaydı bulunamadı (Member). Lütfen yeni kayıt olun veya admin ile iletişime geçin.");
+
+                return View(model);
+            }
+
+            var memberId = await memberRes.Content.ReadFromJsonAsync<int>();
+
+            if (memberId <= 0)
+            {
+                HttpContext.Session.Clear();
+                ModelState.AddModelError("", "MemberId okunamadı. Lütfen tekrar deneyin.");
+                return View(model);
+            }
+
+            HttpContext.Session.SetInt32(SessionKeys.MemberId, memberId);
 
             return RedirectToAction("Index", "Home");
         }
@@ -77,10 +97,7 @@ namespace MVC.Controllers
             var client = _httpClientFactory.CreateClient();
             var apiBaseUrl = _configuration["ApiSettings:BaseUrl"];
 
-            var response = await client.PostAsJsonAsync(
-                $"{apiBaseUrl}/api/auth/register",
-                model
-            );
+            var response = await client.PostAsJsonAsync($"{apiBaseUrl}/api/auth/register", model);
 
             if (!response.IsSuccessStatusCode)
             {

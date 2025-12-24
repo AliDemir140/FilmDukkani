@@ -4,6 +4,7 @@ using MVC.Filters;
 namespace MVC.Areas.DashBoard.Controllers
 {
     [Area("DashBoard")]
+    [RequireAdmin]
     [ServiceFilter(typeof(RequireLoginAttribute))]
     public abstract class DashBoardBaseController : Controller
     {
