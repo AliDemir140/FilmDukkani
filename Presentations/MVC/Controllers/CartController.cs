@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using MVC.Extensions;
+using MVC.Filters;
 using MVC.Models;
 
 namespace MVC.Controllers
@@ -20,9 +21,6 @@ namespace MVC.Controllers
             _deliveryRequestService = deliveryRequestService;
         }
 
-        // =========================
-        // CART INDEX
-        // =========================
         public IActionResult Index()
         {
             var cart = HttpContext.Session.GetObject<List<CartItem>>(CartKey)
@@ -31,9 +29,6 @@ namespace MVC.Controllers
             return View(cart);
         }
 
-        // =========================
-        // ADD TO CART
-        // =========================
         public async Task<IActionResult> Add(int id)
         {
             var movie = (await _movieService.GetMoviesAsync())
@@ -60,9 +55,6 @@ namespace MVC.Controllers
             return RedirectToAction("Index");
         }
 
-        // =========================
-        // REMOVE FROM CART
-        // =========================
         public IActionResult Remove(int id)
         {
             var cart = HttpContext.Session.GetObject<List<CartItem>>(CartKey)
@@ -76,9 +68,8 @@ namespace MVC.Controllers
             return RedirectToAction("Index");
         }
 
-        // =========================
-        // CHECKOUT (GET)
-        // =========================
+        // LOGIN ZORUNLU
+        [RequireLogin]
         public IActionResult Checkout()
         {
             var cart = HttpContext.Session.GetObject<List<CartItem>>(CartKey)
@@ -97,18 +88,16 @@ namespace MVC.Controllers
             {
                 CartItems = cart,
                 MemberLists = lists,
-                SelectedListId = int.Parse(lists.First().Value),
+                SelectedListId = 1,
                 DeliveryDate = DateTime.Today.AddDays(2)
             };
 
             return View(model);
         }
 
-        // =========================
-        // CHECKOUT (POST)
-        // =========================
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequireLogin]
         public async Task<IActionResult> Checkout(CheckoutViewModel model)
         {
             var cart = HttpContext.Session.GetObject<List<CartItem>>(CartKey)
@@ -120,7 +109,7 @@ namespace MVC.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            int memberId = 1; // auth gelene kadar sabit
+            int memberId = 1;
 
             var requestId = await _deliveryRequestService.CreateDeliveryRequestAsync(
                 memberId,
@@ -134,15 +123,10 @@ namespace MVC.Controllers
                 return View(model);
             }
 
-            // Sepeti temizle
             HttpContext.Session.Remove(CartKey);
-
             return RedirectToAction("Success", new { id = requestId });
         }
 
-        // =========================
-        // SUCCESS PAGE
-        // =========================
         public async Task<IActionResult> Success(int id)
         {
             var request = await _deliveryRequestService.GetRequestDetailAsync(id);

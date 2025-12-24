@@ -1,8 +1,18 @@
-﻿@using Microsoft.AspNetCore.Http
+﻿@using MVC.Extensions
+@using MVC.Models
+@using MVC.Constants
+@using Microsoft.AspNetCore.Http
 
 @{
-    var token = Context.Session.GetString("JWT");
-    var userName = Context.Session.GetString("UserName");
+    var cart = Context.Session.GetObject<List<CartItem>>(SessionKeys.Cart);
+    var cartCount = cart?.Count ?? 0;
+
+    var token = Context.Session.GetString(SessionKeys.JwtToken);
+    var userName = Context.Session.GetString(SessionKeys.UserName);
+    var role = Context.Session.GetString(SessionKeys.Role);
+
+    var area = ViewContext.RouteData.Values["area"]?.ToString();
+    bool isDashBoard = string.Equals(area, "DashBoard", StringComparison.OrdinalIgnoreCase);
 }
 
 <!DOCTYPE html>
@@ -12,24 +22,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - FilmDukkani</title>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet"
+          href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet"
+          href="~/css/site.css"
+          asp-append-version="true" />
 </head>
 <body>
 
     <header>
-        <nav class="navbar navbar-expand-lg navbar-dark fd-navbar">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
             <div class="container-fluid">
 
-                <!-- LOGO -->
-                <a class="navbar-brand fd-logo"
+                <!-- SOL: LOGO -->
+                <a class="navbar-brand"
                    asp-controller="Home"
                    asp-action="Index">
                     FilmDukkani
                 </a>
 
-                <button class="navbar-toggler" type="button"
+                <button class="navbar-toggler"
+                        type="button"
                         data-bs-toggle="collapse"
                         data-bs-target="#mainNav">
                     <span class="navbar-toggler-icon"></span>
@@ -37,34 +52,53 @@
 
                 <div class="collapse navbar-collapse" id="mainNav">
 
-                    <!-- ORTA MENÜ -->
-                    <ul class="navbar-nav mx-auto fd-nav-center">
+                    <!-- ORTA: MENÜLER (TAM ORTA) -->
+                    <ul class="navbar-nav mx-auto">
+
                         <li class="nav-item">
-                            <a class="nav-link" asp-controller="Home" asp-action="Index">Ana Sayfa</a>
+                            <a class="nav-link"
+                               asp-controller="Home"
+                               asp-action="Index">
+                                Ana Sayfa
+                            </a>
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link" asp-controller="Product" asp-action="Index">Filmler</a>
+                            <a class="nav-link"
+                               asp-controller="Product"
+                               asp-action="Index">
+                                Filmler
+                            </a>
                         </li>
 
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Cart" asp-action="Index">Sepet</a>
+                        <li class="nav-item position-relative">
+                            <a class="nav-link"
+                               asp-controller="Cart"
+                               asp-action="Index">
+                                Sepet
+                                @if (cartCount > 0)
+                                {
+                                    <span class="badge bg-danger ms-1">
+                                        @cartCount
+                                    </span>
+                                }
+                            </a>
                         </li>
 
-                        @if (!string.IsNullOrEmpty(token))
+                        @if (!string.IsNullOrEmpty(token) && role == "Admin")
                         {
                             <li class="nav-item">
                                 <a class="nav-link"
                                    asp-area="DashBoard"
                                    asp-controller="Home"
                                    asp-action="Index">
-                                    DashBoard
+                                    Dashboard
                                 </a>
                             </li>
                         }
                     </ul>
 
-                    <!-- SAĞ -->
+                    <!-- SAĞ: AUTH -->
                     <div class="d-flex align-items-center gap-2">
                         @if (string.IsNullOrEmpty(token))
                         {
@@ -100,7 +134,23 @@
     </header>
 
     <main class="container-fluid py-4">
-        @RenderBody()
+        @if (isDashBoard)
+        {
+            <div class="row">
+                <div class="col-12 col-md-3 col-lg-2 mb-3">
+                    <partial name="~/Views/Shared/_DashBoardSidebar.cshtml" />
+                </div>
+                <div class="col-12 col-md-9 col-lg-10">
+                    @RenderBody()
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="container">
+                @RenderBody()
+            </div>
+        }
     </main>
 
     <footer class="footer text-muted py-3 border-top">

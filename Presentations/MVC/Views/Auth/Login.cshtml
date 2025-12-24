@@ -1,6 +1,15 @@
 ﻿@model Application.DTOs.UserDTOs.LoginRequestDTO
 
 <h3>Giriş Yap</h3>
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        {
+            <div>@error.ErrorMessage</div>
+        }
+    </div>
+}
 
 <form method="post">
     <div class="mb-3">

@@ -1,7 +1,7 @@
 ﻿@{
-    var area = ViewContext.RouteData.Values["area"]?.ToString() ?? "";
     var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
-    string Active(string c) => controller.Equals(c, StringComparison.OrdinalIgnoreCase) ? "active" : "";
+    string Active(string c) =>
+        controller.Equals(c, StringComparison.OrdinalIgnoreCase) ? "active" : "";
 }
 
 <div class="card shadow-sm rounded-3">
@@ -10,49 +10,50 @@
     </div>
 
     <div class="list-group list-group-flush dashboard-menu">
+
         <a class="list-group-item list-group-item-action @Active("Home")"
            asp-area="DashBoard" asp-controller="Home" asp-action="Index">
-            <span class="me-2">🏠</span> DashBoard Anasayfa
+            🏠 DashBoard Anasayfa
         </a>
 
         <a class="list-group-item list-group-item-action @Active("Category")"
            asp-area="DashBoard" asp-controller="Category" asp-action="Index">
-            <span class="me-2">🗂️</span> Kategoriler
+            🗂️ Kategoriler
         </a>
 
         <a class="list-group-item list-group-item-action @Active("Movie")"
            asp-area="DashBoard" asp-controller="Movie" asp-action="Index">
-            <span class="me-2">🎬</span> Filmler
+            🎬 Filmler
         </a>
 
         <a class="list-group-item list-group-item-action @Active("MembershipPlan")"
            asp-area="DashBoard" asp-controller="MembershipPlan" asp-action="Index">
-            <span class="me-2">💳</span> Üyelik Planları
+            💳 Üyelik Planları
         </a>
 
         <a class="list-group-item list-group-item-action @Active("Member")"
            asp-area="DashBoard" asp-controller="Member" asp-action="Index">
-            <span class="me-2">👤</span> Üyeler
+            👤 Üyeler
         </a>
 
         <a class="list-group-item list-group-item-action @Active("Shelf")"
            asp-area="DashBoard" asp-controller="Shelf" asp-action="Index">
-            <span class="me-2">🧱</span> Raf Yönetimi (Shelf)
+            🧱 Raf Yönetimi
         </a>
 
         <a class="list-group-item list-group-item-action @Active("MovieCopy")"
            asp-area="DashBoard" asp-controller="MovieCopy" asp-action="Index">
-            <span class="me-2">📀</span> Film Kopyaları
+            📀 Film Kopyaları
         </a>
 
         <a class="list-group-item list-group-item-action @Active("DeliveryRequest")"
            asp-area="DashBoard" asp-controller="DeliveryRequest" asp-action="Index">
-            <span class="me-2">🚚</span> Teslimatlar
+            🚚 Teslimatlar
         </a>
 
-        <a class="list-group-item list-group-item-action"
+        <a class="list-group-item list-group-item-action @Active("MemberMovieList")"
            asp-area="DashBoard" asp-controller="MemberMovieList" asp-action="Index">
-            Üye Film Listeleri
+            📋 Üye Film Listeleri
         </a>
 
     </div>

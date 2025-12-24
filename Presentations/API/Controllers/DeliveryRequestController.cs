@@ -88,5 +88,18 @@ namespace API.Controllers
 
             return Ok("İade işlemi tamamlandı.");
         }
+
+        // Kullanıcının kendi teslimatları
+        [HttpGet("member/{memberId}")]
+        public async Task<IActionResult> GetByMember(int memberId)
+        {
+            var requests = await _deliveryService.GetRequestsByMemberAsync(memberId);
+
+            if (requests == null || !requests.Any())
+                return Ok(new List<object>());
+
+            return Ok(requests);
+        }
+
     }
 }
