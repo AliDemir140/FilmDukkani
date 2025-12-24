@@ -368,5 +368,10 @@ namespace Application.ServiceManager
 
             return true;
         }
+        public async Task<List<DeliveryRequestListDto>> GetRequestsByMemberAsync(int memberId)
+        {
+            return await _deliveryRequestRepository.GetByMemberAsync(memberId);
+        }
+
     }
 }

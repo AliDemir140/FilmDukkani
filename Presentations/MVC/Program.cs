@@ -17,11 +17,11 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-// FILTER
-builder.Services.AddScoped<RequireLoginAttribute>();
-
 // Onion
 DependencyResolver.RegisterServices(builder.Services, builder.Configuration);
+
+// FILTER
+builder.Services.AddScoped<RequireLoginAttribute>();
 
 var app = builder.Build();
 
@@ -41,12 +41,12 @@ app.UseSession();
 
 app.UseAuthorization();
 
-// AREA ROUTE
+// AREA
 app.MapControllerRoute(
     name: "areas",
     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
-// DEFAULT ROUTE
+// DEFAULT
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

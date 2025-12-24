@@ -13,28 +13,28 @@ namespace Application.ServiceManager
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
         private readonly IConfiguration _configuration;
 
         public UserServiceManager(
             UserManager<IdentityUser> userManager,
             SignInManager<IdentityUser> signInManager,
+            RoleManager<IdentityRole> roleManager,
             IConfiguration configuration)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _roleManager = roleManager;
             _configuration = configuration;
         }
 
         // REGISTER
-
         public async Task<(bool Success, string Message)> RegisterAsync(RegisterUserDTO dto)
         {
-            var existingUserByEmail = await _userManager.FindByEmailAsync(dto.Email);
-            if (existingUserByEmail != null)
+            if (await _userManager.FindByEmailAsync(dto.Email) != null)
                 return (false, "Bu email adresi zaten kullanılıyor.");
 
-            var existingUserByUsername = await _userManager.FindByNameAsync(dto.UserName);
-            if (existingUserByUsername != null)
+            if (await _userManager.FindByNameAsync(dto.UserName) != null)
                 return (false, "Bu kullanıcı adı zaten kullanılıyor.");
 
             var user = new IdentityUser
@@ -44,19 +44,19 @@ namespace Application.ServiceManager
             };
 
             var result = await _userManager.CreateAsync(user, dto.Password);
-
             if (!result.Succeeded)
-            {
-                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                return (false, errors);
-            }
+                return (false, string.Join(", ", result.Errors.Select(e => e.Description)));
+
+            // DEFAULT ROLE = User
+            if (!await _roleManager.RoleExistsAsync("User"))
+                await _roleManager.CreateAsync(new IdentityRole("User"));
+
+            await _userManager.AddToRoleAsync(user, "User");
 
             return (true, "Kullanıcı başarıyla oluşturuldu.");
         }
 
-
         // LOGIN
-
         public async Task<(bool Success, string Message, LoginResponseDTO Data)> LoginAsync(LoginRequestDTO dto)
         {
             IdentityUser? user =
@@ -75,22 +75,26 @@ namespace Application.ServiceManager
             if (!signInResult.Succeeded)
                 return (false, "Şifre hatalı.", null);
 
-            var token = GenerateToken(user);
+            // ROLE OKUMA
+            var roles = await _userManager.GetRolesAsync(user);
+            var role = roles.FirstOrDefault() ?? "User";
+
+            var token = GenerateToken(user, role);
 
             var response = new LoginResponseDTO
             {
                 Token = token,
                 UserId = user.Id,
-                UserName = user.UserName
+                UserName = user.UserName,
+                Role = role
             };
 
             return (true, "Giriş başarılı.", response);
         }
 
 
-        // JWT TOKEN
-
-        private string GenerateToken(IdentityUser user)
+        // JWT
+        private string GenerateToken(IdentityUser user, string role)
         {
             var jwtSection = _configuration.GetSection("Jwt");
 
@@ -104,11 +108,12 @@ namespace Application.ServiceManager
             );
 
             var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(ClaimTypes.Name, user.UserName ?? ""),
-                new Claim(ClaimTypes.Email, user.Email ?? "")
-            };
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id),
+            new Claim(ClaimTypes.Name, user.UserName ?? ""),
+            new Claim(ClaimTypes.Email, user.Email ?? ""),
+            new Claim(ClaimTypes.Role, role)
+        };
 
             var token = new JwtSecurityToken(
                 issuer: jwtSection["Issuer"],
@@ -120,5 +125,6 @@ namespace Application.ServiceManager
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
     }
 }

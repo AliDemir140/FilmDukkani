@@ -38,13 +38,20 @@ else
         </tbody>
     </table>
 
-    @if (Model.Any())
+    @if (string.IsNullOrEmpty(Context.Session.GetString("JWT")))
     {
-        <div class="mt-3 text-end">
-            <a asp-action="Checkout" class="btn btn-danger">
-                Sepeti Onayla
-            </a>
-        </div>
+        <a asp-controller="Auth"
+           asp-action="Login"
+           class="btn btn-warning">
+            Sipariş vermek için giriş yapın
+        </a>
     }
+    else
+    {
+        <a asp-action="Checkout" class="btn btn-danger">
+            Sepeti Onayla
+        </a>
+    }
+
 
 }
