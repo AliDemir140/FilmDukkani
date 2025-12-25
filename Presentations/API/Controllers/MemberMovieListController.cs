@@ -79,5 +79,21 @@ namespace API.Controllers
 
             return Ok("Film listeye eklendi.");
         }
+
+        // Liste item sil
+        // DELETE: api/MemberMovieList/delete-item?id=123
+        [HttpDelete("delete-item")]
+        public async Task<IActionResult> DeleteItem(int id)
+        {
+            if (id <= 0)
+                return BadRequest("id zorunludur.");
+
+            var ok = await _service.DeleteItemAsync(id);
+
+            if (!ok)
+                return NotFound("Liste elemanı bulunamadı.");
+
+            return Ok("Liste elemanı silindi.");
+        }
     }
 }

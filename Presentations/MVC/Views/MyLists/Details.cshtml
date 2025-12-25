@@ -3,7 +3,7 @@
 @{
     ViewData["Title"] = "Liste Detayı";
     var listName = ViewBag.ListName as string ?? "Liste";
-    var listId = ViewBag.ListId;
+    int listId = ViewBag.ListId != null ? (int)ViewBag.ListId : 0;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -16,9 +16,16 @@
     </a>
 </div>
 
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success mb-3">
+        @TempData["Success"]
+    </div>
+}
+
 @if (TempData["Error"] != null)
 {
-    <div class="alert alert-danger">
+    <div class="alert alert-danger mb-3">
         @TempData["Error"]
     </div>
 }
@@ -45,6 +52,7 @@ else
                         <th style="width:80px;">#</th>
                         <th>Film</th>
                         <th style="width:180px;">Eklenme Tarihi</th>
+                        <th style="width:140px;" class="text-end">İşlem</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -54,6 +62,20 @@ else
                             <td>@item.Priority</td>
                             <td>@(item.MovieTitle ?? "-")</td>
                             <td>@item.AddedDate.ToString("dd.MM.yyyy HH:mm")</td>
+                            <td class="text-end">
+                                <form asp-controller="MyLists"
+                                      asp-action="DeleteItem"
+                                      method="post"
+                                      class="d-inline"
+                                      onsubmit="return confirm('Bu filmi listeden silmek istiyor musun?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="itemId" value="@item.Id" />
+                                    <input type="hidden" name="listId" value="@listId" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="fa-solid fa-trash"></i> Sil
+                                    </button>
+                                </form>
+                            </td>
                         </tr>
                     }
                 </tbody>
