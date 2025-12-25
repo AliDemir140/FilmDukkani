@@ -94,7 +94,6 @@ namespace MVC.Controllers
                     return View(dto);
                 }
 
-                // Eğer Checkout’tan geldiyse oraya dön, değilse MyLists/Index
                 if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
                     return Redirect(returnUrl);
 
@@ -122,21 +121,18 @@ namespace MVC.Controllers
             {
                 var client = _httpClientFactory.CreateClient();
 
-                // 1) Üyenin listelerini çekip bu listenin ona ait olup olmadığını kontrol et
                 var lists = await client.GetFromJsonAsync<List<MemberMovieListDto>>(
                     $"{ApiBaseUrl}/api/MemberMovieList/lists-by-member?memberId={memberId.Value}"
                 ) ?? new List<MemberMovieListDto>();
 
                 var selectedList = lists.FirstOrDefault(x => x.Id == id);
                 if (selectedList == null)
-                    return Forbid(); // başka birinin listesini açamasın
+                    return Forbid();
 
-                // 2) Liste itemlarını çek
                 var items = await client.GetFromJsonAsync<List<MemberMovieListItemDto>>(
                     $"{ApiBaseUrl}/api/MemberMovieList/list-items?listId={id}"
                 ) ?? new List<MemberMovieListItemDto>();
 
-                // ViewBag ile basit başlık/isim gösterebilirsin
                 ViewBag.ListName = selectedList.Name;
                 ViewBag.ListId = selectedList.Id;
 
@@ -146,6 +142,50 @@ namespace MVC.Controllers
             {
                 TempData["Error"] = "Liste detayları alınamadı. API çalışıyor mu kontrol et.";
                 return RedirectToAction(nameof(Index));
+            }
+        }
+
+        // POST: /MyLists/DeleteItem
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteItem(int itemId, int listId)
+        {
+            var memberId = HttpContext.Session.GetInt32(SessionKeys.MemberId);
+            if (memberId == null)
+                return RedirectToAction("Login", "Auth");
+
+            if (itemId <= 0 || listId <= 0)
+            {
+                TempData["Error"] = "Geçersiz istek.";
+                return RedirectToAction(nameof(Details), new { id = listId });
+            }
+
+            if (string.IsNullOrWhiteSpace(ApiBaseUrl))
+            {
+                TempData["Error"] = "API BaseUrl bulunamadı.";
+                return RedirectToAction(nameof(Details), new { id = listId });
+            }
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient();
+
+                // API: /api/MemberMovieList/delete-item?id=123
+                var res = await client.DeleteAsync($"{ApiBaseUrl}/api/MemberMovieList/delete-item?id={itemId}");
+
+                if (!res.IsSuccessStatusCode)
+                {
+                    TempData["Error"] = "Film listeden silinemedi.";
+                    return RedirectToAction(nameof(Details), new { id = listId });
+                }
+
+                TempData["Success"] = "Film listeden silindi.";
+                return RedirectToAction(nameof(Details), new { id = listId });
+            }
+            catch
+            {
+                TempData["Error"] = "Silme işlemi sırasında hata oluştu. API çalışıyor mu kontrol et.";
+                return RedirectToAction(nameof(Details), new { id = listId });
             }
         }
     }
