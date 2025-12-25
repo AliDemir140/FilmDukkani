@@ -15,8 +15,6 @@ namespace API.Controllers
             _service = service;
         }
 
-        // Üyeye ait listeleri getir
-        // GET: api/MemberMovieList/lists-by-member?memberId=1
         [HttpGet("lists-by-member")]
         public async Task<IActionResult> GetListsByMember(int memberId)
         {
@@ -27,8 +25,6 @@ namespace API.Controllers
             return Ok(lists);
         }
 
-        // Yeni liste oluştur
-        // POST: api/MemberMovieList/create-list
         [HttpPost("create-list")]
         public async Task<IActionResult> CreateList([FromBody] CreateMemberMovieListDto dto)
         {
@@ -42,8 +38,6 @@ namespace API.Controllers
             return Ok(new { Message = "Liste oluşturuldu.", ListId = listId });
         }
 
-        // Bir listenin item'larını getir
-        // GET: api/MemberMovieList/list-items?listId=1
         [HttpGet("list-items")]
         public async Task<IActionResult> GetListItems(int listId)
         {
@@ -54,8 +48,6 @@ namespace API.Controllers
             return Ok(items);
         }
 
-        // Listeye film ekle
-        // POST: api/MemberMovieList/add-item
         [HttpPost("add-item")]
         public async Task<IActionResult> AddItem([FromBody] CreateMemberMovieListItemDto dto)
         {
@@ -68,7 +60,6 @@ namespace API.Controllers
             if (dto.MovieId <= 0)
                 return BadRequest("MovieId zorunludur.");
 
-            // Priority UI'den gelmeyebilir, yine de >= 1 olsun
             if (dto.Priority <= 0)
                 dto.Priority = 1;
 
@@ -80,8 +71,6 @@ namespace API.Controllers
             return Ok("Film listeye eklendi.");
         }
 
-        // Liste item sil
-        // DELETE: api/MemberMovieList/delete-item?id=123
         [HttpDelete("delete-item")]
         public async Task<IActionResult> DeleteItem(int id)
         {
@@ -94,6 +83,26 @@ namespace API.Controllers
                 return NotFound("Liste elemanı bulunamadı.");
 
             return Ok("Liste elemanı silindi.");
+        }
+
+        // ✅ move-item (↑ ↓)
+        // POST: api/MemberMovieList/move-item?listId=1&itemId=10&direction=up
+        [HttpPost("move-item")]
+        public async Task<IActionResult> MoveItem(int listId, int itemId, string direction)
+        {
+            if (listId <= 0 || itemId <= 0)
+                return BadRequest("listId ve itemId zorunludur.");
+
+            direction = (direction ?? "").Trim().ToLower();
+            if (direction != "up" && direction != "down")
+                return BadRequest("direction sadece 'up' veya 'down' olabilir.");
+
+            var ok = await _service.MoveItemAsync(listId, itemId, direction);
+
+            if (!ok)
+                return BadRequest("Öncelik güncellenemedi.");
+
+            return Ok("Öncelik güncellendi.");
         }
     }
 }

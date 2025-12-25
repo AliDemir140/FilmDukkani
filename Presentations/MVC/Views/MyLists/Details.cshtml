@@ -4,6 +4,11 @@
     ViewData["Title"] = "Liste Detayı";
     var listName = ViewBag.ListName as string ?? "Liste";
     int listId = ViewBag.ListId != null ? (int)ViewBag.ListId : 0;
+
+    var ordered = (Model ?? new List<Application.DTOs.MemberMovieListDTOs.MemberMovieListItemDto>())
+        .OrderBy(x => x.Priority)
+        .ThenBy(x => x.AddedDate)
+        .ToList();
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -30,7 +35,7 @@
     </div>
 }
 
-@if (Model == null || !Model.Any())
+@if (ordered == null || !ordered.Any())
 {
     <div class="alert alert-info">
         Bu listede henüz film bulunmuyor.
@@ -52,17 +57,55 @@ else
                         <th style="width:80px;">#</th>
                         <th>Film</th>
                         <th style="width:180px;">Eklenme Tarihi</th>
-                        <th style="width:140px;" class="text-end">İşlem</th>
+                        <th style="width:260px;" class="text-end">İşlem</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var item in Model.OrderBy(x => x.Priority))
+                    @for (int i = 0; i < ordered.Count; i++)
                     {
+                        var item = ordered[i];
+                        bool isFirst = i == 0;
+                        bool isLast = i == ordered.Count - 1;
+
                         <tr>
                             <td>@item.Priority</td>
                             <td>@(item.MovieTitle ?? "-")</td>
                             <td>@item.AddedDate.ToString("dd.MM.yyyy HH:mm")</td>
+
                             <td class="text-end">
+                                <!-- ↑ -->
+                                <form asp-controller="MyLists"
+                                      asp-action="MoveItem"
+                                      method="post"
+                                      class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="itemId" value="@item.Id" />
+                                    <input type="hidden" name="listId" value="@listId" />
+                                    <input type="hidden" name="direction" value="up" />
+                                    <button type="submit"
+                                            class="btn btn-sm btn-outline-light me-1"
+                                            @(isFirst ? "disabled" : "")>
+                                        <i class="fa-solid fa-arrow-up"></i>
+                                    </button>
+                                </form>
+
+                                <!-- ↓ -->
+                                <form asp-controller="MyLists"
+                                      asp-action="MoveItem"
+                                      method="post"
+                                      class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="itemId" value="@item.Id" />
+                                    <input type="hidden" name="listId" value="@listId" />
+                                    <input type="hidden" name="direction" value="down" />
+                                    <button type="submit"
+                                            class="btn btn-sm btn-outline-light me-2"
+                                            @(isLast ? "disabled" : "")>
+                                        <i class="fa-solid fa-arrow-down"></i>
+                                    </button>
+                                </form>
+
+                                <!-- Sil -->
                                 <form asp-controller="MyLists"
                                       asp-action="DeleteItem"
                                       method="post"
