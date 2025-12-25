@@ -1,4 +1,7 @@
-﻿@model List<Application.DTOs.MemberMovieListDTOs.MemberMovieListItemDto>
+﻿@using MVC.Extensions
+@using MVC.Models
+@using MVC.Constants
+@model List<Application.DTOs.MemberMovieListDTOs.MemberMovieListItemDto>
 
 @{
     ViewData["Title"] = "Liste Detayı";
@@ -9,16 +12,43 @@
         .OrderBy(x => x.Priority)
         .ThenBy(x => x.AddedDate)
         .ToList();
+
+    var cart = Context.Session.GetObject<List<CartItem>>(SessionKeys.Cart) ?? new List<CartItem>();
+    bool cartHasItems = cart.Any();
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="mb-0">@listName</h2>
 
-    <a asp-controller="MyLists"
-       asp-action="Index"
-       class="btn btn-outline-secondary">
-        ← Listelerime Dön
-    </a>
+    <div class="d-flex gap-2">
+        @if (!cartHasItems)
+        {
+            <form asp-controller="MyLists"
+                  asp-action="AddListToCart"
+                  method="post"
+                  class="d-inline">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="listId" value="@listId" />
+                <button type="submit" class="btn btn-danger">
+                    <i class="fa-solid fa-cart-shopping"></i> Listeyi Sepete Ekle
+                </button>
+            </form>
+        }
+        else
+        {
+            <a asp-controller="Cart"
+               asp-action="Index"
+               class="btn btn-outline-warning">
+                <i class="fa-solid fa-cart-shopping"></i> Sepete Git
+            </a>
+        }
+
+        <a asp-controller="MyLists"
+           asp-action="Index"
+           class="btn btn-outline-secondary">
+            ← Listelerime Dön
+        </a>
+    </div>
 </div>
 
 @if (TempData["Success"] != null)

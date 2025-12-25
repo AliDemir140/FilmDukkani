@@ -1,8 +1,6 @@
 ﻿using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Domain.Enums;
-
 
 namespace Infrastructure.Persistence.Configurations
 {
@@ -10,29 +8,21 @@ namespace Infrastructure.Persistence.Configurations
     {
         public void Configure(EntityTypeBuilder<DeliveryRequest> builder)
         {
-            builder.HasKey(dr => dr.ID);
+            builder.HasKey(x => x.ID);
 
-            builder.Property(dr => dr.RequestedDate)
-                   .IsRequired();
+            // Member ilişkisi -> burada CASCADE YAPMIYORUZ (multiple cascade path kırmak için)
+            builder.HasOne(x => x.Member)
+                   .WithMany()
+                   .HasForeignKey(x => x.MemberId)
+                   .OnDelete(DeleteBehavior.NoAction); // 🔥 KRİTİK
 
-            builder.Property(dr => dr.DeliveryDate)
-                   .IsRequired();
+            // List ilişkisi -> CASCADE (liste silinirse request de silinsin)
+            builder.HasOne(x => x.MemberMovieList)
+                   .WithMany(x => x.DeliveryRequests)
+                   .HasForeignKey(x => x.MemberMovieListId)
+                   .OnDelete(DeleteBehavior.Cascade); // 🔥 KRİTİK
 
-            // ENUM mapping
-            builder.Property(dr => dr.Status)
-                   .HasConversion<byte>()
-                   .HasDefaultValue(DeliveryStatus.Pending)
-                   .IsRequired();
-
-            builder.HasOne(dr => dr.Member)
-                   .WithMany(m => m.DeliveryRequests)
-                   .HasForeignKey(dr => dr.MemberId)
-                   .OnDelete(DeleteBehavior.Restrict);
-
-            builder.HasOne(dr => dr.MemberMovieList)
-                   .WithMany(l => l.DeliveryRequests)
-                   .HasForeignKey(dr => dr.MemberMovieListId)
-                   .OnDelete(DeleteBehavior.Restrict);
+            builder.Property(x => x.Status).IsRequired();
         }
     }
 }

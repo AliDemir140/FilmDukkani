@@ -1,8 +1,9 @@
 ﻿using Infrastructure.DependencyResolvers;
 using Infrastructure.Persistence;
 using Infrastructure.Persistence.SeedData;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -30,7 +31,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// Add services
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -45,13 +45,19 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<FilmDukkaniDbContext>();
-        context.Database.Migrate();
+        await context.Database.MigrateAsync();
 
+        // ✅ Role seed
+        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+        await RoleSeed.SeedAsync(roleManager);
+
+        // ✅ Seed: reference + admin + (dev data)
         var seeder = services.GetRequiredService<DatabaseSeeder>();
         await seeder.SeedReferenceDataAsync();
 
         if (app.Environment.IsDevelopment())
         {
+            await seeder.SeedAdminAsync(app.Configuration);
             await seeder.SeedDevDataAsync();
         }
     }

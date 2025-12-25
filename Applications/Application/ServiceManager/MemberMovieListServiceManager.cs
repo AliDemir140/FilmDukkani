@@ -34,12 +34,25 @@ namespace Application.ServiceManager
                 .ToList();
         }
 
+        // ✅ KURAL: aynı isimden liste oluşturulamasın (case-insensitive + trim)
         public async Task<int> CreateListAsync(CreateMemberMovieListDto dto)
         {
+            var name = (dto.Name ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(name))
+                return 0;
+
+            var existing = await _memberMovieListRepository.GetAllAsync(x =>
+                x.MemberId == dto.MemberId &&
+                x.Name.ToLower() == name.ToLower()
+            );
+
+            if (existing.Any())
+                return 0;
+
             var list = new MemberMovieList
             {
                 MemberId = dto.MemberId,
-                Name = dto.Name
+                Name = name
             };
 
             await _memberMovieListRepository.AddAsync(list);
@@ -51,7 +64,11 @@ namespace Application.ServiceManager
             var items = await _memberMovieListItemRepository.GetAllAsync(i => i.MemberMovieListId == listId);
 
             var movieIds = items.Select(x => x.MovieId).Distinct().ToList();
-            var movies = await _moviesRepository.GetAllAsync(m => movieIds.Contains(m.ID));
+
+            var movies = movieIds.Any()
+                ? await _moviesRepository.GetAllAsync(m => movieIds.Contains(m.ID))
+                : new List<Domain.Entities.Movie>();
+
             var movieMap = movies.ToDictionary(m => m.ID, m => m.Title);
 
             return items
@@ -114,7 +131,21 @@ namespace Application.ServiceManager
             if (list == null)
                 return false;
 
-            list.Name = dto.Name;
+            var newName = (dto.Name ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(newName))
+                return false;
+
+            // ✅ aynı isim kontrolü
+            var dup = await _memberMovieListRepository.GetAllAsync(x =>
+                x.MemberId == list.MemberId &&
+                x.ID != list.ID &&
+                x.Name.ToLower() == newName.ToLower()
+            );
+
+            if (dup.Any())
+                return false;
+
+            list.Name = newName;
             await _memberMovieListRepository.UpdateAsync(list);
             return true;
         }
@@ -165,10 +196,9 @@ namespace Application.ServiceManager
             return true;
         }
 
-        // ✅ YENİ: Up/Down ile swap
+        // ✅ Up/Down swap
         public async Task<bool> MoveItemAsync(int listId, int itemId, string direction)
         {
-            // sadece o listeye ait itemlar
             var items = await _memberMovieListItemRepository.GetAllAsync(i => i.MemberMovieListId == listId);
 
             var ordered = items
@@ -183,14 +213,15 @@ namespace Application.ServiceManager
             if (index < 0)
                 return false;
 
+            direction = (direction ?? "").Trim().ToLower();
+
             if (direction == "up")
             {
-                if (index == 0) return true; // zaten en üstte
+                if (index == 0) return true;
 
                 var current = ordered[index];
                 var prev = ordered[index - 1];
 
-                // swap priority
                 int tmp = current.Priority;
                 current.Priority = prev.Priority;
                 prev.Priority = tmp;
@@ -202,7 +233,7 @@ namespace Application.ServiceManager
 
             if (direction == "down")
             {
-                if (index == ordered.Count - 1) return true; // zaten en altta
+                if (index == ordered.Count - 1) return true;
 
                 var current = ordered[index];
                 var next = ordered[index + 1];
