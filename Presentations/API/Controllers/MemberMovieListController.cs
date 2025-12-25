@@ -34,9 +34,21 @@ namespace API.Controllers
             if (dto.MemberId <= 0)
                 return BadRequest("MemberId zorunludur.");
 
+            dto.Name = (dto.Name ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(dto.Name))
+                return BadRequest("Liste adı zorunludur.");
+
             var listId = await _service.CreateListAsync(dto);
+
+            if (listId == -1)
+                return Conflict("Bu liste adı zaten mevcut."); 
+
+            if (listId == 0)
+                return BadRequest("Liste oluşturulamadı.");
+
             return Ok(new { Message = "Liste oluşturuldu.", ListId = listId });
         }
+
 
         [HttpGet("list-items")]
         public async Task<IActionResult> GetListItems(int listId)

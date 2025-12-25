@@ -14,6 +14,9 @@ namespace Infrastructure.Persistence.Configurations
                    .IsRequired()
                    .HasMaxLength(100);
 
+            builder.HasIndex(x => new { x.MemberId, x.Name })
+                   .IsUnique();
+
             builder.HasOne(l => l.Member)
                    .WithMany()
                    .HasForeignKey(l => l.MemberId)
@@ -24,7 +27,6 @@ namespace Infrastructure.Persistence.Configurations
                    .HasForeignKey(i => i.MemberMovieListId)
                    .OnDelete(DeleteBehavior.Cascade);
 
-            // ✅ EKLE: liste silinince requestler de silinsin
             builder.HasMany(l => l.DeliveryRequests)
                    .WithOne(r => r.MemberMovieList)
                    .HasForeignKey(r => r.MemberMovieListId)
