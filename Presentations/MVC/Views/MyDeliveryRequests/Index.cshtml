@@ -4,68 +4,90 @@
     ViewData["Title"] = "Siparişlerim";
 }
 
-<h2 class="mb-4">Siparişlerim</h2>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Siparişlerim</h2>
+</div>
 
-@if (!Model.Any())
+@if (Model == null || !Model.Any())
 {
-    <div class="alert alert-info">
-        Henüz oluşturulmuş bir siparişiniz (teslimat isteğiniz) bulunmamaktadır.
+    <div class="card dark-card">
+        <div class="card-body text-center py-5">
+            <i class="fa-solid fa-box-open text-danger fs-1 mb-3"></i>
+            <h5 class="mb-2">Henüz siparişin yok</h5>
+            <p class="text-muted mb-4">
+                Sepete film ekleyip “Teslimatı Onayla” dediğinde siparişlerin burada görünecek.
+            </p>
+
+            <a asp-controller="Product"
+               asp-action="Index"
+               class="btn btn-danger">
+                Filmlere Git
+            </a>
+        </div>
     </div>
 }
 else
 {
-    <table class="table table-bordered table-hover align-middle">
-        <thead class="table-dark">
-            <tr>
-                <th>#</th>
-                <th>Liste Adı</th>
-                <th>Teslimat Tarihi</th>
-                <th>Durum</th>
-                <th class="text-center">Detay</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model)
-            {
-                <tr>
-                    <td>@item.Id</td>
-                    <td>@item.ListName</td>
-                    <td>@item.DeliveryDate.ToString("dd.MM.yyyy")</td>
-                    <td>
-                        @switch (item.Status)
-                        {
-                            case Domain.Enums.DeliveryStatus.Pending:
-                                <span class="badge bg-secondary">Bekliyor</span>
-                                break;
-                            case Domain.Enums.DeliveryStatus.Prepared:
-                                <span class="badge bg-warning text-dark">Hazırlandı</span>
-                                break;
-                            case Domain.Enums.DeliveryStatus.Shipped:
-                                <span class="badge bg-info text-dark">Kuryede</span>
-                                break;
-                            case Domain.Enums.DeliveryStatus.Delivered:
-                                <span class="badge bg-primary">Teslim Edildi</span>
-                                break;
-                            case Domain.Enums.DeliveryStatus.Completed:
-                                <span class="badge bg-success">Tamamlandı</span>
-                                break;
-                            case Domain.Enums.DeliveryStatus.Cancelled:
-                                <span class="badge bg-danger">İptal</span>
-                                break;
-                            default:
-                                <span class="badge bg-dark">Bilinmiyor</span>
-                                break;
-                        }
-                    </td>
-                    <td class="text-center">
-                        <a asp-action="Details"
-                           asp-route-id="@item.Id"
-                           class="btn btn-sm btn-outline-primary">
-                            Detay
-                        </a>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div class="card dark-card">
+        <div class="card-header">
+            <b>Tüm Siparişler</b>
+        </div>
+
+        <div class="card-body p-0">
+            <table class="table dark-table table-hover mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th style="width:90px;">#</th>
+                        <th>Liste Adı</th>
+                        <th style="width:160px;">Teslimat Tarihi</th>
+                        <th style="width:140px;">Durum</th>
+                        <th class="text-center" style="width:120px;">Detay</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>#@item.Id</td>
+                            <td>@item.ListName</td>
+                            <td>@item.DeliveryDate.ToString("dd.MM.yyyy")</td>
+                            <td>
+                                @switch (item.Status)
+                                {
+                                    case Domain.Enums.DeliveryStatus.Pending:
+                                        <span class="badge bg-secondary">Bekliyor</span>
+                                        break;
+                                    case Domain.Enums.DeliveryStatus.Prepared:
+                                        <span class="badge bg-warning text-dark">Hazırlandı</span>
+                                        break;
+                                    case Domain.Enums.DeliveryStatus.Shipped:
+                                        <span class="badge bg-info text-dark">Kuryede</span>
+                                        break;
+                                    case Domain.Enums.DeliveryStatus.Delivered:
+                                        <span class="badge bg-primary">Teslim Edildi</span>
+                                        break;
+                                    case Domain.Enums.DeliveryStatus.Completed:
+                                        <span class="badge bg-success">Tamamlandı</span>
+                                        break;
+                                    case Domain.Enums.DeliveryStatus.Cancelled:
+                                        <span class="badge bg-danger">İptal</span>
+                                        break;
+                                    default:
+                                        <span class="badge bg-dark">Bilinmiyor</span>
+                                        break;
+                                }
+                            </td>
+                            <td class="text-center">
+                                <a asp-action="Details"
+                                   asp-route-id="@item.Id"
+                                   class="btn btn-sm btn-outline-light">
+                                    Detay
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 }

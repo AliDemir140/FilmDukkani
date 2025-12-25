@@ -14,29 +14,60 @@
     </a>
 </div>
 
-@if (!Model.Any())
+@if (Model == null || !Model.Any())
 {
-    <div class="alert alert-info">
-        Henüz bir listen yok. “Yeni Liste” ile oluşturabilirsin.
+    <div class="card dark-card">
+        <div class="card-body text-center py-5">
+            <i class="fa-solid fa-list text-danger fs-1 mb-3"></i>
+            <h5 class="mb-2">Henüz bir listen yok</h5>
+            <p class="text-muted mb-4">
+                Film listeni oluştur, sonra filmleri listene ekleyerek sipariş sürecini başlat.
+            </p>
+
+            <a class="btn btn-danger"
+               asp-controller="MyLists"
+               asp-action="Create">
+                İlk Listemi Oluştur
+            </a>
+        </div>
     </div>
 }
 else
 {
-    <table class="table table-bordered table-hover align-middle">
-        <thead class="table-dark">
-            <tr>
-                <th style="width:80px">#</th>
-                <th>Liste Adı</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var l in Model)
-            {
-                <tr>
-                    <td>@l.Id</td>
-                    <td>@l.Name</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div class="card dark-card">
+        <div class="card-header">
+            <b>Listeler</b>
+        </div>
+
+        <div class="card-body p-0">
+            <table class="table dark-table table-hover mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th style="width:90px;">#</th>
+                        <th>Liste Adı</th>
+                        <th class="text-end" style="width:160px;">İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var l in Model)
+                    {
+                        <tr>
+                            <td>#@l.Id</td>
+                            <td>@l.Name</td>
+                            <td class="text-end">
+                                @* Detay sayfasını birazdan yazacaksak dursun.
+                                   Henüz yoksa bu butonu kaldırabilirsin. *@
+                                <a class="btn btn-sm btn-outline-light"
+                                   asp-controller="MyLists"
+                                   asp-action="Details"
+                                   asp-route-id="@l.Id">
+                                    Detay
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 }

@@ -1,4 +1,4 @@
-body {
+﻿body {
     background: #0b0f14;
     color: #e6e6e6;
 }
@@ -26,6 +26,22 @@ body {
         background: rgba(255,45,45,.15);
         color: #fff;
     }
+
+    /* Active link görünümü */
+    .fd-nav-center .nav-link.active,
+    .fd-nav-center .nav-link[aria-current="page"] {
+        background: rgba(255,45,45,.20);
+        color: #fff;
+        border: 1px solid rgba(255,45,45,.25);
+    }
+
+/* Mobilde collapse açılınca biraz daha düzenli dursun */
+@media (max-width: 991.98px) {
+    .fd-nav-center .nav-link {
+        padding: .65rem .9rem;
+        margin: .15rem 0;
+    }
+}
 
 .product-card {
     background: #0f141b;
@@ -66,8 +82,7 @@ body {
     background-color: rgba(255, 255, 255, 0.05);
 }
 
-
-/* Dashboard - Son Teslimat �stekleri �zel d�zeltme */
+/* Dashboard - Son Teslimat İstekleri özel düzeltme */
 .dashboard-light {
     background-color: #ffffff;
     color: #212529;
@@ -83,7 +98,7 @@ body {
         color: #fff;
     }
 
-/* Checkout & Success i�in �zel koyu kart */
+/* Checkout & Success için özel koyu kart */
 .dark-card {
     background-color: #0f141a;
     color: #eaeaea;

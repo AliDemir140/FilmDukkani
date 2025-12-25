@@ -215,7 +215,7 @@ namespace MVC.Controllers
                 return View(model);
             }
 
-            // ✅ KRİTİK FIX: Sepetteki filmleri seçilen listeye yaz
+            // Sepetteki filmleri seçilen listeye yaz
             await AddCartMoviesToListAsync(model.SelectedListId, cart);
 
             var requestId = await _deliveryRequestService.CreateDeliveryRequestAsync(
