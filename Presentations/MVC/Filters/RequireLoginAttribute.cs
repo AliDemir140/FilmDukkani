@@ -9,11 +9,9 @@ namespace MVC.Filters
         public override void OnActionExecuting(ActionExecutingContext context)
         {
             var session = context.HttpContext.Session;
-
             var token = session.GetString(SessionKeys.JwtToken);
 
-            // Giriş yoksa
-            if (string.IsNullOrEmpty(token))
+            if (string.IsNullOrWhiteSpace(token))
             {
                 context.Result = new RedirectToActionResult("Login", "Auth", null);
                 return;

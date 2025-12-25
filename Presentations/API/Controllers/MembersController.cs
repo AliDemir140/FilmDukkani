@@ -19,13 +19,14 @@ namespace API.Controllers
         public async Task<IActionResult> GetMemberIdByUserId(string userId)
         {
             if (string.IsNullOrWhiteSpace(userId))
-                return BadRequest("userId zorunludur.");
+                return BadRequest(new { message = "userId zorunludur." });
 
+            // tek kaydı bul
             var members = await _memberRepository.GetAllAsync(x => x.IdentityUserId == userId);
             var member = members.FirstOrDefault();
 
             if (member == null)
-                return NotFound("Member bulunamadı.");
+                return NotFound(new { message = "Member bulunamadı." });
 
             return Ok(member.ID);
         }

@@ -157,24 +157,71 @@ namespace Application.ServiceManager
             var member = await _memberRepository.GetByIdAsync(request.MemberId);
             var list = await _memberMovieListRepository.GetByIdAsync(request.MemberMovieListId);
 
+            // Request item’ları (hazırlanmışsa burada olur)
             var items = await _deliveryRequestItemRepository
                 .GetAllAsync(i => i.DeliveryRequestId == request.ID);
 
             var itemDtos = new List<DeliveryRequestItemDto>();
 
-            foreach (var item in items)
+            // 1) Eğer item varsa normal akış
+            if (items != null && items.Any())
             {
-                var movie = await _movieRepository.GetByIdAsync(item.MovieId);
-
-                itemDtos.Add(new DeliveryRequestItemDto
+                foreach (var item in items)
                 {
-                    Id = item.ID,
-                    MovieId = item.MovieId,
-                    MovieTitle = movie?.Title,
-                    IsReturned = item.IsReturned,
-                    IsDamaged = item.IsDamaged,
-                    ReturnDate = item.ReturnDate
-                });
+                    var movie = await _movieRepository.GetByIdAsync(item.MovieId);
+
+                    itemDtos.Add(new DeliveryRequestItemDto
+                    {
+                        Id = item.ID,
+                        MovieId = item.MovieId,
+                        MovieTitle = movie?.Title,
+                        IsReturned = item.IsReturned,
+                        IsDamaged = item.IsDamaged,
+                        ReturnDate = item.ReturnDate
+                    });
+                }
+            }
+            else
+            {
+                // 2) Item yoksa (Pending aşaması) → LISTE item’larından “planlanan” filmleri göster
+                // Plan limiti
+                int maxMoviesToShow = 0;
+
+                if (member != null)
+                {
+                    var plan = await _membershipPlanRepository.GetByIdAsync(member.MembershipPlanId);
+                    if (plan != null)
+                        maxMoviesToShow = plan.MaxMoviesPerMonth;
+                }
+
+                // Plan bulunamazsa da en azından ilk 5’i gösterelim (boş kalmasın)
+                if (maxMoviesToShow <= 0)
+                    maxMoviesToShow = 5;
+
+                var listItems = await _memberMovieListItemRepository
+                    .GetAllAsync(i => i.MemberMovieListId == request.MemberMovieListId);
+
+                var planned = listItems
+                    .OrderBy(i => i.Priority)
+                    .ThenBy(i => i.AddedDate)
+                    .Take(maxMoviesToShow)
+                    .ToList();
+
+                foreach (var li in planned)
+                {
+                    var movie = await _movieRepository.GetByIdAsync(li.MovieId);
+
+                    // Id=0 -> DB’de DeliveryRequestItem yok, bu “planlanan” satır
+                    itemDtos.Add(new DeliveryRequestItemDto
+                    {
+                        Id = 0,
+                        MovieId = li.MovieId,
+                        MovieTitle = movie?.Title,
+                        IsReturned = false,
+                        IsDamaged = false,
+                        ReturnDate = null
+                    });
+                }
             }
 
             return new DeliveryRequestDto
@@ -183,7 +230,7 @@ namespace Application.ServiceManager
                 MemberId = request.MemberId,
                 MemberFullName = member != null ? $"{member.FirstName} {member.LastName}" : string.Empty,
                 MemberMovieListId = request.MemberMovieListId,
-                ListName = list?.Name,
+                ListName = list?.Name ?? string.Empty,
                 RequestedDate = request.RequestedDate,
                 DeliveryDate = request.DeliveryDate,
                 Status = request.Status,
@@ -368,10 +415,10 @@ namespace Application.ServiceManager
 
             return true;
         }
+
         public async Task<List<DeliveryRequestListDto>> GetRequestsByMemberAsync(int memberId)
         {
             return await _deliveryRequestRepository.GetByMemberAsync(memberId);
         }
-
     }
 }
