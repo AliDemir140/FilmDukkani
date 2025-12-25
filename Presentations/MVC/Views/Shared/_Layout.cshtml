@@ -15,6 +15,17 @@
     bool isDashBoard = string.Equals(area, "DashBoard", StringComparison.OrdinalIgnoreCase);
 
     bool isLoggedIn = !string.IsNullOrEmpty(token);
+
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    string Active(string c, string? a = null)
+    {
+        bool controllerOk = controller.Equals(c, StringComparison.OrdinalIgnoreCase);
+        bool areaOk = a == null
+            ? string.IsNullOrEmpty(area)
+            : string.Equals(area, a, StringComparison.OrdinalIgnoreCase);
+
+        return (controllerOk && areaOk) ? "active" : "";
+    }
 }
 
 <!DOCTYPE html>
@@ -35,11 +46,11 @@
 <body>
 
     <header>
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <nav class="navbar navbar-expand-lg navbar-dark fd-navbar">
             <div class="container-fluid">
 
                 <!-- SOL: LOGO -->
-                <a class="navbar-brand"
+                <a class="navbar-brand fd-logo"
                    asp-area=""
                    asp-controller="Home"
                    asp-action="Index">
@@ -56,71 +67,70 @@
                 <div class="collapse navbar-collapse" id="mainNav">
 
                     <!-- ORTA: MENÜLER -->
-                    <ul class="navbar-nav mx-auto">
+                    <ul class="navbar-nav mx-auto fd-nav-center">
 
                         <li class="nav-item">
-                            <a class="nav-link"
+                            <a class="nav-link @Active("Home")"
                                asp-area=""
                                asp-controller="Home"
                                asp-action="Index">
-                                Ana Sayfa
+                                <i class="fa-solid fa-house me-1"></i> Ana Sayfa
                             </a>
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link"
+                            <a class="nav-link @Active("Product")"
                                asp-area=""
                                asp-controller="Product"
                                asp-action="Index">
-                                Filmler
+                                <i class="fa-solid fa-film me-1"></i> Filmler
                             </a>
                         </li>
 
                         <li class="nav-item position-relative">
-                            <a class="nav-link"
+                            <a class="nav-link @Active("Cart")"
                                asp-area=""
                                asp-controller="Cart"
                                asp-action="Index">
-                                Sepet
+                                <i class="fa-solid fa-cart-shopping me-1"></i> Sepet
                                 @if (cartCount > 0)
                                 {
-                                    <span class="badge bg-danger ms-1">
-                                        @cartCount
-                                    </span>
+                                    <span class="badge bg-danger ms-1">@cartCount</span>
                                 }
                             </a>
                         </li>
 
-                        @* Login olan kullanıcıya özel menüler *@
+                        @* Login olan kullanıcıya özel *@
                         @if (isLoggedIn)
                         {
                             <li class="nav-item">
-                                <a class="nav-link"
+                                <a class="nav-link @Active("MyLists")"
                                    asp-area=""
                                    asp-controller="MyLists"
                                    asp-action="Index">
-                                    Listelerim
+                                    <i class="fa-solid fa-list me-1"></i> Listelerim
                                 </a>
                             </li>
 
                             <li class="nav-item">
-                                <a class="nav-link"
+                                <a class="nav-link @Active("MyDeliveryRequests")"
                                    asp-area=""
                                    asp-controller="MyDeliveryRequests"
                                    asp-action="Index">
-                                    Siparişlerim
+                                    <i class="fa-solid fa-box me-1"></i> Siparişlerim
                                 </a>
                             </li>
                         }
 
+                        @* Admin ise dashboard *@
                         @if (isLoggedIn && role == "Admin")
                         {
                             <li class="nav-item">
-                                <a class="nav-link"
+                                <a class="nav-link @Active("Home", "DashBoard")"
                                    asp-area="DashBoard"
                                    asp-controller="Home"
                                    asp-action="Index">
-                                    Dashboard
+                                    <i class="fa-solid fa-gauge-high me-1"></i> Dashboard
                                 </a>
                             </li>
                         }

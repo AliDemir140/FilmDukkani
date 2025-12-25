@@ -6,6 +6,13 @@
 
 <h2 class="mb-4">Teslimat Onayı</h2>
 
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["Error"]
+    </div>
+}
+
 <form asp-action="Checkout" method="post">
     @Html.AntiForgeryToken()
 
@@ -40,13 +47,6 @@
         </div>
         <div class="card-body">
 
-            @if (TempData["Error"] != null)
-            {
-                <div class="alert alert-danger">
-                    @TempData["Error"]
-                </div>
-            }
-
             <div class="mb-3">
                 <label class="form-label">Film Listesi</label>
 
@@ -75,6 +75,7 @@
                 <span asp-validation-for="DeliveryDate" class="text-danger"></span>
             </div>
 
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         </div>
     </div>
 

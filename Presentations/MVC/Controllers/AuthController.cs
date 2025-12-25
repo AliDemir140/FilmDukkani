@@ -29,56 +29,103 @@ namespace MVC.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            var client = _httpClientFactory.CreateClient();
             var apiBaseUrl = _configuration["ApiSettings:BaseUrl"];
-
-            // Login isteği
-            var response = await client.PostAsJsonAsync($"{apiBaseUrl}/api/auth/login", model);
-
-            if (!response.IsSuccessStatusCode)
+            if (string.IsNullOrWhiteSpace(apiBaseUrl))
             {
-                ModelState.AddModelError("", "Kullanıcı adı veya şifre hatalı.");
+                ModelState.AddModelError("", "ApiSettings:BaseUrl ayarı bulunamadı.");
                 return View(model);
             }
 
-            var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponseDTO>();
-
-            if (loginResponse == null || string.IsNullOrEmpty(loginResponse.Token))
+            try
             {
-                ModelState.AddModelError("", "Giriş sırasında hata oluştu.");
-                return View(model);
+                var client = _httpClientFactory.CreateClient();
+
+                // 1) LOGIN
+                using var response = await client.PostAsJsonAsync($"{apiBaseUrl}/api/auth/login", model);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    // API bazen { message: "..." } döner, onu yakalamaya çalışalım (yakalanamazsa generic)
+                    var apiMsg = await TryReadMessageAsync(response);
+                    ModelState.AddModelError("", apiMsg ?? "Kullanıcı adı veya şifre hatalı.");
+                    return View(model);
+                }
+
+                var loginResponse = await response.Content.ReadFromJsonAsync<LoginResponseDTO>();
+
+                if (loginResponse == null || string.IsNullOrWhiteSpace(loginResponse.Token))
+                {
+                    ModelState.AddModelError("", "Giriş sırasında hata oluştu (token boş).");
+                    return View(model);
+                }
+
+                // Session kayıtları
+                HttpContext.Session.SetString(SessionKeys.JwtToken, loginResponse.Token);
+                HttpContext.Session.SetString(SessionKeys.UserId, loginResponse.UserId ?? string.Empty);
+                HttpContext.Session.SetString(SessionKeys.UserName, loginResponse.UserName ?? string.Empty);
+                HttpContext.Session.SetString(SessionKeys.Role, loginResponse.Role ?? "User");
+
+                // 2) MEMBER ID çek (404 gelirse site çökmesin)
+                using var memberRes = await client.GetAsync($"{apiBaseUrl}/api/members/by-user/{loginResponse.UserId}");
+
+                if (!memberRes.IsSuccessStatusCode)
+                {
+                    HttpContext.Session.Clear();
+
+                    // 404 ise özel mesaj
+                    if ((int)memberRes.StatusCode == 404)
+                    {
+                        ModelState.AddModelError("",
+                            "Üye kaydı bulunamadı (Member). Kayıt işlemi eksik kalmış olabilir.");
+                        return View(model);
+                    }
+
+                    var apiMsg = await TryReadMessageAsync(memberRes);
+                    ModelState.AddModelError("",
+                        apiMsg ?? $"Member servisine erişilemedi. (HTTP {(int)memberRes.StatusCode})");
+                    return View(model);
+                }
+
+                int memberId;
+                try
+                {
+                    var read = await memberRes.Content.ReadFromJsonAsync<int?>();
+                    memberId = read ?? 0;
+                }
+                catch
+                {
+                    memberId = 0;
+                }
+
+                if (memberId <= 0)
+                {
+                    HttpContext.Session.Clear();
+                    ModelState.AddModelError("", "MemberId okunamadı. Lütfen tekrar deneyin.");
+                    return View(model);
+                }
+
+                HttpContext.Session.SetInt32(SessionKeys.MemberId, memberId);
+
+                return RedirectToAction("Index", "Home");
             }
-
-            // Session kayıtları
-            HttpContext.Session.SetString(SessionKeys.JwtToken, loginResponse.Token);
-            HttpContext.Session.SetString(SessionKeys.UserId, loginResponse.UserId);
-            HttpContext.Session.SetString(SessionKeys.UserName, loginResponse.UserName);
-            HttpContext.Session.SetString(SessionKeys.Role, loginResponse.Role);
-
-            var memberRes = await client.GetAsync($"{apiBaseUrl}/api/members/by-user/{loginResponse.UserId}");
-
-            if (!memberRes.IsSuccessStatusCode)
+            catch (HttpRequestException)
             {
                 HttpContext.Session.Clear();
-
-                ModelState.AddModelError("",
-                    "Üye kaydı bulunamadı (Member). Lütfen yeni kayıt olun veya admin ile iletişime geçin.");
-
+                ModelState.AddModelError("", "API'ye bağlanılamadı. API çalışıyor mu kontrol et.");
                 return View(model);
             }
-
-            var memberId = await memberRes.Content.ReadFromJsonAsync<int>();
-
-            if (memberId <= 0)
+            catch (TaskCanceledException)
             {
                 HttpContext.Session.Clear();
-                ModelState.AddModelError("", "MemberId okunamadı. Lütfen tekrar deneyin.");
+                ModelState.AddModelError("", "İstek zaman aşımına uğradı. Tekrar deneyin.");
                 return View(model);
             }
-
-            HttpContext.Session.SetInt32(SessionKeys.MemberId, memberId);
-
-            return RedirectToAction("Index", "Home");
+            catch (Exception)
+            {
+                HttpContext.Session.Clear();
+                ModelState.AddModelError("", "Beklenmeyen bir hata oluştu.");
+                return View(model);
+            }
         }
 
         [HttpGet]
@@ -94,24 +141,71 @@ namespace MVC.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            var client = _httpClientFactory.CreateClient();
             var apiBaseUrl = _configuration["ApiSettings:BaseUrl"];
-
-            var response = await client.PostAsJsonAsync($"{apiBaseUrl}/api/auth/register", model);
-
-            if (!response.IsSuccessStatusCode)
+            if (string.IsNullOrWhiteSpace(apiBaseUrl))
             {
-                ModelState.AddModelError("", "Kayıt başarısız.");
+                ModelState.AddModelError("", "ApiSettings:BaseUrl ayarı bulunamadı.");
                 return View(model);
             }
 
-            return RedirectToAction("Login");
+            try
+            {
+                var client = _httpClientFactory.CreateClient();
+                using var response = await client.PostAsJsonAsync($"{apiBaseUrl}/api/auth/register", model);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var apiMsg = await TryReadMessageAsync(response);
+                    ModelState.AddModelError("", apiMsg ?? "Kayıt başarısız.");
+                    return View(model);
+                }
+
+                return RedirectToAction("Login");
+            }
+            catch (HttpRequestException)
+            {
+                ModelState.AddModelError("", "API'ye bağlanılamadı. API çalışıyor mu kontrol et.");
+                return View(model);
+            }
+            catch (TaskCanceledException)
+            {
+                ModelState.AddModelError("", "İstek zaman aşımına uğradı. Tekrar deneyin.");
+                return View(model);
+            }
+            catch (Exception)
+            {
+                ModelState.AddModelError("", "Beklenmeyen bir hata oluştu.");
+                return View(model);
+            }
         }
 
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();
             return RedirectToAction("Index", "Home");
+        }
+
+        // API response içinde { message: "..."} varsa okumayı dener
+        private static async Task<string?> TryReadMessageAsync(HttpResponseMessage response)
+        {
+            try
+            {
+                var obj = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>();
+                if (obj == null) return null;
+
+                // message / Message anahtarlarını destekle
+                if (obj.TryGetValue("message", out var m1) && m1 != null)
+                    return m1.ToString();
+
+                if (obj.TryGetValue("Message", out var m2) && m2 != null)
+                    return m2.ToString();
+
+                return null;
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }

@@ -18,7 +18,6 @@ namespace API.Controllers
         }
 
         // REGISTER
-
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterUserDTO dto)
         {
@@ -34,7 +33,6 @@ namespace API.Controllers
         }
 
         // LOGIN
-
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDTO dto)
         {
@@ -50,18 +48,19 @@ namespace API.Controllers
         }
 
         // TOKEN TEST (Authorize)
-
         [HttpGet("me")]
         [Authorize]
         public IActionResult Me()
         {
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var userName = User.Identity?.Name;
+            var role = User.FindFirst(ClaimTypes.Role)?.Value;
 
             return Ok(new
             {
                 userId,
-                userName
+                userName,
+                role
             });
         }
     }

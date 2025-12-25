@@ -18,9 +18,6 @@ namespace MVC.Controllers
         public async Task<IActionResult> Index()
         {
             var memberId = HttpContext.Session.GetInt32(SessionKeys.MemberId);
-            var userId = HttpContext.Session.GetString(SessionKeys.UserId);
-            var role = HttpContext.Session.GetString(SessionKeys.Role);
-
             if (memberId == null)
                 return RedirectToAction("Login", "Auth");
 
@@ -44,6 +41,5 @@ namespace MVC.Controllers
 
             return View(dto);
         }
-
     }
 }
