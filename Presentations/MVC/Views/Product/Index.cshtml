@@ -1,6 +1,20 @@
 ﻿@using Application.DTOs.MovieDTOs
 @model List<MovieDto>
 
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success mb-3">
+        @TempData["Success"]
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger mb-3">
+        @TempData["Error"]
+    </div>
+}
+
 @{
     ViewData["Title"] = "Film Kataloğu";
     var q = (string)(ViewBag.Query ?? "");
