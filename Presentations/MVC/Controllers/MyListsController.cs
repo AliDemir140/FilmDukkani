@@ -3,6 +3,8 @@ using Application.DTOs.MemberMovieListDTOs;
 using Microsoft.AspNetCore.Mvc;
 using MVC.Constants;
 using MVC.Filters;
+using MVC.Extensions;
+using MVC.Models;
 
 namespace MVC.Controllers
 {
@@ -220,7 +222,6 @@ namespace MVC.Controllers
             {
                 var client = _httpClientFactory.CreateClient();
 
-                // API: POST /api/MemberMovieList/move-item?listId=1&itemId=10&direction=up
                 var res = await client.PostAsync(
                     $"{ApiBaseUrl}/api/MemberMovieList/move-item?listId={listId}&itemId={itemId}&direction={direction}",
                     content: null
@@ -238,6 +239,84 @@ namespace MVC.Controllers
             catch
             {
                 TempData["Error"] = "Öncelik güncellenemedi. API çalışıyor mu kontrol et.";
+                return RedirectToAction(nameof(Details), new { id = listId });
+            }
+        }
+
+        // ✅ POST: /MyLists/AddListToCart
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddListToCart(int listId)
+        {
+            var memberId = HttpContext.Session.GetInt32(SessionKeys.MemberId);
+            if (memberId == null)
+                return RedirectToAction("Login", "Auth");
+
+            // Sepet doluysa -> tekrar basma, direkt sepete git
+            var cart = HttpContext.Session.GetObject<List<CartItem>>(SessionKeys.Cart) ?? new List<CartItem>();
+            if (cart.Any())
+            {
+                TempData["Error"] = "Sepet zaten dolu. Önce sepeti boşalt veya checkout yap.";
+                return RedirectToAction("Index", "Cart");
+            }
+
+            if (listId <= 0)
+            {
+                TempData["Error"] = "Geçersiz liste.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (string.IsNullOrWhiteSpace(ApiBaseUrl))
+            {
+                TempData["Error"] = "API BaseUrl bulunamadı.";
+                return RedirectToAction(nameof(Details), new { id = listId });
+            }
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient();
+
+                // Güvenlik: liste bu üyeye mi ait?
+                var lists = await client.GetFromJsonAsync<List<MemberMovieListDto>>(
+                    $"{ApiBaseUrl}/api/MemberMovieList/lists-by-member?memberId={memberId.Value}"
+                ) ?? new List<MemberMovieListDto>();
+
+                if (!lists.Any(x => x.Id == listId))
+                    return Forbid();
+
+                // Liste itemlarını çek
+                var items = await client.GetFromJsonAsync<List<MemberMovieListItemDto>>(
+                    $"{ApiBaseUrl}/api/MemberMovieList/list-items?listId={listId}"
+                ) ?? new List<MemberMovieListItemDto>();
+
+                if (!items.Any())
+                {
+                    TempData["Error"] = "Bu listede film yok.";
+                    return RedirectToAction(nameof(Details), new { id = listId });
+                }
+
+                foreach (var it in items)
+                {
+                    if (cart.Any(x => x.MovieId == it.MovieId))
+                        continue;
+
+                    cart.Add(new CartItem
+                    {
+                        MovieId = it.MovieId,
+                        MovieTitle = it.MovieTitle ?? "Film",
+                        CoverImageUrl = "",
+                        ReleaseYear = 0
+                    });
+                }
+
+                HttpContext.Session.SetObject(SessionKeys.Cart, cart);
+
+                TempData["Success"] = "Liste sepete eklendi.";
+                return RedirectToAction("Index", "Cart");
+            }
+            catch
+            {
+                TempData["Error"] = "Liste sepete eklenemedi. API çalışıyor mu kontrol et.";
                 return RedirectToAction(nameof(Details), new { id = listId });
             }
         }

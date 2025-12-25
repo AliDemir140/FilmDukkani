@@ -109,6 +109,7 @@ namespace Application.ServiceManager
             if (member == null)
                 return false;
 
+
             await _memberRepository.DeleteAsync(member);
             return true;
         }

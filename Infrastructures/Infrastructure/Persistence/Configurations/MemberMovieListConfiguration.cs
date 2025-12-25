@@ -15,13 +15,19 @@ namespace Infrastructure.Persistence.Configurations
                    .HasMaxLength(100);
 
             builder.HasOne(l => l.Member)
-                   .WithMany() // İleride Member içine ICollection<MemberMovieList> eklersek WithMany(m => m.Lists) yaparız
+                   .WithMany()
                    .HasForeignKey(l => l.MemberId)
                    .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasMany(l => l.Items)
                    .WithOne(i => i.MemberMovieList)
                    .HasForeignKey(i => i.MemberMovieListId)
+                   .OnDelete(DeleteBehavior.Cascade);
+
+            // ✅ EKLE: liste silinince requestler de silinsin
+            builder.HasMany(l => l.DeliveryRequests)
+                   .WithOne(r => r.MemberMovieList)
+                   .HasForeignKey(r => r.MemberMovieListId)
                    .OnDelete(DeleteBehavior.Cascade);
         }
     }
