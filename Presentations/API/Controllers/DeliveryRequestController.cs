@@ -27,6 +27,9 @@ namespace API.Controllers
             if (newId == 0)
                 return BadRequest("Geçersiz teslimat tarihi. Teslimat en az 2 gün sonrası olmalı ve Pazar günü seçilemez.");
 
+            if (newId == -1)
+                return Conflict("Bu liste için zaten aktif bir sipariş var. (Bekliyor/Hazırlanıyor/Kuryede/Teslim Edildi)");
+
             return Ok(new
             {
                 Message = "Teslimat isteği oluşturuldu.",
@@ -100,6 +103,5 @@ namespace API.Controllers
 
             return Ok(requests);
         }
-
     }
 }
