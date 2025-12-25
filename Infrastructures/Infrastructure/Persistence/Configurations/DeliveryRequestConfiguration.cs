@@ -10,13 +10,13 @@ namespace Infrastructure.Persistence.Configurations
         {
             builder.HasKey(x => x.ID);
 
-            // Member ilişkisi -> NO ACTION (multiple cascade path kırmak için)
+            // ✅ Member ilişkisi (navigation bağlı) + NO ACTION (multiple cascade path kırmak için)
             builder.HasOne(x => x.Member)
-                   .WithMany()
+                   .WithMany(m => m.DeliveryRequests)
                    .HasForeignKey(x => x.MemberId)
                    .OnDelete(DeleteBehavior.NoAction);
 
-            // List ilişkisi -> CASCADE (liste silinirse request de silinsin)
+            // ✅ List ilişkisi
             builder.HasOne(x => x.MemberMovieList)
                    .WithMany(x => x.DeliveryRequests)
                    .HasForeignKey(x => x.MemberMovieListId)

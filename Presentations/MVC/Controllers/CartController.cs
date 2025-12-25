@@ -281,7 +281,6 @@ namespace MVC.Controllers
                 if (model.SelectedListId <= 0)
                     model.SelectedListId = int.Parse(model.MemberLists.First().Value);
 
-                // viewbag tekrar
                 var minAgain = await CheckMinimumAsync(model.SelectedListId);
                 ViewBag.HasMinimum = minAgain.ok;
                 ViewBag.MinRequired = minAgain.minimumRequired;
@@ -293,7 +292,7 @@ namespace MVC.Controllers
             // ✅ Sepet filmlerini listeye yaz
             await AddCartMoviesToListAsync(model.SelectedListId, cart);
 
-            // ✅ Min 5 kontrol (POST güvenlik) - listeye yazdıktan sonra kontrol daha mantıklı
+            // ✅ Min 5 kontrol (POST güvenlik)
             var min = await CheckMinimumAsync(model.SelectedListId);
             ViewBag.HasMinimum = min.ok;
             ViewBag.MinRequired = min.minimumRequired;
@@ -308,12 +307,14 @@ namespace MVC.Controllers
                 return View(model);
             }
 
+            // ✅ Sipariş oluştur
             var requestId = await _deliveryRequestService.CreateDeliveryRequestAsync(
                 memberId.Value,
                 model.SelectedListId,
                 model.DeliveryDate
             );
 
+            // ✅ 0: tarih kuralı
             if (requestId == 0)
             {
                 model.CartItems = cart;
@@ -325,7 +326,22 @@ namespace MVC.Controllers
                 return View(model);
             }
 
+            // ✅ -1: aynı liste için aktif sipariş var (DOĞRU MESAJ)
+            if (requestId == -1)
+            {
+                model.CartItems = cart;
+                model.MemberLists = await GetMemberListsSelectAsync(memberId.Value);
+
+                ModelState.AddModelError("",
+                    "Bu liste için zaten aktif bir sipariş var. (Bekliyor/Hazırlanıyor/Kuryede/Teslim Edildi). Lütfen farklı liste seçin.");
+
+                return View(model);
+            }
+
+            // ✅ Başarılı: sepeti GARANTİ temizle
             HttpContext.Session.Remove(SessionKeys.Cart);
+            HttpContext.Session.SetObject(SessionKeys.Cart, new List<CartItem>()); // ekstra garanti
+
             return RedirectToAction(nameof(Success), new { id = requestId });
         }
 

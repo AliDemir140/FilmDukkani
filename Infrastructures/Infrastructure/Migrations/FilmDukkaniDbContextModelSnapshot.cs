@@ -160,9 +160,6 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("DeliveryDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("MemberID")
-                        .HasColumnType("int");
-
                     b.Property<int>("MemberId")
                         .HasColumnType("int");
 
@@ -179,8 +176,6 @@ namespace Infrastructure.Migrations
                         .HasColumnType("tinyint");
 
                     b.HasKey("ID");
-
-                    b.HasIndex("MemberID");
 
                     b.HasIndex("MemberId");
 
@@ -906,12 +901,8 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.DeliveryRequest", b =>
                 {
-                    b.HasOne("Domain.Entities.Member", null)
-                        .WithMany("DeliveryRequests")
-                        .HasForeignKey("MemberID");
-
                     b.HasOne("Domain.Entities.Member", "Member")
-                        .WithMany()
+                        .WithMany("DeliveryRequests")
                         .HasForeignKey("MemberId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
