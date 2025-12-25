@@ -20,7 +20,6 @@ namespace Application.ServiceManager
             _moviesRepository = moviesRepository;
         }
 
-        // Bir üyenin listelerini getir
         public async Task<List<MemberMovieListDto>> GetListsByMemberAsync(int memberId)
         {
             var lists = await _memberMovieListRepository.GetAllAsync(l => l.MemberId == memberId);
@@ -35,7 +34,6 @@ namespace Application.ServiceManager
                 .ToList();
         }
 
-        // Yeni liste oluştur
         public async Task<int> CreateListAsync(CreateMemberMovieListDto dto)
         {
             var list = new MemberMovieList
@@ -45,19 +43,14 @@ namespace Application.ServiceManager
             };
 
             await _memberMovieListRepository.AddAsync(list);
-
-            return list.ID; // ID otomatik atanır
+            return list.ID;
         }
 
-        // Bir listenin içindeki film item'larını getir
         public async Task<List<MemberMovieListItemDto>> GetListItemsAsync(int listId)
         {
             var items = await _memberMovieListItemRepository.GetAllAsync(i => i.MemberMovieListId == listId);
 
-            // Film isimleri için gerekli
             var movieIds = items.Select(x => x.MovieId).Distinct().ToList();
-
-            // IMovieRepository yoksa eklemen gerekir (aşağıda verdim)
             var movies = await _moviesRepository.GetAllAsync(m => movieIds.Contains(m.ID));
             var movieMap = movies.ToDictionary(m => m.ID, m => m.Title);
 
@@ -76,8 +69,6 @@ namespace Application.ServiceManager
                 .ToList();
         }
 
-
-        // Aynı filmi aynı listeye iki kez eklemeyi önlemek için kontrol
         private async Task<bool> IsMovieAlreadyInList(int listId, int movieId)
         {
             var items = await _memberMovieListItemRepository
@@ -86,18 +77,16 @@ namespace Application.ServiceManager
             return items.Any();
         }
 
-        // Listeye film ekle
         public async Task<bool> AddItemToListAsync(CreateMemberMovieListItemDto dto)
         {
-            // Aynı film daha önce eklenmiş mi kontrolü
             if (await IsMovieAlreadyInList(dto.MemberMovieListId, dto.MovieId))
-                return false; // Controller bunu "Film zaten listede" diye dönecek
+                return false;
 
             var item = new MemberMovieListItem
             {
                 MemberMovieListId = dto.MemberMovieListId,
                 MovieId = dto.MovieId,
-                Priority = dto.Priority,
+                Priority = dto.Priority <= 0 ? 1 : dto.Priority,
                 AddedDate = DateTime.Now
             };
 
@@ -105,7 +94,6 @@ namespace Application.ServiceManager
             return true;
         }
 
-        // Min 5 film kontrolü
         public async Task<bool> HasMinimumItemsAsync(int listId, int minimumCount = 5)
         {
             var items = await _memberMovieListItemRepository
@@ -120,8 +108,6 @@ namespace Application.ServiceManager
             return items.Count;
         }
 
-
-        // Liste adını güncelle
         public async Task<bool> UpdateListNameAsync(UpdateMemberMovieListNameDto dto)
         {
             var list = await _memberMovieListRepository.GetByIdAsync(dto.Id);
@@ -133,7 +119,6 @@ namespace Application.ServiceManager
             return true;
         }
 
-        // Liste item'ını sil
         public async Task<bool> DeleteItemAsync(int itemId)
         {
             var item = await _memberMovieListItemRepository.GetByIdAsync(itemId);
@@ -144,7 +129,6 @@ namespace Application.ServiceManager
             return true;
         }
 
-        // Liste item'ının önceliğini güncelle
         public async Task<bool> UpdateItemPriorityAsync(UpdateMemberMovieListItemPriorityDto dto)
         {
             var item = await _memberMovieListItemRepository.GetByIdAsync(dto.Id);
@@ -156,7 +140,6 @@ namespace Application.ServiceManager
             return true;
         }
 
-        // Liste var mı yok mu kontrolü
         public async Task<bool> ListExistsAsync(int listId)
         {
             var list = await _memberMovieListRepository.GetByIdAsync(listId);
@@ -166,8 +149,6 @@ namespace Application.ServiceManager
         public async Task<bool> ReorderItemsAsync(int listId, List<int> orderedItemIds)
         {
             var items = await _memberMovieListItemRepository.GetAllAsync(i => i.MemberMovieListId == listId);
-
-            // Güvenlik: sadece o listenin item'ları
             var itemMap = items.ToDictionary(x => x.ID, x => x);
 
             int pr = 1;
@@ -184,5 +165,58 @@ namespace Application.ServiceManager
             return true;
         }
 
+        // ✅ YENİ: Up/Down ile swap
+        public async Task<bool> MoveItemAsync(int listId, int itemId, string direction)
+        {
+            // sadece o listeye ait itemlar
+            var items = await _memberMovieListItemRepository.GetAllAsync(i => i.MemberMovieListId == listId);
+
+            var ordered = items
+                .OrderBy(x => x.Priority)
+                .ThenBy(x => x.AddedDate)
+                .ToList();
+
+            if (!ordered.Any())
+                return false;
+
+            var index = ordered.FindIndex(x => x.ID == itemId);
+            if (index < 0)
+                return false;
+
+            if (direction == "up")
+            {
+                if (index == 0) return true; // zaten en üstte
+
+                var current = ordered[index];
+                var prev = ordered[index - 1];
+
+                // swap priority
+                int tmp = current.Priority;
+                current.Priority = prev.Priority;
+                prev.Priority = tmp;
+
+                await _memberMovieListItemRepository.UpdateAsync(prev);
+                await _memberMovieListItemRepository.UpdateAsync(current);
+                return true;
+            }
+
+            if (direction == "down")
+            {
+                if (index == ordered.Count - 1) return true; // zaten en altta
+
+                var current = ordered[index];
+                var next = ordered[index + 1];
+
+                int tmp = current.Priority;
+                current.Priority = next.Priority;
+                next.Priority = tmp;
+
+                await _memberMovieListItemRepository.UpdateAsync(next);
+                await _memberMovieListItemRepository.UpdateAsync(current);
+                return true;
+            }
+
+            return false;
+        }
     }
 }

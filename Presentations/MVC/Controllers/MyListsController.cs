@@ -170,7 +170,6 @@ namespace MVC.Controllers
             {
                 var client = _httpClientFactory.CreateClient();
 
-                // API: /api/MemberMovieList/delete-item?id=123
                 var res = await client.DeleteAsync($"{ApiBaseUrl}/api/MemberMovieList/delete-item?id={itemId}");
 
                 if (!res.IsSuccessStatusCode)
@@ -185,6 +184,60 @@ namespace MVC.Controllers
             catch
             {
                 TempData["Error"] = "Silme işlemi sırasında hata oluştu. API çalışıyor mu kontrol et.";
+                return RedirectToAction(nameof(Details), new { id = listId });
+            }
+        }
+
+        // ✅ POST: /MyLists/MoveItem  (↑ ↓)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MoveItem(int itemId, int listId, string direction)
+        {
+            var memberId = HttpContext.Session.GetInt32(SessionKeys.MemberId);
+            if (memberId == null)
+                return RedirectToAction("Login", "Auth");
+
+            if (itemId <= 0 || listId <= 0)
+            {
+                TempData["Error"] = "Geçersiz istek.";
+                return RedirectToAction(nameof(Details), new { id = listId });
+            }
+
+            if (string.IsNullOrWhiteSpace(ApiBaseUrl))
+            {
+                TempData["Error"] = "API BaseUrl bulunamadı.";
+                return RedirectToAction(nameof(Details), new { id = listId });
+            }
+
+            direction = (direction ?? "").Trim().ToLower();
+            if (direction != "up" && direction != "down")
+            {
+                TempData["Error"] = "Geçersiz yön.";
+                return RedirectToAction(nameof(Details), new { id = listId });
+            }
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient();
+
+                // API: POST /api/MemberMovieList/move-item?listId=1&itemId=10&direction=up
+                var res = await client.PostAsync(
+                    $"{ApiBaseUrl}/api/MemberMovieList/move-item?listId={listId}&itemId={itemId}&direction={direction}",
+                    content: null
+                );
+
+                if (!res.IsSuccessStatusCode)
+                {
+                    TempData["Error"] = "Öncelik güncellenemedi.";
+                    return RedirectToAction(nameof(Details), new { id = listId });
+                }
+
+                TempData["Success"] = "Öncelik güncellendi.";
+                return RedirectToAction(nameof(Details), new { id = listId });
+            }
+            catch
+            {
+                TempData["Error"] = "Öncelik güncellenemedi. API çalışıyor mu kontrol et.";
                 return RedirectToAction(nameof(Details), new { id = listId });
             }
         }
