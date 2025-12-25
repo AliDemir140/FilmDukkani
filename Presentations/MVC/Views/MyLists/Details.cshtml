@@ -1,0 +1,63 @@
+﻿@model List<Application.DTOs.MemberMovieListDTOs.MemberMovieListItemDto>
+
+@{
+    ViewData["Title"] = "Liste Detayı";
+    var listName = ViewBag.ListName as string ?? "Liste";
+    var listId = ViewBag.ListId;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">@listName</h2>
+
+    <a asp-controller="MyLists"
+       asp-action="Index"
+       class="btn btn-outline-secondary">
+        ← Listelerime Dön
+    </a>
+</div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">
+        @TempData["Error"]
+    </div>
+}
+
+@if (Model == null || !Model.Any())
+{
+    <div class="alert alert-info">
+        Bu listede henüz film bulunmuyor.
+        <br />
+        Filmler sayfasından bu listeye film ekleyebilirsin.
+    </div>
+}
+else
+{
+    <div class="card dark-card">
+        <div class="card-header">
+            <b>Liste İçeriği</b>
+        </div>
+
+        <div class="card-body p-0">
+            <table class="table dark-table table-hover mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th style="width:80px;">#</th>
+                        <th>Film</th>
+                        <th style="width:180px;">Eklenme Tarihi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.OrderBy(x => x.Priority))
+                    {
+                        <tr>
+                            <td>@item.Priority</td>
+                            <td>@(item.MovieTitle ?? "-")</td>
+                            <td>@item.AddedDate.ToString("dd.MM.yyyy HH:mm")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

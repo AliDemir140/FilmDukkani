@@ -60,7 +60,10 @@
                 <button class="navbar-toggler"
                         type="button"
                         data-bs-toggle="collapse"
-                        data-bs-target="#mainNav">
+                        data-bs-target="#mainNav"
+                        aria-controls="mainNav"
+                        aria-expanded="false"
+                        aria-label="Menüyü aç/kapat">
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
@@ -73,7 +76,8 @@
                             <a class="nav-link @Active("Home")"
                                asp-area=""
                                asp-controller="Home"
-                               asp-action="Index">
+                               asp-action="Index"
+                               aria-current="@(Active("Home") == "active" ? "page" : null)">
                                 <i class="fa-solid fa-house me-1"></i> Ana Sayfa
                             </a>
                         </li>
@@ -82,7 +86,8 @@
                             <a class="nav-link @Active("Product")"
                                asp-area=""
                                asp-controller="Product"
-                               asp-action="Index">
+                               asp-action="Index"
+                               aria-current="@(Active("Product") == "active" ? "page" : null)">
                                 <i class="fa-solid fa-film me-1"></i> Filmler
                             </a>
                         </li>
@@ -91,7 +96,8 @@
                             <a class="nav-link @Active("Cart")"
                                asp-area=""
                                asp-controller="Cart"
-                               asp-action="Index">
+                               asp-action="Index"
+                               aria-current="@(Active("Cart") == "active" ? "page" : null)">
                                 <i class="fa-solid fa-cart-shopping me-1"></i> Sepet
                                 @if (cartCount > 0)
                                 {
@@ -107,7 +113,8 @@
                                 <a class="nav-link @Active("MyLists")"
                                    asp-area=""
                                    asp-controller="MyLists"
-                                   asp-action="Index">
+                                   asp-action="Index"
+                                   aria-current="@(Active("MyLists") == "active" ? "page" : null)">
                                     <i class="fa-solid fa-list me-1"></i> Listelerim
                                 </a>
                             </li>
@@ -116,7 +123,8 @@
                                 <a class="nav-link @Active("MyDeliveryRequests")"
                                    asp-area=""
                                    asp-controller="MyDeliveryRequests"
-                                   asp-action="Index">
+                                   asp-action="Index"
+                                   aria-current="@(Active("MyDeliveryRequests") == "active" ? "page" : null)">
                                     <i class="fa-solid fa-box me-1"></i> Siparişlerim
                                 </a>
                             </li>
@@ -129,7 +137,8 @@
                                 <a class="nav-link @Active("Home", "DashBoard")"
                                    asp-area="DashBoard"
                                    asp-controller="Home"
-                                   asp-action="Index">
+                                   asp-action="Index"
+                                   aria-current="@(Active("Home", "DashBoard") == "active" ? "page" : null)">
                                     <i class="fa-solid fa-gauge-high me-1"></i> Dashboard
                                 </a>
                             </li>
@@ -137,7 +146,7 @@
                     </ul>
 
                     <!-- SAĞ: AUTH -->
-                    <div class="d-flex align-items-center gap-2">
+                    <div class="d-flex align-items-center gap-2 ms-lg-2">
                         @if (!isLoggedIn)
                         {
                             <a asp-area=""

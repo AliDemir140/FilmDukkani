@@ -18,6 +18,8 @@ namespace MVC.Controllers
             _configuration = configuration;
         }
 
+        private string? ApiBaseUrl => _configuration["ApiSettings:BaseUrl"];
+
         // GET: /MyLists
         public async Task<IActionResult> Index()
         {
@@ -25,54 +27,126 @@ namespace MVC.Controllers
             if (memberId == null)
                 return RedirectToAction("Login", "Auth");
 
-            var client = _httpClientFactory.CreateClient();
-            var apiBaseUrl = _configuration["ApiSettings:BaseUrl"];
+            if (string.IsNullOrWhiteSpace(ApiBaseUrl))
+            {
+                TempData["Error"] = "API BaseUrl bulunamadı. appsettings.json kontrol et.";
+                return View(new List<MemberMovieListDto>());
+            }
 
-            var lists = await client.GetFromJsonAsync<List<MemberMovieListDto>>(
-                $"{apiBaseUrl}/api/MemberMovieList/lists-by-member?memberId={memberId.Value}"
-            );
+            try
+            {
+                var client = _httpClientFactory.CreateClient();
 
-            lists ??= new List<MemberMovieListDto>();
-            return View(lists);
+                var lists = await client.GetFromJsonAsync<List<MemberMovieListDto>>(
+                    $"{ApiBaseUrl}/api/MemberMovieList/lists-by-member?memberId={memberId.Value}"
+                );
+
+                return View(lists ?? new List<MemberMovieListDto>());
+            }
+            catch
+            {
+                TempData["Error"] = "Listeler alınamadı. API çalışıyor mu kontrol et.";
+                return View(new List<MemberMovieListDto>());
+            }
         }
 
-        // GET: /MyLists/Create
+        // GET: /MyLists/Create?returnUrl=/Cart/Checkout
         [HttpGet]
-        public IActionResult Create()
+        public IActionResult Create(string? returnUrl = null)
         {
+            ViewBag.ReturnUrl = returnUrl;
             return View(new CreateMemberMovieListDto());
         }
 
         // POST: /MyLists/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(CreateMemberMovieListDto dto)
+        public async Task<IActionResult> Create(CreateMemberMovieListDto dto, string? returnUrl = null)
         {
             var memberId = HttpContext.Session.GetInt32(SessionKeys.MemberId);
             if (memberId == null)
                 return RedirectToAction("Login", "Auth");
 
             dto.MemberId = memberId.Value;
+            ViewBag.ReturnUrl = returnUrl;
 
             if (!ModelState.IsValid)
                 return View(dto);
 
-            var client = _httpClientFactory.CreateClient();
-            var apiBaseUrl = _configuration["ApiSettings:BaseUrl"];
-
-            var response = await client.PostAsJsonAsync(
-                $"{apiBaseUrl}/api/MemberMovieList/create-list",
-                dto
-            );
-
-            if (!response.IsSuccessStatusCode)
+            if (string.IsNullOrWhiteSpace(ApiBaseUrl))
             {
-                ModelState.AddModelError("", "Liste oluşturulamadı.");
+                ModelState.AddModelError("", "API BaseUrl bulunamadı. appsettings.json kontrol et.");
                 return View(dto);
             }
 
-            return RedirectToAction("Checkout", "Cart");
+            try
+            {
+                var client = _httpClientFactory.CreateClient();
 
+                var response = await client.PostAsJsonAsync(
+                    $"{ApiBaseUrl}/api/MemberMovieList/create-list",
+                    dto
+                );
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    ModelState.AddModelError("", "Liste oluşturulamadı.");
+                    return View(dto);
+                }
+
+                // Eğer Checkout’tan geldiyse oraya dön, değilse MyLists/Index
+                if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+                    return Redirect(returnUrl);
+
+                return RedirectToAction(nameof(Index));
+            }
+            catch
+            {
+                ModelState.AddModelError("", "Liste oluşturulamadı. API çalışıyor mu kontrol et.");
+                return View(dto);
+            }
+        }
+
+        // GET: /MyLists/Details/5
+        [HttpGet]
+        public async Task<IActionResult> Details(int id)
+        {
+            var memberId = HttpContext.Session.GetInt32(SessionKeys.MemberId);
+            if (memberId == null)
+                return RedirectToAction("Login", "Auth");
+
+            if (string.IsNullOrWhiteSpace(ApiBaseUrl))
+                return NotFound("API BaseUrl bulunamadı.");
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient();
+
+                // 1) Üyenin listelerini çekip bu listenin ona ait olup olmadığını kontrol et
+                var lists = await client.GetFromJsonAsync<List<MemberMovieListDto>>(
+                    $"{ApiBaseUrl}/api/MemberMovieList/lists-by-member?memberId={memberId.Value}"
+                ) ?? new List<MemberMovieListDto>();
+
+                var selectedList = lists.FirstOrDefault(x => x.Id == id);
+                if (selectedList == null)
+                    return Forbid(); // başka birinin listesini açamasın
+
+                // 2) Liste itemlarını çek
+                var items = await client.GetFromJsonAsync<List<MemberMovieListItemDto>>(
+                    $"{ApiBaseUrl}/api/MemberMovieList/list-items?listId={id}"
+                ) ?? new List<MemberMovieListItemDto>();
+
+                // ViewBag ile basit başlık/isim gösterebilirsin
+                ViewBag.ListName = selectedList.Name;
+                ViewBag.ListId = selectedList.Id;
+
+                return View(items);
+            }
+            catch
+            {
+                TempData["Error"] = "Liste detayları alınamadı. API çalışıyor mu kontrol et.";
+                return RedirectToAction(nameof(Index));
+            }
         }
     }
 }
