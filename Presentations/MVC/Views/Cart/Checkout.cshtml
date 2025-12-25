@@ -2,6 +2,10 @@
 
 @{
     ViewData["Title"] = "Teslimat Onayı";
+
+    bool hasMinimum = (bool?)ViewBag.HasMinimum ?? true;
+    int minRequired = (int?)ViewBag.MinRequired ?? 5;
+    int currentCount = (int?)ViewBag.CurrentCount ?? 0;
 }
 
 <h2 class="mb-4">Teslimat Onayı</h2>
@@ -47,17 +51,26 @@
         </div>
         <div class="card-body">
 
+            <div id="minRuleAlert" class="alert alert-danger @(hasMinimum ? "d-none" : "")">
+                <b>Uyarı:</b> Teslimat oluşturmak için seçili listede en az <b>@minRequired</b> film olmalı.
+                Şu an: <b>@currentCount</b>
+                <br />
+                Filmler sayfasından bu listeye film ekleyebilirsin.
+            </div>
+
             <div class="mb-3">
                 <label class="form-label">Film Listesi</label>
 
                 <div class="d-flex gap-2">
                     <select asp-for="SelectedListId"
                             asp-items="Model.MemberLists"
-                            class="form-select">
+                            class="form-select"
+                            id="SelectedListId">
                     </select>
 
                     <a asp-controller="MyLists"
                        asp-action="Create"
+                       asp-route-returnUrl="/Cart/Checkout"
                        class="btn btn-outline-danger"
                        style="white-space:nowrap;">
                         + Yeni Liste
@@ -84,7 +97,10 @@
             Sepete Geri Dön
         </a>
 
-        <button type="submit" class="btn btn-danger">
+        <button type="submit"
+                id="btnCheckout"
+                class="btn btn-danger"
+                @(hasMinimum ? "" : "disabled=\"disabled\"")>
             Teslimatı Onayla
         </button>
     </div>
@@ -92,4 +108,47 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        (function () {
+            const sel = document.getElementById("SelectedListId");
+            const alertBox = document.getElementById("minRuleAlert");
+            const btn = document.getElementById("btnCheckout");
+
+            if (!sel || !alertBox || !btn) return;
+
+            async function checkMin() {
+                const listId = parseInt(sel.value || "0");
+                if (!listId) return;
+
+                try {
+                    const res = await fetch(`/Cart/CheckMinimum?listId=${listId}`, { cache: "no-store" });
+                    if (!res.ok) throw new Error("failed");
+
+                    const data = await res.json();
+                    const ok = data.hasMinimum;
+                    const minReq = data.minimumRequired;
+                    const current = data.currentCount;
+
+                    if (!ok) {
+                        alertBox.classList.remove("d-none");
+                        alertBox.innerHTML =
+                            `<b>Uyarı:</b> Teslimat oluşturmak için seçili listede en az <b>${minReq}</b> film olmalı. Şu an: <b>${current}</b><br/>Filmler sayfasından bu listeye film ekleyebilirsin.`;
+                        btn.disabled = true;
+                    } else {
+                        alertBox.classList.add("d-none");
+                        btn.disabled = false;
+                    }
+                } catch {
+                    alertBox.classList.remove("d-none");
+                    alertBox.innerHTML = "Min 5 kontrolü yapılamadı. API çalışıyor mu kontrol et.";
+                    // burada ister disable et ister etme; ben güvenli olsun diye disable ediyorum:
+                    btn.disabled = true;
+                }
+            }
+
+            sel.addEventListener("change", checkMin);
+            checkMin();
+        })();
+    </script>
 }

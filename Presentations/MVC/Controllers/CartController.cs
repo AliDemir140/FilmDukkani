@@ -30,6 +30,15 @@ namespace MVC.Controllers
             _configuration = configuration;
         }
 
+        private string? ApiBaseUrl => _configuration["ApiSettings:BaseUrl"];
+
+        private class CheckMinimumResponse
+        {
+            public bool hasMinimum { get; set; }
+            public int minimumRequired { get; set; }
+            public int currentCount { get; set; }
+        }
+
         public IActionResult Index()
         {
             var cart = HttpContext.Session.GetObject<List<CartItem>>(SessionKeys.Cart)
@@ -80,8 +89,7 @@ namespace MVC.Controllers
         // Üyenin listelerini API'den çekip SelectListItem'a çevirir
         private async Task<List<SelectListItem>> GetMemberListsSelectAsync(int memberId)
         {
-            var apiBaseUrl = _configuration["ApiSettings:BaseUrl"];
-            if (string.IsNullOrWhiteSpace(apiBaseUrl))
+            if (string.IsNullOrWhiteSpace(ApiBaseUrl))
                 return new List<SelectListItem>();
 
             try
@@ -89,7 +97,7 @@ namespace MVC.Controllers
                 var client = _httpClientFactory.CreateClient();
 
                 var lists = await client.GetFromJsonAsync<List<MemberMovieListDto>>(
-                    $"{apiBaseUrl}/api/MemberMovieList/lists-by-member?memberId={memberId}"
+                    $"{ApiBaseUrl}/api/MemberMovieList/lists-by-member?memberId={memberId}"
                 );
 
                 lists ??= new List<MemberMovieListDto>();
@@ -102,26 +110,81 @@ namespace MVC.Controllers
             }
             catch
             {
-                // API kapalı / hata -> boş dön, view patlamasın
                 return new List<SelectListItem>();
             }
         }
 
+        // ✅ Min 5 film kuralı kontrol (API: check-minimum)
+        private async Task<(bool ok, int currentCount, int minimumRequired)> CheckMinimumAsync(int listId)
+        {
+            if (string.IsNullOrWhiteSpace(ApiBaseUrl))
+                return (false, 0, 5);
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient();
+
+                var res = await client.GetFromJsonAsync<CheckMinimumResponse>(
+                    $"{ApiBaseUrl}/api/MemberMovieList/check-minimum?listId={listId}"
+                );
+
+                if (res == null)
+                    return (false, 0, 5);
+
+                return (res.hasMinimum, res.currentCount, res.minimumRequired);
+            }
+            catch
+            {
+                return (false, 0, 5);
+            }
+        }
+
+        // ✅ JS burayı çağıracak: /Cart/CheckMinimum?listId=...
+        [HttpGet]
+        public async Task<IActionResult> CheckMinimum(int listId)
+        {
+            var memberId = HttpContext.Session.GetInt32(SessionKeys.MemberId);
+            if (memberId == null)
+                return Unauthorized();
+
+            if (listId <= 0)
+                return BadRequest("listId zorunludur.");
+
+            if (string.IsNullOrWhiteSpace(ApiBaseUrl))
+                return BadRequest("ApiSettings:BaseUrl bulunamadı.");
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient();
+
+                var res = await client.GetAsync($"{ApiBaseUrl}/api/MemberMovieList/check-minimum?listId={listId}");
+                if (!res.IsSuccessStatusCode)
+                    return StatusCode((int)res.StatusCode);
+
+                var data = await res.Content.ReadFromJsonAsync<CheckMinimumResponse>();
+                if (data == null)
+                    return StatusCode(500);
+
+                return Ok(data);
+            }
+            catch
+            {
+                return StatusCode(500);
+            }
+        }
+
         // ✅ Sepetteki filmleri seçilen listeye otomatik ekle
-        // Not: Aynı film listede varsa tekrar eklemez (API zaten false döndürüyor)
         private async Task AddCartMoviesToListAsync(int listId, List<CartItem> cart)
         {
-            var apiBaseUrl = _configuration["ApiSettings:BaseUrl"];
-            if (string.IsNullOrWhiteSpace(apiBaseUrl))
+            if (string.IsNullOrWhiteSpace(ApiBaseUrl))
                 return;
 
             try
             {
                 var client = _httpClientFactory.CreateClient();
 
-                // Listede mevcut item'ları çek (priority devam etsin diye)
                 var existingItems = await client.GetFromJsonAsync<List<MemberMovieListItemDto>>(
-                    $"{apiBaseUrl}/api/MemberMovieList/list-items?listId={listId}"
+                    $"{ApiBaseUrl}/api/MemberMovieList/list-items?listId={listId}"
                 ) ?? new List<MemberMovieListItemDto>();
 
                 var existingMovieIds = existingItems.Select(x => x.MovieId).ToHashSet();
@@ -139,13 +202,12 @@ namespace MVC.Controllers
                         Priority = nextPriority++
                     };
 
-                    // Başarısız olsa bile checkout'u çökertmeyelim
-                    await client.PostAsJsonAsync($"{apiBaseUrl}/api/MemberMovieList/add-item", dto);
+                    await client.PostAsJsonAsync($"{ApiBaseUrl}/api/MemberMovieList/add-item", dto);
                 }
             }
             catch
             {
-                // sessiz geç: checkout sayfası patlamasın
+                // sessiz geç
             }
         }
 
@@ -168,14 +230,21 @@ namespace MVC.Controllers
             if (!memberLists.Any())
             {
                 TempData["Error"] = "Checkout yapabilmek için önce bir liste oluşturmalısın.";
-                return RedirectToAction("Create", "MyLists");
+                return RedirectToAction("Create", "MyLists", new { returnUrl = "/Cart/Checkout" });
             }
+
+            int selectedListId = int.Parse(memberLists.First().Value);
+
+            var min = await CheckMinimumAsync(selectedListId);
+            ViewBag.HasMinimum = min.ok;
+            ViewBag.MinRequired = min.minimumRequired;
+            ViewBag.CurrentCount = min.currentCount;
 
             var model = new CheckoutViewModel
             {
                 CartItems = cart,
                 MemberLists = memberLists,
-                SelectedListId = int.Parse(memberLists.First().Value),
+                SelectedListId = selectedListId,
                 DeliveryDate = DateTime.Today.AddDays(2)
             };
 
@@ -197,7 +266,7 @@ namespace MVC.Controllers
             if (memberId == null)
                 return RedirectToAction("Login", "Auth");
 
-            // ModelState invalid olursa listeyi geri doldur (API'den)
+            // ModelState invalid olursa listeyi geri doldur
             if (!ModelState.IsValid)
             {
                 model.CartItems = cart;
@@ -206,17 +275,38 @@ namespace MVC.Controllers
                 if (model.MemberLists == null || !model.MemberLists.Any())
                 {
                     TempData["Error"] = "Checkout yapabilmek için önce bir liste oluşturmalısın.";
-                    return RedirectToAction("Create", "MyLists");
+                    return RedirectToAction("Create", "MyLists", new { returnUrl = "/Cart/Checkout" });
                 }
 
                 if (model.SelectedListId <= 0)
                     model.SelectedListId = int.Parse(model.MemberLists.First().Value);
 
+                // viewbag tekrar
+                var minAgain = await CheckMinimumAsync(model.SelectedListId);
+                ViewBag.HasMinimum = minAgain.ok;
+                ViewBag.MinRequired = minAgain.minimumRequired;
+                ViewBag.CurrentCount = minAgain.currentCount;
+
                 return View(model);
             }
 
-            // Sepetteki filmleri seçilen listeye yaz
+            // ✅ Sepet filmlerini listeye yaz
             await AddCartMoviesToListAsync(model.SelectedListId, cart);
+
+            // ✅ Min 5 kontrol (POST güvenlik) - listeye yazdıktan sonra kontrol daha mantıklı
+            var min = await CheckMinimumAsync(model.SelectedListId);
+            ViewBag.HasMinimum = min.ok;
+            ViewBag.MinRequired = min.minimumRequired;
+            ViewBag.CurrentCount = min.currentCount;
+
+            if (!min.ok)
+            {
+                model.CartItems = cart;
+                model.MemberLists = await GetMemberListsSelectAsync(memberId.Value);
+
+                ModelState.AddModelError("", $"Teslimat için seçili listede en az {min.minimumRequired} film olmalı. Şu an: {min.currentCount}");
+                return View(model);
+            }
 
             var requestId = await _deliveryRequestService.CreateDeliveryRequestAsync(
                 memberId.Value,
@@ -239,7 +329,6 @@ namespace MVC.Controllers
             return RedirectToAction(nameof(Success), new { id = requestId });
         }
 
-        // GET: /Cart/Success/5
         public async Task<IActionResult> Success(int id)
         {
             var request = await _deliveryRequestService.GetRequestDetailAsync(id);
