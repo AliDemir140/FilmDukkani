@@ -1,6 +1,7 @@
 ﻿using Application.DTOs.DeliveryRequestDTOs;
 using Application.Repositories;
 using Domain.Entities;
+using Domain.Enums;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -29,6 +30,20 @@ namespace Infrastructure.Repositories
                           Status = r.Status
                       })
                 .ToListAsync();
+        }
+
+        // Aynı liste için aktif sipariş kontrolü
+        public async Task<bool> HasActiveRequestForListAsync(int memberId, int listId)
+        {
+            return await _context.DeliveryRequests
+                .AsNoTracking()
+                .AnyAsync(r =>
+                    r.MemberId == memberId &&
+                    r.MemberMovieListId == listId &&
+                    (r.Status == DeliveryStatus.Pending ||
+                     r.Status == DeliveryStatus.Prepared ||
+                     r.Status == DeliveryStatus.Shipped ||
+                     r.Status == DeliveryStatus.Delivered));
         }
     }
 }

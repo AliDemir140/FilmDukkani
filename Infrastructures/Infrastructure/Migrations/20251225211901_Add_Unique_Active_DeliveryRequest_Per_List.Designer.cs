@@ -4,6 +4,7 @@ using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(FilmDukkaniDbContext))]
-    partial class FilmDukkaniDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251225211901_Add_Unique_Active_DeliveryRequest_Per_List")]
+    partial class Add_Unique_Active_DeliveryRequest_Per_List
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -160,6 +163,9 @@ namespace Infrastructure.Migrations
                     b.Property<DateTime>("DeliveryDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("MemberID")
+                        .HasColumnType("int");
+
                     b.Property<int>("MemberId")
                         .HasColumnType("int");
 
@@ -176,6 +182,8 @@ namespace Infrastructure.Migrations
                         .HasColumnType("tinyint");
 
                     b.HasKey("ID");
+
+                    b.HasIndex("MemberID");
 
                     b.HasIndex("MemberId");
 
@@ -901,8 +909,12 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.DeliveryRequest", b =>
                 {
-                    b.HasOne("Domain.Entities.Member", "Member")
+                    b.HasOne("Domain.Entities.Member", null)
                         .WithMany("DeliveryRequests")
+                        .HasForeignKey("MemberID");
+
+                    b.HasOne("Domain.Entities.Member", "Member")
+                        .WithMany()
                         .HasForeignKey("MemberId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();

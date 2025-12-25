@@ -10,7 +10,7 @@ namespace Infrastructure.Persistence.Configurations
         {
             builder.HasKey(x => x.ID);
 
-            // ✅ Member ilişkisi (navigation'ı bağladık -> shadow FK oluşmaz)
+            // ✅ Member ilişkisi (navigation bağlı) + NO ACTION (multiple cascade path kırmak için)
             builder.HasOne(x => x.Member)
                    .WithMany(m => m.DeliveryRequests)
                    .HasForeignKey(x => x.MemberId)
@@ -23,6 +23,13 @@ namespace Infrastructure.Persistence.Configurations
                    .OnDelete(DeleteBehavior.Cascade);
 
             builder.Property(x => x.Status).IsRequired();
+
+            // ✅ DB KURALI: Aynı liste için aynı anda sadece 1 aktif sipariş olabilir
+            // Active = Pending(0), Prepared(1), Shipped(2), Delivered(3)
+            builder.HasIndex(x => x.MemberMovieListId)
+                   .IsUnique()
+                   .HasDatabaseName("UX_DeliveryRequests_ActivePerList")
+                   .HasFilter("[Status] IN (0,1,2,3)");
         }
     }
 }
