@@ -34,20 +34,22 @@ namespace Application.ServiceManager
                 .ToList();
         }
 
-        // ✅ KURAL: aynı isimden liste oluşturulamasın (case-insensitive + trim)
+        // return:
+        //  0  -> invalid / fail
+        // -1  -> duplicate
+        // >0  -> created listId
         public async Task<int> CreateListAsync(CreateMemberMovieListDto dto)
         {
+            if (dto == null) return 0;
+
             var name = (dto.Name ?? "").Trim();
             if (string.IsNullOrWhiteSpace(name))
                 return 0;
 
-            var existing = await _memberMovieListRepository.GetAllAsync(x =>
-                x.MemberId == dto.MemberId &&
-                x.Name.ToLower() == name.ToLower()
-            );
-
-            if (existing.Any())
-                return 0;
+            // ✅ repository seviyesinde var mı kontrol (daha temiz + tek yerden yönetim)
+            var exists = await _memberMovieListRepository.ExistsByNameAsync(dto.MemberId, name);
+            if (exists)
+                return -1;
 
             var list = new MemberMovieList
             {
@@ -135,14 +137,9 @@ namespace Application.ServiceManager
             if (string.IsNullOrWhiteSpace(newName))
                 return false;
 
-            // ✅ aynı isim kontrolü
-            var dup = await _memberMovieListRepository.GetAllAsync(x =>
-                x.MemberId == list.MemberId &&
-                x.ID != list.ID &&
-                x.Name.ToLower() == newName.ToLower()
-            );
-
-            if (dup.Any())
+            // ✅ aynı member’da başka listede bu isim var mı? (kendisi hariç)
+            var exists = await _memberMovieListRepository.ExistsByNameAsync(list.MemberId, newName);
+            if (exists && !string.Equals(list.Name?.Trim(), newName, StringComparison.OrdinalIgnoreCase))
                 return false;
 
             list.Name = newName;
