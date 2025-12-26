@@ -1,5 +1,6 @@
 ﻿using Application.DTOs.DeliveryRequestDTOs;
 using Application.Repositories;
+using Application.Interfaces;
 using Domain.Entities;
 using Domain.Enums;
 
@@ -16,6 +17,7 @@ namespace Application.ServiceManager
         private readonly IMembershipPlanRepository _membershipPlanRepository;
         private readonly IMovieCopyRepository _movieCopyRepository;
         private readonly IDamagedMovieRepository _damagedMovieRepository;
+        private readonly IEmailService _emailService;
 
         public DeliveryRequestServiceManager(
             IDeliveryRequestRepository deliveryRequestRepository,
@@ -26,7 +28,8 @@ namespace Application.ServiceManager
             IMemberRepository memberRepository,
             IMembershipPlanRepository membershipPlanRepository,
             IMovieCopyRepository movieCopyRepository,
-            IDamagedMovieRepository damagedMovieRepository)
+            IDamagedMovieRepository damagedMovieRepository,
+            IEmailService emailService)
         {
             _deliveryRequestRepository = deliveryRequestRepository;
             _deliveryRequestItemRepository = deliveryRequestItemRepository;
@@ -37,6 +40,7 @@ namespace Application.ServiceManager
             _membershipPlanRepository = membershipPlanRepository;
             _movieCopyRepository = movieCopyRepository;
             _damagedMovieRepository = damagedMovieRepository;
+            _emailService = emailService;
         }
 
         public async Task<int> UserCancelRequestAsync(int memberId, int requestId, string reason)
@@ -197,6 +201,74 @@ namespace Application.ServiceManager
             public DateTime AddedDate { get; set; }
         }
 
+        private static string BuildTomorrowEmailSubject(DateTime deliveryDate)
+        {
+            return "Yarın teslim edilecek filmler";
+        }
+
+        private string BuildTomorrowEmailBody(Member member, DeliveryRequest request, string listName, List<string> movieTitles)
+        {
+            var lines = new List<string>
+            {
+                "Merhaba " + member.FirstName + " " + member.LastName + ",",
+                "",
+                "Teslimat tarihi: " + request.DeliveryDate.ToString("dd.MM.yyyy"),
+                "Liste: " + listName,
+                "",
+                "Yarın teslim edilecek filmler:"
+            };
+
+            if (movieTitles.Count == 0)
+            {
+                lines.Add("Bu teslimat için uygun kopya bulunamadı.");
+            }
+            else
+            {
+                for (int i = 0; i < movieTitles.Count; i++)
+                {
+                    lines.Add((i + 1) + ") " + movieTitles[i]);
+                }
+            }
+
+            lines.Add("");
+            lines.Add("FilmDukkani");
+
+            return string.Join(Environment.NewLine, lines);
+        }
+
+        private async Task SendTomorrowEmailAsync(int requestId)
+        {
+            var request = await _deliveryRequestRepository.GetByIdAsync(requestId);
+            if (request == null) return;
+
+            var member = await _memberRepository.GetByIdAsync(request.MemberId);
+            if (member == null) return;
+
+            if (string.IsNullOrWhiteSpace(member.Email))
+                return;
+
+            var list = await _memberMovieListRepository.GetByIdAsync(request.MemberMovieListId);
+            var listName = list?.Name ?? string.Empty;
+
+            var items = await _deliveryRequestItemRepository.GetAllAsync(i => i.DeliveryRequestId == request.ID);
+            if (items == null || !items.Any())
+                return;
+
+            var titles = new List<string>();
+
+            foreach (var item in items)
+            {
+                var movie = await _movieRepository.GetByIdAsync(item.MovieId);
+                if (movie != null && !string.IsNullOrWhiteSpace(movie.Title))
+                    titles.Add(movie.Title);
+            }
+
+            var subject = BuildTomorrowEmailSubject(request.DeliveryDate);
+            var body = BuildTomorrowEmailBody(member, request, listName, titles);
+
+            await _emailService.SendAsync(member.Email, subject, body);
+        }
+
         public async Task PrepareTomorrowDeliveriesAsync()
         {
             DateTime tomorrow = DateTime.Today.AddDays(1);
@@ -317,6 +389,8 @@ namespace Application.ServiceManager
 
                 req.Status = DeliveryStatus.Prepared;
                 await _deliveryRequestRepository.UpdateAsync(req);
+
+                await SendTomorrowEmailAsync(req.ID);
             }
         }
 

@@ -1,4 +1,4 @@
-﻿using Application.Abstractions;
+﻿using Application.Interfaces;
 using Application.DTOs.UserDTOs;
 using Application.Repositories;
 using Domain.Entities;
