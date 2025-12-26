@@ -22,7 +22,6 @@ namespace MVC.Controllers
 
         private string? ApiBaseUrl => _configuration["ApiSettings:BaseUrl"];
 
-        // GET: /MyLists
         public async Task<IActionResult> Index()
         {
             var memberId = HttpContext.Session.GetInt32(SessionKeys.MemberId);
@@ -52,7 +51,6 @@ namespace MVC.Controllers
             }
         }
 
-        // GET: /MyLists/Create?returnUrl=/Cart/Checkout
         [HttpGet]
         public IActionResult Create(string? returnUrl = null)
         {
@@ -60,7 +58,6 @@ namespace MVC.Controllers
             return View(new CreateMemberMovieListDto());
         }
 
-        // POST: /MyLists/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CreateMemberMovieListDto dto, string? returnUrl = null)
@@ -108,7 +105,6 @@ namespace MVC.Controllers
             }
         }
 
-        // GET: /MyLists/Details/5
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
@@ -147,7 +143,6 @@ namespace MVC.Controllers
             }
         }
 
-        // POST: /MyLists/DeleteItem
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteItem(int itemId, int listId)
@@ -190,7 +185,6 @@ namespace MVC.Controllers
             }
         }
 
-        // ✅ POST: /MyLists/MoveItem  (↑ ↓)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MoveItem(int itemId, int listId, string direction)
@@ -243,7 +237,6 @@ namespace MVC.Controllers
             }
         }
 
-        // ✅ POST: /MyLists/AddListToCart
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddListToCart(int listId)
@@ -252,7 +245,6 @@ namespace MVC.Controllers
             if (memberId == null)
                 return RedirectToAction("Login", "Auth");
 
-            // Sepet doluysa -> tekrar basma, direkt sepete git
             var cart = HttpContext.Session.GetObject<List<CartItem>>(SessionKeys.Cart) ?? new List<CartItem>();
             if (cart.Any())
             {
@@ -276,7 +268,6 @@ namespace MVC.Controllers
             {
                 var client = _httpClientFactory.CreateClient();
 
-                // Güvenlik: liste bu üyeye mi ait?
                 var lists = await client.GetFromJsonAsync<List<MemberMovieListDto>>(
                     $"{ApiBaseUrl}/api/MemberMovieList/lists-by-member?memberId={memberId.Value}"
                 ) ?? new List<MemberMovieListDto>();
@@ -284,7 +275,6 @@ namespace MVC.Controllers
                 if (!lists.Any(x => x.Id == listId))
                     return Forbid();
 
-                // Liste itemlarını çek
                 var items = await client.GetFromJsonAsync<List<MemberMovieListItemDto>>(
                     $"{ApiBaseUrl}/api/MemberMovieList/list-items?listId={listId}"
                 ) ?? new List<MemberMovieListItemDto>();
@@ -317,6 +307,181 @@ namespace MVC.Controllers
             catch
             {
                 TempData["Error"] = "Liste sepete eklenemedi. API çalışıyor mu kontrol et.";
+                return RedirectToAction(nameof(Details), new { id = listId });
+            }
+        }
+
+        // ✅ Tek listeyi boşalt (liste kalsın)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ClearList(int listId)
+        {
+            var memberId = HttpContext.Session.GetInt32(SessionKeys.MemberId);
+            if (memberId == null)
+                return RedirectToAction("Login", "Auth");
+
+            if (listId <= 0)
+            {
+                TempData["Error"] = "Geçersiz liste.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (string.IsNullOrWhiteSpace(ApiBaseUrl))
+            {
+                TempData["Error"] = "API BaseUrl bulunamadı.";
+                return RedirectToAction(nameof(Details), new { id = listId });
+            }
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient();
+                var res = await client.DeleteAsync($"{ApiBaseUrl}/api/MemberMovieList/clear-list-items?listId={listId}");
+
+                if (!res.IsSuccessStatusCode)
+                {
+                    TempData["Error"] = "Liste boşaltılamadı.";
+                    return RedirectToAction(nameof(Details), new { id = listId });
+                }
+
+                TempData["Success"] = "Liste boşaltıldı.";
+                return RedirectToAction(nameof(Details), new { id = listId });
+            }
+            catch
+            {
+                TempData["Error"] = "Liste boşaltılamadı. API çalışıyor mu kontrol et.";
+                return RedirectToAction(nameof(Details), new { id = listId });
+            }
+        }
+
+        // ✅ Toplu temizlik: siparişe girmemiş listeleri boşalt
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ClearAllNonOrdered()
+        {
+            var memberId = HttpContext.Session.GetInt32(SessionKeys.MemberId);
+            if (memberId == null)
+                return RedirectToAction("Login", "Auth");
+
+            if (string.IsNullOrWhiteSpace(ApiBaseUrl))
+            {
+                TempData["Error"] = "API BaseUrl bulunamadı.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient();
+                var res = await client.PostAsync($"{ApiBaseUrl}/api/MemberMovieList/clear-all-nonordered?memberId={memberId.Value}", null);
+
+                if (!res.IsSuccessStatusCode)
+                {
+                    TempData["Error"] = "Toplu temizlik yapılamadı.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                var data = await res.Content.ReadFromJsonAsync<Dictionary<string, int>>();
+                var clearedCount = data != null && data.ContainsKey("clearedCount") ? data["clearedCount"] : 0;
+
+                TempData["Success"] = $"Toplu temizlik tamamlandı. Boşaltılan liste sayısı: {clearedCount}";
+                return RedirectToAction(nameof(Index));
+            }
+            catch
+            {
+                TempData["Error"] = "Toplu temizlik yapılamadı. API çalışıyor mu kontrol et.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        // ✅ Liste adını değiştir (detaydan)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Rename(int listId, string name)
+        {
+            var memberId = HttpContext.Session.GetInt32(SessionKeys.MemberId);
+            if (memberId == null)
+                return RedirectToAction("Login", "Auth");
+
+            name = (name ?? "").Trim();
+            if (listId <= 0 || string.IsNullOrWhiteSpace(name))
+            {
+                TempData["Error"] = "Liste adı zorunludur.";
+                return RedirectToAction(nameof(Details), new { id = listId });
+            }
+
+            if (string.IsNullOrWhiteSpace(ApiBaseUrl))
+            {
+                TempData["Error"] = "API BaseUrl bulunamadı.";
+                return RedirectToAction(nameof(Details), new { id = listId });
+            }
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient();
+
+                var dto = new UpdateMemberMovieListNameDto { Id = listId, Name = name };
+                var res = await client.PutAsJsonAsync($"{ApiBaseUrl}/api/MemberMovieList/update-name", dto);
+
+                if (!res.IsSuccessStatusCode)
+                {
+                    TempData["Error"] = "Liste adı değiştirilemedi. (Aynı isim olabilir)";
+                    return RedirectToAction(nameof(Details), new { id = listId });
+                }
+
+                TempData["Success"] = "Liste adı güncellendi.";
+                return RedirectToAction(nameof(Details), new { id = listId });
+            }
+            catch
+            {
+                TempData["Error"] = "Liste adı güncellenemedi. API çalışıyor mu kontrol et.";
+                return RedirectToAction(nameof(Details), new { id = listId });
+            }
+        }
+
+        // ✅ Listeyi sil (aktif sipariş yoksa)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteList(int listId)
+        {
+            var memberId = HttpContext.Session.GetInt32(SessionKeys.MemberId);
+            if (memberId == null)
+                return RedirectToAction("Login", "Auth");
+
+            if (listId <= 0)
+            {
+                TempData["Error"] = "Geçersiz liste.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (string.IsNullOrWhiteSpace(ApiBaseUrl))
+            {
+                TempData["Error"] = "API BaseUrl bulunamadı.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient();
+
+                var res = await client.DeleteAsync($"{ApiBaseUrl}/api/MemberMovieList/delete-list?listId={listId}");
+
+                if (res.StatusCode == System.Net.HttpStatusCode.Conflict)
+                {
+                    TempData["Error"] = "Bu liste için aktif sipariş var. Liste silinemez.";
+                    return RedirectToAction(nameof(Details), new { id = listId });
+                }
+
+                if (!res.IsSuccessStatusCode)
+                {
+                    TempData["Error"] = "Liste silinemedi.";
+                    return RedirectToAction(nameof(Details), new { id = listId });
+                }
+
+                TempData["Success"] = "Liste silindi.";
+                return RedirectToAction(nameof(Index));
+            }
+            catch
+            {
+                TempData["Error"] = "Liste silinemedi. API çalışıyor mu kontrol et.";
                 return RedirectToAction(nameof(Details), new { id = listId });
             }
         }

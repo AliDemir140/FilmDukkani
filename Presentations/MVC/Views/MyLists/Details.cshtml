@@ -18,7 +18,19 @@
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="mb-0">@listName</h2>
+    <div>
+        <h2 class="mb-1">@listName</h2>
+
+        <!-- ✅ Rename -->
+        <form asp-controller="MyLists" asp-action="Rename" method="post" class="d-flex gap-2 mt-2" style="max-width:520px;">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="listId" value="@listId" />
+            <input type="text" name="name" class="form-control" value="@listName" />
+            <button type="submit" class="btn btn-outline-light">
+                Kaydet
+            </button>
+        </form>
+    </div>
 
     <div class="d-flex gap-2">
         @if (!cartHasItems)
@@ -42,6 +54,26 @@
                 <i class="fa-solid fa-cart-shopping"></i> Sepete Git
             </a>
         }
+
+        <!-- ✅ Listeyi boşalt -->
+        <form asp-controller="MyLists" asp-action="ClearList" method="post" class="d-inline"
+              onsubmit="return confirm('Liste içindeki tüm filmler silinsin mi? (Liste kalır)');">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="listId" value="@listId" />
+            <button type="submit" class="btn btn-outline-danger">
+                <i class="fa-solid fa-broom"></i> Listeyi Boşalt
+            </button>
+        </form>
+
+        <!-- ✅ Listeyi sil -->
+        <form asp-controller="MyLists" asp-action="DeleteList" method="post" class="d-inline"
+              onsubmit="return confirm('Liste tamamen silinsin mi? (Sadece aktif sipariş yoksa)');">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="listId" value="@listId" />
+            <button type="submit" class="btn btn-danger">
+                <i class="fa-solid fa-trash"></i> Listeyi Sil
+            </button>
+        </form>
 
         <a asp-controller="MyLists"
            asp-action="Index"

@@ -7,12 +7,31 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="mb-0">Listelerim</h2>
 
-    <a class="btn btn-danger"
-       asp-controller="MyLists"
-       asp-action="Create">
-        + Yeni Liste
-    </a>
+    <div class="d-flex gap-2">
+        <form asp-controller="MyLists" asp-action="ClearAllNonOrdered" method="post" class="d-inline">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-outline-danger"
+                    onclick="return confirm('Siparişe girmemiş tüm listelerin içeriği temizlensin mi? (Listeler kalır)');">
+                <i class="fa-solid fa-broom"></i> Toplu Temizlik
+            </button>
+        </form>
+
+        <a class="btn btn-danger"
+           asp-controller="MyLists"
+           asp-action="Create">
+            + Yeni Liste
+        </a>
+    </div>
 </div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success mb-3">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger mb-3">@TempData["Error"]</div>
+}
 
 @if (Model == null || !Model.Any())
 {
@@ -55,8 +74,6 @@ else
                             <td>#@l.Id</td>
                             <td>@l.Name</td>
                             <td class="text-end">
-                                @* Detay sayfasını birazdan yazacaksak dursun.
-                                   Henüz yoksa bu butonu kaldırabilirsin. *@
                                 <a class="btn btn-sm btn-outline-light"
                                    asp-controller="MyLists"
                                    asp-action="Details"

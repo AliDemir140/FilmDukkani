@@ -9,15 +9,18 @@ namespace Application.ServiceManager
         private readonly IMemberMovieListRepository _memberMovieListRepository;
         private readonly IMemberMovieListItemRepository _memberMovieListItemRepository;
         private readonly IMovieRepository _moviesRepository;
+        private readonly IDeliveryRequestRepository _deliveryRequestRepository;
 
         public MemberMovieListServiceManager(
             IMemberMovieListRepository memberMovieListRepository,
             IMemberMovieListItemRepository memberMovieListItemRepository,
-            IMovieRepository moviesRepository)
+            IMovieRepository moviesRepository,
+            IDeliveryRequestRepository deliveryRequestRepository)
         {
             _memberMovieListRepository = memberMovieListRepository;
             _memberMovieListItemRepository = memberMovieListItemRepository;
             _moviesRepository = moviesRepository;
+            _deliveryRequestRepository = deliveryRequestRepository;
         }
 
         public async Task<List<MemberMovieListDto>> GetListsByMemberAsync(int memberId)
@@ -34,10 +37,6 @@ namespace Application.ServiceManager
                 .ToList();
         }
 
-        // return:
-        //  0  -> invalid / fail
-        // -1  -> duplicate
-        // >0  -> created listId
         public async Task<int> CreateListAsync(CreateMemberMovieListDto dto)
         {
             if (dto == null) return 0;
@@ -46,7 +45,6 @@ namespace Application.ServiceManager
             if (string.IsNullOrWhiteSpace(name))
                 return 0;
 
-            // ✅ repository seviyesinde var mı kontrol (daha temiz + tek yerden yönetim)
             var exists = await _memberMovieListRepository.ExistsByNameAsync(dto.MemberId, name);
             if (exists)
                 return -1;
@@ -69,7 +67,7 @@ namespace Application.ServiceManager
 
             var movies = movieIds.Any()
                 ? await _moviesRepository.GetAllAsync(m => movieIds.Contains(m.ID))
-                : new List<Domain.Entities.Movie>();
+                : new List<Movie>();
 
             var movieMap = movies.ToDictionary(m => m.ID, m => m.Title);
 
@@ -137,7 +135,6 @@ namespace Application.ServiceManager
             if (string.IsNullOrWhiteSpace(newName))
                 return false;
 
-            // ✅ aynı member’da başka listede bu isim var mı? (kendisi hariç)
             var exists = await _memberMovieListRepository.ExistsByNameAsync(list.MemberId, newName);
             if (exists && !string.Equals(list.Name?.Trim(), newName, StringComparison.OrdinalIgnoreCase))
                 return false;
@@ -193,7 +190,6 @@ namespace Application.ServiceManager
             return true;
         }
 
-        // ✅ Up/Down swap
         public async Task<bool> MoveItemAsync(int listId, int itemId, string direction)
         {
             var items = await _memberMovieListItemRepository.GetAllAsync(i => i.MemberMovieListId == listId);
@@ -245,6 +241,70 @@ namespace Application.ServiceManager
             }
 
             return false;
+        }
+
+        // ✅ Tek listeyi boşalt (itemları sil, liste kalsın)
+        public async Task<bool> ClearListItemsAsync(int listId)
+        {
+            var list = await _memberMovieListRepository.GetByIdAsync(listId);
+            if (list == null)
+                return false;
+
+            var items = await _memberMovieListItemRepository.GetAllAsync(i => i.MemberMovieListId == listId);
+
+            foreach (var it in items)
+                await _memberMovieListItemRepository.DeleteAsync(it);
+
+            return true;
+        }
+
+        // ✅ Listeyi sil (aktif sipariş yoksa)
+        // return: 0 yok, -1 aktif sipariş var, 1 başarılı
+        public async Task<int> DeleteListAsync(int listId)
+        {
+            var list = await _memberMovieListRepository.GetByIdAsync(listId);
+            if (list == null)
+                return 0;
+
+            // aktif sipariş var mı? (memberId repo istiyor)
+            var hasActive = await _deliveryRequestRepository.HasActiveRequestForListAsync(list.MemberId, listId);
+            if (hasActive)
+                return -1;
+
+            // önce itemları sil
+            var items = await _memberMovieListItemRepository.GetAllAsync(i => i.MemberMovieListId == listId);
+            foreach (var it in items)
+                await _memberMovieListItemRepository.DeleteAsync(it);
+
+            // sonra listeyi sil
+            await _memberMovieListRepository.DeleteAsync(list);
+            return 1;
+        }
+
+        // ✅ Toplu temizlik: siparişe girmemiş listelerin itemlarını sil
+        // dönen: kaç liste boşaltıldı
+        public async Task<int> ClearAllNonOrderedListsAsync(int memberId)
+        {
+            var lists = await _memberMovieListRepository.GetAllAsync(l => l.MemberId == memberId);
+            int cleared = 0;
+
+            foreach (var list in lists)
+            {
+                var hasActive = await _deliveryRequestRepository.HasActiveRequestForListAsync(memberId, list.ID);
+                if (hasActive)
+                    continue;
+
+                var items = await _memberMovieListItemRepository.GetAllAsync(i => i.MemberMovieListId == list.ID);
+                if (!items.Any())
+                    continue;
+
+                foreach (var it in items)
+                    await _memberMovieListItemRepository.DeleteAsync(it);
+
+                cleared++;
+            }
+
+            return cleared;
         }
     }
 }
