@@ -68,6 +68,7 @@ namespace Infrastructure.DependencyResolvers
             services.AddScoped<UserServiceManager>();
 
             services.AddScoped<IEmailService, FakeEmailService>();
+            services.AddScoped<ISmsService, FakeSmsService>();
         }
     }
 }
