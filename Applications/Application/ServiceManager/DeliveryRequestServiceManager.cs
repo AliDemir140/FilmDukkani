@@ -188,6 +188,15 @@ namespace Application.ServiceManager
             return 1;
         }
 
+        private sealed class DeliveryCandidate
+        {
+            public int RequestId { get; set; }
+            public int MovieId { get; set; }
+            public int ListItemId { get; set; }
+            public int Priority { get; set; }
+            public DateTime AddedDate { get; set; }
+        }
+
         public async Task PrepareTomorrowDeliveriesAsync()
         {
             DateTime tomorrow = DateTime.Today.AddDays(1);
@@ -195,61 +204,119 @@ namespace Application.ServiceManager
             var requests = await _deliveryRequestRepository
                 .GetAllAsync(r => r.DeliveryDate.Date == tomorrow.Date && r.Status == DeliveryStatus.Pending);
 
+            if (requests == null || !requests.Any())
+                return;
+
+            var requestMap = requests.ToDictionary(r => r.ID, r => r);
+
+            var quotaByRequestId = new Dictionary<int, int>();
+            var assignedCountByRequestId = new Dictionary<int, int>();
+            var anyItemAddedByRequestId = new Dictionary<int, bool>();
+            var candidates = new List<DeliveryCandidate>();
+
             foreach (var request in requests)
             {
-                bool anyItemAdded = false;
-
                 var member = await _memberRepository.GetByIdAsync(request.MemberId);
                 if (member == null) continue;
 
                 var plan = await _membershipPlanRepository.GetByIdAsync(member.MembershipPlanId);
                 if (plan == null) continue;
 
-                int maxMoviesToSend = plan.MaxChangePerMonth;
-                if (maxMoviesToSend <= 0) continue;
+                int quota = plan.MaxChangePerMonth;
+                if (quota <= 0) continue;
 
-                var list = await _memberMovieListRepository.GetByIdAsync(request.MemberMovieListId);
-                if (list == null) continue;
+                quotaByRequestId[request.ID] = quota;
+                assignedCountByRequestId[request.ID] = 0;
+                anyItemAddedByRequestId[request.ID] = false;
 
                 var listItems = await _memberMovieListItemRepository
-                    .GetAllAsync(i => i.MemberMovieListId == list.ID);
+                    .GetAllAsync(i => i.MemberMovieListId == request.MemberMovieListId);
 
-                var sortedItems = listItems
+                if (listItems == null || !listItems.Any())
+                    continue;
+
+                var planned = listItems
                     .OrderBy(i => i.Priority)
                     .ThenBy(i => i.AddedDate)
-                    .Take(maxMoviesToSend)
+                    .Take(quota)
                     .ToList();
 
-                foreach (var item in sortedItems)
+                foreach (var li in planned)
                 {
-                    var copies = await _movieCopyRepository
-                        .GetAllAsync(c => c.MovieId == item.MovieId && c.IsAvailable && !c.IsDamaged);
-
-                    var selectedCopy = copies.FirstOrDefault();
-                    if (selectedCopy == null) continue;
-
-                    selectedCopy.IsAvailable = false;
-                    await _movieCopyRepository.UpdateAsync(selectedCopy);
-
-                    var dri = new DeliveryRequestItem
+                    candidates.Add(new DeliveryCandidate
                     {
-                        DeliveryRequestId = request.ID,
-                        MovieId = item.MovieId,
-                        MovieCopyId = selectedCopy.ID,
-                        MemberMovieListItemId = item.ID,
-                        IsReturned = false,
-                        IsDamaged = false
-                    };
-
-                    await _deliveryRequestItemRepository.AddAsync(dri);
-                    anyItemAdded = true;
+                        RequestId = request.ID,
+                        MovieId = li.MovieId,
+                        ListItemId = li.ID,
+                        Priority = li.Priority,
+                        AddedDate = li.AddedDate
+                    });
                 }
+            }
 
-                if (anyItemAdded)
+            if (!candidates.Any())
+                return;
+
+            var movieIds = candidates.Select(c => c.MovieId).Distinct().ToList();
+
+            var allCopies = await _movieCopyRepository.GetAllAsync(c =>
+                movieIds.Contains(c.MovieId) && c.IsAvailable && !c.IsDamaged);
+
+            var copyQueues = allCopies
+                .GroupBy(c => c.MovieId)
+                .ToDictionary(g => g.Key, g => new Queue<MovieCopy>(g.OrderBy(x => x.ID)));
+
+            var orderedCandidates = candidates
+                .OrderBy(c => c.Priority)
+                .ThenBy(c => c.AddedDate)
+                .ThenBy(c => c.RequestId)
+                .ToList();
+
+            foreach (var cand in orderedCandidates)
+            {
+                if (!quotaByRequestId.TryGetValue(cand.RequestId, out var quota))
+                    continue;
+
+                if (!assignedCountByRequestId.TryGetValue(cand.RequestId, out var assigned))
+                    continue;
+
+                if (assigned >= quota)
+                    continue;
+
+                if (!copyQueues.TryGetValue(cand.MovieId, out var q) || q.Count == 0)
+                    continue;
+
+                var selectedCopy = q.Dequeue();
+
+                selectedCopy.IsAvailable = false;
+                await _movieCopyRepository.UpdateAsync(selectedCopy);
+
+                var dri = new DeliveryRequestItem
                 {
-                    request.Status = DeliveryStatus.Prepared;
-                    await _deliveryRequestRepository.UpdateAsync(request);
-                }
+                    DeliveryRequestId = cand.RequestId,
+                    MovieId = cand.MovieId,
+                    MovieCopyId = selectedCopy.ID,
+                    MemberMovieListItemId = cand.ListItemId,
+                    IsReturned = false,
+                    IsDamaged = false
+                };
+
+                await _deliveryRequestItemRepository.AddAsync(dri);
+
+                assignedCountByRequestId[cand.RequestId] = assigned + 1;
+                anyItemAddedByRequestId[cand.RequestId] = true;
+            }
+
+            foreach (var pair in anyItemAddedByRequestId)
+            {
+                if (!pair.Value)
+                    continue;
+
+                if (!requestMap.TryGetValue(pair.Key, out var req))
+                    continue;
+
+                req.Status = DeliveryStatus.Prepared;
+                await _deliveryRequestRepository.UpdateAsync(req);
             }
         }
 
