@@ -18,6 +18,7 @@ namespace Application.ServiceManager
         private readonly IMovieCopyRepository _movieCopyRepository;
         private readonly IDamagedMovieRepository _damagedMovieRepository;
         private readonly IEmailService _emailService;
+        private readonly ISmsService _smsService;
 
         public DeliveryRequestServiceManager(
             IDeliveryRequestRepository deliveryRequestRepository,
@@ -29,7 +30,8 @@ namespace Application.ServiceManager
             IMembershipPlanRepository membershipPlanRepository,
             IMovieCopyRepository movieCopyRepository,
             IDamagedMovieRepository damagedMovieRepository,
-            IEmailService emailService)
+            IEmailService emailService,
+            ISmsService smsService)
         {
             _deliveryRequestRepository = deliveryRequestRepository;
             _deliveryRequestItemRepository = deliveryRequestItemRepository;
@@ -41,6 +43,7 @@ namespace Application.ServiceManager
             _movieCopyRepository = movieCopyRepository;
             _damagedMovieRepository = damagedMovieRepository;
             _emailService = emailService;
+            _smsService = smsService;
         }
 
         public async Task<int> UserCancelRequestAsync(int memberId, int requestId, string reason)
@@ -267,6 +270,22 @@ namespace Application.ServiceManager
             var body = BuildTomorrowEmailBody(member, request, listName, titles);
 
             await _emailService.SendAsync(member.Email, subject, body);
+        }
+
+        private async Task SendShippedSmsAsync(int requestId)
+        {
+            var request = await _deliveryRequestRepository.GetByIdAsync(requestId);
+            if (request == null) return;
+
+            var member = await _memberRepository.GetByIdAsync(request.MemberId);
+            if (member == null) return;
+
+            var phone = (member.Phone ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(phone))
+                return;
+
+            var message = "Filmleriniz kargoya verildi. Teslimat tarihi: " + request.DeliveryDate.ToString("dd.MM.yyyy");
+            await _smsService.SendAsync(phone, message);
         }
 
         public async Task PrepareTomorrowDeliveriesAsync()
@@ -554,6 +573,8 @@ namespace Application.ServiceManager
 
             request.Status = DeliveryStatus.Shipped;
             await _deliveryRequestRepository.UpdateAsync(request);
+
+            await SendShippedSmsAsync(request.ID);
 
             return true;
         }
