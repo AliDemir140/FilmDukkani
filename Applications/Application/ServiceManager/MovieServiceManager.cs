@@ -15,38 +15,67 @@ namespace Application.ServiceManager
             _categoryRepository = categoryRepository;
         }
 
-        // LISTELEME
         public async Task<List<MovieDto>> GetMoviesAsync()
         {
             var movies = await _movieRepository.GetMoviesWithCategoryAsync();
 
             return movies
-                .Select(m => new MovieDto
+                .Select(m =>
                 {
-                    Id = m.ID,
-                    Title = m.Title,
-                    OriginalTitle = m.OriginalTitle,
-                    Description = m.Description,
-                    ReleaseYear = m.ReleaseYear,
-                    TechnicalDetails = m.TechnicalDetails,
-                    AudioFeatures = m.AudioFeatures,
-                    SubtitleLanguages = m.SubtitleLanguages,
-                    TrailerUrl = m.TrailerUrl,
-                    CoverImageUrl = m.CoverImageUrl,
-                    Barcode = m.Barcode,
-                    Supplier = m.Supplier,
-                    CategoryId = m.CategoryId,
-                    CategoryName = m.Category != null ? m.Category.CategoryName : null
+                    var categoryIds = m.MovieCategories?
+                        .Select(x => x.CategoryId)
+                        .Distinct()
+                        .ToList() ?? new List<int>();
+
+                    var categoryNames = m.MovieCategories?
+                        .Select(x => x.Category != null ? x.Category.CategoryName : null)
+                        .Where(x => !string.IsNullOrWhiteSpace(x))
+                        .Select(x => x!)
+                        .Distinct()
+                        .ToList() ?? new List<string>();
+
+                    return new MovieDto
+                    {
+                        Id = m.ID,
+                        Title = m.Title,
+                        OriginalTitle = m.OriginalTitle,
+                        Description = m.Description,
+                        ReleaseYear = m.ReleaseYear,
+                        TechnicalDetails = m.TechnicalDetails,
+                        AudioFeatures = m.AudioFeatures,
+                        SubtitleLanguages = m.SubtitleLanguages,
+                        TrailerUrl = m.TrailerUrl,
+                        CoverImageUrl = m.CoverImageUrl,
+                        Barcode = m.Barcode,
+                        Supplier = m.Supplier,
+
+                        CategoryIds = categoryIds,
+                        CategoryNames = categoryNames,
+
+                        CategoryId = categoryIds.FirstOrDefault(),
+                        CategoryName = categoryNames.FirstOrDefault()
+                    };
                 })
                 .ToList();
         }
 
-        // EKLEME (Kategori yoksa patlatma -> false)
+
+
         public async Task<bool> AddMovie(CreateMovieDto dto)
         {
-            var category = await _categoryRepository.GetByIdAsync(dto.CategoryId);
-            if (category == null)
+            if (dto.CategoryIds == null || dto.CategoryIds.Count == 0)
                 return false;
+
+            var distinctIds = dto.CategoryIds.Where(x => x > 0).Distinct().ToList();
+            if (distinctIds.Count == 0)
+                return false;
+
+            foreach (var cid in distinctIds)
+            {
+                var category = await _categoryRepository.GetByIdAsync(cid);
+                if (category == null)
+                    return false;
+            }
 
             var movie = new Movie
             {
@@ -61,18 +90,25 @@ namespace Application.ServiceManager
                 CoverImageUrl = dto.CoverImageUrl,
                 Barcode = dto.Barcode,
                 Supplier = dto.Supplier,
-                CategoryId = dto.CategoryId
+                MovieCategories = distinctIds.Select(cid => new MovieCategory
+                {
+                    CategoryId = cid
+                }).ToList()
             };
 
             await _movieRepository.AddAsync(movie);
             return true;
         }
 
-        // TEK GETIRME (Update için)
         public async Task<UpdateMovieDto?> GetMovie(int id)
         {
-            var movie = await _movieRepository.GetByIdAsync(id);
+            var movie = await _movieRepository.GetMovieWithCategoryAsync(id);
             if (movie == null) return null;
+
+            var categoryIds = movie.MovieCategories?
+                .Select(x => x.CategoryId)
+                .Distinct()
+                .ToList() ?? new List<int>();
 
             return new UpdateMovieDto
             {
@@ -88,34 +124,42 @@ namespace Application.ServiceManager
                 CoverImageUrl = movie.CoverImageUrl,
                 Barcode = movie.Barcode,
                 Supplier = movie.Supplier,
-                CategoryId = movie.CategoryId
+                CategoryIds = categoryIds
             };
         }
 
-        // FILM DETAYI
         public async Task<MovieDetailDto?> GetMovieDetailAsync(int id)
         {
             var movie = await _movieRepository.GetMovieWithCategoryAsync(id);
             if (movie == null)
                 return null;
 
-            var categoryName = movie.Category?.CategoryName ?? string.Empty;
+            var categoryIds = movie.MovieCategories?
+                .Select(x => x.CategoryId)
+                .Distinct()
+                .ToList() ?? new List<int>();
+
+            var categoryNames = movie.MovieCategories?
+                .Where(x => x.Category != null && !string.IsNullOrWhiteSpace(x.Category.CategoryName))
+                .Select(x => x.Category.CategoryName)
+                .Distinct()
+                .ToList() ?? new List<string>();
 
             return new MovieDetailDto
             {
                 Id = movie.ID,
                 Title = movie.Title,
-                Description = movie.Description,
+                Description = movie.Description ?? string.Empty,
                 ReleaseYear = movie.ReleaseYear,
-                CategoryId = movie.CategoryId,
-                CategoryName = categoryName,
+                CategoryIds = categoryIds,
+                CategoryNames = categoryNames,
 
-                OriginalTitle = movie.OriginalTitle,
-                TechnicalDetails = movie.TechnicalDetails,
-                AudioFeatures = movie.AudioFeatures,
-                SubtitleLanguages = movie.SubtitleLanguages,
-                TrailerUrl = movie.TrailerUrl,
-                CoverImageUrl = movie.CoverImageUrl,
+                OriginalTitle = movie.OriginalTitle ?? string.Empty,
+                TechnicalDetails = movie.TechnicalDetails ?? string.Empty,
+                AudioFeatures = movie.AudioFeatures ?? string.Empty,
+                SubtitleLanguages = movie.SubtitleLanguages ?? string.Empty,
+                TrailerUrl = movie.TrailerUrl ?? string.Empty,
+                CoverImageUrl = movie.CoverImageUrl ?? string.Empty,
 
                 Actors = new List<string>(),
                 Directors = new List<string>(),
@@ -123,7 +167,6 @@ namespace Application.ServiceManager
             };
         }
 
-        // SILME (Controller: Delete(int id) ile uyumlu)
         public async Task<bool> DeleteMovie(int id)
         {
             var movie = await _movieRepository.GetByIdAsync(id);
@@ -134,16 +177,25 @@ namespace Application.ServiceManager
             return true;
         }
 
-        // GUNCELLEME (Kategori yoksa patlatma -> false)
         public async Task<bool> UpdateMovie(UpdateMovieDto dto)
         {
-            var movie = await _movieRepository.GetByIdAsync(dto.Id);
+            var movie = await _movieRepository.GetMovieWithCategoryAsync(dto.Id);
             if (movie == null)
                 return false;
 
-            var category = await _categoryRepository.GetByIdAsync(dto.CategoryId);
-            if (category == null)
+            if (dto.CategoryIds == null || dto.CategoryIds.Count == 0)
                 return false;
+
+            var distinctIds = dto.CategoryIds.Where(x => x > 0).Distinct().ToList();
+            if (distinctIds.Count == 0)
+                return false;
+
+            foreach (var cid in distinctIds)
+            {
+                var category = await _categoryRepository.GetByIdAsync(cid);
+                if (category == null)
+                    return false;
+            }
 
             movie.Title = dto.Title;
             movie.OriginalTitle = dto.OriginalTitle;
@@ -156,7 +208,24 @@ namespace Application.ServiceManager
             movie.CoverImageUrl = dto.CoverImageUrl;
             movie.Barcode = dto.Barcode;
             movie.Supplier = dto.Supplier;
-            movie.CategoryId = dto.CategoryId;
+
+            movie.MovieCategories ??= new List<MovieCategory>();
+
+            var existingIds = movie.MovieCategories.Select(x => x.CategoryId).Distinct().ToList();
+
+            var toRemove = movie.MovieCategories.Where(x => !distinctIds.Contains(x.CategoryId)).ToList();
+            foreach (var rm in toRemove)
+                movie.MovieCategories.Remove(rm);
+
+            var toAdd = distinctIds.Where(x => !existingIds.Contains(x)).ToList();
+            foreach (var cid in toAdd)
+            {
+                movie.MovieCategories.Add(new MovieCategory
+                {
+                    CategoryId = cid,
+                    MovieId = movie.ID
+                });
+            }
 
             await _movieRepository.UpdateAsync(movie);
             return true;

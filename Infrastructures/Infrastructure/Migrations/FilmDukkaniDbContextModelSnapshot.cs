@@ -164,7 +164,9 @@ namespace Infrastructure.Migrations
                         .HasColumnType("tinyint");
 
                     b.Property<string>("CancelReason")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(500)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(500)");
 
                     b.Property<DateTime?>("CancelRequestedAt")
                         .HasColumnType("datetime2");
@@ -468,9 +470,6 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("int");
-
                     b.Property<string>("CoverImageUrl")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -519,8 +518,6 @@ namespace Infrastructure.Migrations
                         .HasColumnType("nvarchar(500)");
 
                     b.HasKey("ID");
-
-                    b.HasIndex("CategoryId");
 
                     b.ToTable("Movies");
                 });
@@ -598,6 +595,21 @@ namespace Infrastructure.Migrations
                     b.HasIndex("MovieId", "AwardId", "Year");
 
                     b.ToTable("MovieAwards");
+                });
+
+            modelBuilder.Entity("Domain.Entities.MovieCategory", b =>
+                {
+                    b.Property<int>("MovieId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.HasKey("MovieId", "CategoryId");
+
+                    b.HasIndex("CategoryId");
+
+                    b.ToTable("MovieCategories");
                 });
 
             modelBuilder.Entity("Domain.Entities.MovieCopy", b =>
@@ -1009,17 +1021,6 @@ namespace Infrastructure.Migrations
                     b.Navigation("Movie");
                 });
 
-            modelBuilder.Entity("Domain.Entities.Movie", b =>
-                {
-                    b.HasOne("Domain.Entities.Category", "Category")
-                        .WithMany("Movies")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Category");
-                });
-
             modelBuilder.Entity("Domain.Entities.MovieActor", b =>
                 {
                     b.HasOne("Domain.Entities.Actor", "Actor")
@@ -1054,6 +1055,25 @@ namespace Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Award");
+
+                    b.Navigation("Movie");
+                });
+
+            modelBuilder.Entity("Domain.Entities.MovieCategory", b =>
+                {
+                    b.HasOne("Domain.Entities.Category", "Category")
+                        .WithMany("MovieCategories")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Movie", "Movie")
+                        .WithMany("MovieCategories")
+                        .HasForeignKey("MovieId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
 
                     b.Navigation("Movie");
                 });
@@ -1158,7 +1178,7 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Category", b =>
                 {
-                    b.Navigation("Movies");
+                    b.Navigation("MovieCategories");
                 });
 
             modelBuilder.Entity("Domain.Entities.DeliveryRequest", b =>
@@ -1195,6 +1215,8 @@ namespace Infrastructure.Migrations
                     b.Navigation("MovieActors");
 
                     b.Navigation("MovieAwards");
+
+                    b.Navigation("MovieCategories");
 
                     b.Navigation("MovieCopies");
 

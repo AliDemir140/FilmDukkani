@@ -1,7 +1,7 @@
 ﻿using Domain.Entities;
+using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Domain.Enums;
 
 namespace Infrastructure.Persistence.Configurations
 {
@@ -45,17 +45,10 @@ namespace Infrastructure.Persistence.Configurations
             builder.Property(m => m.Supplier)
                 .HasMaxLength(100);
 
-            // ENUM mapping
             builder.Property(m => m.Status)
                    .HasConversion<byte>()
                    .HasDefaultValue(MovieStatus.Available)
                    .IsRequired();
-
-            // Category ilişkisi
-            builder.HasOne(m => m.Category)
-                   .WithMany(c => c.Movies)
-                   .HasForeignKey(m => m.CategoryId)
-                   .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

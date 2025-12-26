@@ -25,11 +25,10 @@
         </div>
 
         <div class="col-12 col-md-6">
-            <label class="form-label">Kategori</label>
-            <select asp-for="CategoryId" class="form-select" asp-items="ViewBag.Categories">
-                <option value="">Seçiniz</option>
+            <label class="form-label">Kategoriler</label>
+            <select asp-for="CategoryIds" class="form-select" asp-items="ViewBag.Categories" multiple>
             </select>
-            <span asp-validation-for="CategoryId" class="text-danger"></span>
+            <span asp-validation-for="CategoryIds" class="text-danger"></span>
         </div>
     </div>
 

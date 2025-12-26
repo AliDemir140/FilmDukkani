@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(FilmDukkaniDbContext))]
-    [Migration("20251225211901_Add_Unique_Active_DeliveryRequest_Per_List")]
-    partial class Add_Unique_Active_DeliveryRequest_Per_List
+    [Migration("20251226202314_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -157,14 +157,28 @@ namespace Infrastructure.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
 
+                    b.Property<bool?>("CancelApproved")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("CancelDecisionAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<byte?>("CancelPreviousStatus")
+                        .HasColumnType("tinyint");
+
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(500)
+                        .IsUnicode(true)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("CancelRequestedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime>("DeliveryDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<int?>("MemberID")
-                        .HasColumnType("int");
 
                     b.Property<int>("MemberId")
                         .HasColumnType("int");
@@ -182,8 +196,6 @@ namespace Infrastructure.Migrations
                         .HasColumnType("tinyint");
 
                     b.HasKey("ID");
-
-                    b.HasIndex("MemberID");
 
                     b.HasIndex("MemberId");
 
@@ -461,9 +473,6 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("int");
-
                     b.Property<string>("CoverImageUrl")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -512,8 +521,6 @@ namespace Infrastructure.Migrations
                         .HasColumnType("nvarchar(500)");
 
                     b.HasKey("ID");
-
-                    b.HasIndex("CategoryId");
 
                     b.ToTable("Movies");
                 });
@@ -591,6 +598,21 @@ namespace Infrastructure.Migrations
                     b.HasIndex("MovieId", "AwardId", "Year");
 
                     b.ToTable("MovieAwards");
+                });
+
+            modelBuilder.Entity("Domain.Entities.MovieCategory", b =>
+                {
+                    b.Property<int>("MovieId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.HasKey("MovieId", "CategoryId");
+
+                    b.HasIndex("CategoryId");
+
+                    b.ToTable("MovieCategories");
                 });
 
             modelBuilder.Entity("Domain.Entities.MovieCopy", b =>
@@ -909,12 +931,8 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.DeliveryRequest", b =>
                 {
-                    b.HasOne("Domain.Entities.Member", null)
-                        .WithMany("DeliveryRequests")
-                        .HasForeignKey("MemberID");
-
                     b.HasOne("Domain.Entities.Member", "Member")
-                        .WithMany()
+                        .WithMany("DeliveryRequests")
                         .HasForeignKey("MemberId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
@@ -1006,17 +1024,6 @@ namespace Infrastructure.Migrations
                     b.Navigation("Movie");
                 });
 
-            modelBuilder.Entity("Domain.Entities.Movie", b =>
-                {
-                    b.HasOne("Domain.Entities.Category", "Category")
-                        .WithMany("Movies")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Category");
-                });
-
             modelBuilder.Entity("Domain.Entities.MovieActor", b =>
                 {
                     b.HasOne("Domain.Entities.Actor", "Actor")
@@ -1051,6 +1058,25 @@ namespace Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Award");
+
+                    b.Navigation("Movie");
+                });
+
+            modelBuilder.Entity("Domain.Entities.MovieCategory", b =>
+                {
+                    b.HasOne("Domain.Entities.Category", "Category")
+                        .WithMany("MovieCategories")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Movie", "Movie")
+                        .WithMany("MovieCategories")
+                        .HasForeignKey("MovieId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
 
                     b.Navigation("Movie");
                 });
@@ -1155,7 +1181,7 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Category", b =>
                 {
-                    b.Navigation("Movies");
+                    b.Navigation("MovieCategories");
                 });
 
             modelBuilder.Entity("Domain.Entities.DeliveryRequest", b =>
@@ -1192,6 +1218,8 @@ namespace Infrastructure.Migrations
                     b.Navigation("MovieActors");
 
                     b.Navigation("MovieAwards");
+
+                    b.Navigation("MovieCategories");
 
                     b.Navigation("MovieCopies");
 

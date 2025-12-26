@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace Application.DTOs.MovieDTOs
 {
@@ -41,7 +42,7 @@ namespace Application.DTOs.MovieDTOs
         [MaxLength(100, ErrorMessage = "Tedarikçi adı en fazla 100 karakter olabilir.")]
         public string? Supplier { get; set; }
 
-        [Required(ErrorMessage = "Kategori seçimi zorunludur.")]
-        public int CategoryId { get; set; }
+        [Required(ErrorMessage = "En az 1 kategori seçmelisiniz.")]
+        public List<int> CategoryIds { get; set; } = new();
     }
 }

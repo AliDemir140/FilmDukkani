@@ -35,7 +35,7 @@ namespace MVC.Controllers
             var movies = await _movieService.GetMoviesAsync();
 
             if (categoryId.HasValue && categoryId.Value > 0)
-                movies = movies.Where(m => m.CategoryId == categoryId.Value).ToList();
+                movies = movies.Where(m => m.CategoryIds.Contains(categoryId.Value)).ToList();
 
             if (!string.IsNullOrWhiteSpace(q))
             {
