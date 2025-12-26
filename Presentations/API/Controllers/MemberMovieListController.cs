@@ -41,14 +41,13 @@ namespace API.Controllers
             var listId = await _service.CreateListAsync(dto);
 
             if (listId == -1)
-                return Conflict("Bu liste adı zaten mevcut."); 
+                return Conflict("Bu liste adı zaten mevcut.");
 
             if (listId == 0)
                 return BadRequest("Liste oluşturulamadı.");
 
             return Ok(new { Message = "Liste oluşturuldu.", ListId = listId });
         }
-
 
         [HttpGet("list-items")]
         public async Task<IActionResult> GetListItems(int listId)
@@ -97,23 +96,17 @@ namespace API.Controllers
             return Ok("Liste elemanı silindi.");
         }
 
-        // ✅ Min 5 film kuralını kontrol et
-        // GET: api/MemberMovieList/check-minimum?listId=1
         [HttpGet("check-minimum")]
         public async Task<IActionResult> CheckMinimum(int listId)
         {
             if (listId <= 0)
                 return BadRequest("listId zorunludur.");
 
-            // Önce liste var mı
             var exists = await _service.ListExistsAsync(listId);
             if (!exists)
                 return NotFound("Liste bulunamadı.");
 
-            // Minimum 5 film var mı
             bool hasMinimum = await _service.HasMinimumItemsAsync(listId, 5);
-
-            // Mevcut film sayısı
             int currentCount = await _service.GetItemCountAsync(listId);
 
             return Ok(new
@@ -124,8 +117,6 @@ namespace API.Controllers
             });
         }
 
-        // ✅ move-item (↑ ↓)
-        // POST: api/MemberMovieList/move-item?listId=1&itemId=10&direction=up
         [HttpPost("move-item")]
         public async Task<IActionResult> MoveItem(int listId, int itemId, string direction)
         {
@@ -142,6 +133,74 @@ namespace API.Controllers
                 return BadRequest("Öncelik güncellenemedi.");
 
             return Ok("Öncelik güncellendi.");
+        }
+
+        // ✅ Liste adını değiştir
+        // PUT: api/MemberMovieList/update-name
+        [HttpPut("update-name")]
+        public async Task<IActionResult> UpdateName([FromBody] UpdateMemberMovieListNameDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (dto.Id <= 0)
+                return BadRequest("Id zorunludur.");
+
+            dto.Name = (dto.Name ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(dto.Name))
+                return BadRequest("Liste adı zorunludur.");
+
+            var ok = await _service.UpdateListNameAsync(dto);
+            if (!ok)
+                return BadRequest("Liste adı güncellenemedi. (Aynı isim kullanılmış olabilir)");
+
+            return Ok("Liste adı güncellendi.");
+        }
+
+        // ✅ Tek listeyi boşalt (liste kalsın, itemlar silinsin)
+        // DELETE: api/MemberMovieList/clear-list-items?listId=5
+        [HttpDelete("clear-list-items")]
+        public async Task<IActionResult> ClearListItems(int listId)
+        {
+            if (listId <= 0)
+                return BadRequest("listId zorunludur.");
+
+            var ok = await _service.ClearListItemsAsync(listId);
+            if (!ok)
+                return BadRequest("Liste boşaltılamadı.");
+
+            return Ok("Liste boşaltıldı.");
+        }
+
+        // ✅ Listeyi sil (sadece aktif sipariş yoksa)
+        // DELETE: api/MemberMovieList/delete-list?listId=5
+        [HttpDelete("delete-list")]
+        public async Task<IActionResult> DeleteList(int listId)
+        {
+            if (listId <= 0)
+                return BadRequest("listId zorunludur.");
+
+            var result = await _service.DeleteListAsync(listId);
+
+            if (result == -1)
+                return Conflict("Bu liste için aktif sipariş var. Liste silinemez.");
+
+            if (result == 0)
+                return NotFound("Liste bulunamadı.");
+
+            return Ok("Liste silindi.");
+        }
+
+        // ✅ Toplu temizlik: siparişe girmemiş tüm listeleri boşalt
+        // POST: api/MemberMovieList/clear-all-nonordered?memberId=1
+        [HttpPost("clear-all-nonordered")]
+        public async Task<IActionResult> ClearAllNonOrdered(int memberId)
+        {
+            if (memberId <= 0)
+                return BadRequest("memberId zorunludur.");
+
+            var cleared = await _service.ClearAllNonOrderedListsAsync(memberId);
+            return Ok(new { clearedCount = cleared });
         }
     }
 }
