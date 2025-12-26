@@ -1,4 +1,8 @@
-﻿using Application.DTOs.MemberMovieListDTOs;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Application.DTOs.MemberMovieListDTOs;
 using Application.Repositories;
 using Domain.Entities;
 
@@ -23,11 +27,27 @@ namespace Application.ServiceManager
             _deliveryRequestRepository = deliveryRequestRepository;
         }
 
+        private async Task<MemberMovieList?> GetListAsync(int listId)
+        {
+            if (listId <= 0) return null;
+            return await _memberMovieListRepository.GetByIdAsync(listId);
+        }
+
+        private async Task<bool> IsListLockedAsync(int listId)
+        {
+            var list = await GetListAsync(listId);
+            if (list == null) return false;
+
+            // Pending/Prepared/Shipped/Delivered/CancelRequested => TRUE (repo böyle kontrol ediyor)
+            return await _deliveryRequestRepository.HasActiveRequestForListAsync(list.MemberId, listId);
+        }
+
         public async Task<List<MemberMovieListDto>> GetListsByMemberAsync(int memberId)
         {
             var lists = await _memberMovieListRepository.GetAllAsync(l => l.MemberId == memberId);
 
             return lists
+                .OrderByDescending(x => x.ID)
                 .Select(l => new MemberMovieListDto
                 {
                     Id = l.ID,
@@ -40,6 +60,7 @@ namespace Application.ServiceManager
         public async Task<int> CreateListAsync(CreateMemberMovieListDto dto)
         {
             if (dto == null) return 0;
+            if (dto.MemberId <= 0) return 0;
 
             var name = (dto.Name ?? "").Trim();
             if (string.IsNullOrWhiteSpace(name))
@@ -52,7 +73,8 @@ namespace Application.ServiceManager
             var list = new MemberMovieList
             {
                 MemberId = dto.MemberId,
-                Name = name
+                Name = name,
+                Items = new List<MemberMovieListItem>()
             };
 
             await _memberMovieListRepository.AddAsync(list);
@@ -94,10 +116,20 @@ namespace Application.ServiceManager
             return items.Any();
         }
 
-        public async Task<bool> AddItemToListAsync(CreateMemberMovieListItemDto dto)
+        // Return:
+        //  1  -> eklendi
+        //  0  -> zaten var
+        // -1  -> liste kilitli
+        public async Task<int> AddItemToListAsync(CreateMemberMovieListItemDto dto)
         {
+            if (dto == null) return 0;
+            if (dto.MemberMovieListId <= 0 || dto.MovieId <= 0) return 0;
+
+            if (await IsListLockedAsync(dto.MemberMovieListId))
+                return -1;
+
             if (await IsMovieAlreadyInList(dto.MemberMovieListId, dto.MovieId))
-                return false;
+                return 0;
 
             var item = new MemberMovieListItem
             {
@@ -108,7 +140,7 @@ namespace Application.ServiceManager
             };
 
             await _memberMovieListItemRepository.AddAsync(item);
-            return true;
+            return 1;
         }
 
         public async Task<bool> HasMinimumItemsAsync(int listId, int minimumCount = 5)
@@ -125,44 +157,71 @@ namespace Application.ServiceManager
             return items.Count;
         }
 
-        public async Task<bool> UpdateListNameAsync(UpdateMemberMovieListNameDto dto)
+        // Return:
+        //  1  -> ok
+        //  0  -> bulunamadı / geçersiz
+        // -1  -> kilitli
+        // -2  -> aynı isim var
+        public async Task<int> UpdateListNameAsync(UpdateMemberMovieListNameDto dto)
         {
+            if (dto == null || dto.Id <= 0) return 0;
+
             var list = await _memberMovieListRepository.GetByIdAsync(dto.Id);
-            if (list == null)
-                return false;
+            if (list == null) return 0;
+
+            if (await IsListLockedAsync(list.ID))
+                return -1;
 
             var newName = (dto.Name ?? "").Trim();
             if (string.IsNullOrWhiteSpace(newName))
-                return false;
+                return 0;
 
             var exists = await _memberMovieListRepository.ExistsByNameAsync(list.MemberId, newName);
             if (exists && !string.Equals(list.Name?.Trim(), newName, StringComparison.OrdinalIgnoreCase))
-                return false;
+                return -2;
 
             list.Name = newName;
             await _memberMovieListRepository.UpdateAsync(list);
-            return true;
+            return 1;
         }
 
-        public async Task<bool> DeleteItemAsync(int itemId)
+        // Return:
+        //  1  -> silindi
+        //  0  -> item yok
+        // -1  -> kilitli
+        public async Task<int> DeleteItemAsync(int itemId)
         {
+            if (itemId <= 0) return 0;
+
             var item = await _memberMovieListItemRepository.GetByIdAsync(itemId);
-            if (item == null)
-                return false;
+            if (item == null) return 0;
+
+            if (await IsListLockedAsync(item.MemberMovieListId))
+                return -1;
 
             await _memberMovieListItemRepository.DeleteAsync(item);
-            return true;
+            return 1;
         }
 
-        public async Task<bool> UpdateItemPriorityAsync(UpdateMemberMovieListItemPriorityDto dto)
+        // Return:
+        //  1  -> güncellendi
+        //  0  -> item yok / geçersiz
+        // -1  -> kilitli
+        public async Task<int> UpdateItemPriorityAsync(UpdateMemberMovieListItemPriorityDto dto)
         {
+            if (dto == null || dto.Id <= 0) return 0;
+
             var item = await _memberMovieListItemRepository.GetByIdAsync(dto.Id);
-            if (item == null)
-                return false;
+            if (item == null) return 0;
+
+            if (await IsListLockedAsync(item.MemberMovieListId))
+                return -1;
+
+            if (dto.Priority <= 0) dto.Priority = 1;
 
             item.Priority = dto.Priority;
             await _memberMovieListItemRepository.UpdateAsync(item);
-            return true;
+            return 1;
         }
 
         public async Task<bool> ListExistsAsync(int listId)
@@ -171,9 +230,25 @@ namespace Application.ServiceManager
             return list != null;
         }
 
-        public async Task<bool> ReorderItemsAsync(int listId, List<int> orderedItemIds)
+        // Return:
+        //  1  -> ok
+        //  0  -> liste yok / boş
+        // -1  -> kilitli
+        public async Task<int> ReorderItemsAsync(int listId, List<int> orderedItemIds)
         {
+            if (listId <= 0) return 0;
+
+            var list = await _memberMovieListRepository.GetByIdAsync(listId);
+            if (list == null) return 0;
+
+            if (await IsListLockedAsync(listId))
+                return -1;
+
+            orderedItemIds ??= new List<int>();
+
             var items = await _memberMovieListItemRepository.GetAllAsync(i => i.MemberMovieListId == listId);
+            if (!items.Any()) return 0;
+
             var itemMap = items.ToDictionary(x => x.ID, x => x);
 
             int pr = 1;
@@ -187,11 +262,23 @@ namespace Application.ServiceManager
                 pr++;
             }
 
-            return true;
+            return 1;
         }
 
-        public async Task<bool> MoveItemAsync(int listId, int itemId, string direction)
+        // Return:
+        //  1  -> ok
+        //  0  -> hata / bulunamadı
+        // -1  -> kilitli
+        public async Task<int> MoveItemAsync(int listId, int itemId, string direction)
         {
+            if (listId <= 0 || itemId <= 0) return 0;
+
+            var list = await _memberMovieListRepository.GetByIdAsync(listId);
+            if (list == null) return 0;
+
+            if (await IsListLockedAsync(listId))
+                return -1;
+
             var items = await _memberMovieListItemRepository.GetAllAsync(i => i.MemberMovieListId == listId);
 
             var ordered = items
@@ -200,17 +287,17 @@ namespace Application.ServiceManager
                 .ToList();
 
             if (!ordered.Any())
-                return false;
+                return 0;
 
             var index = ordered.FindIndex(x => x.ID == itemId);
             if (index < 0)
-                return false;
+                return 0;
 
             direction = (direction ?? "").Trim().ToLower();
 
             if (direction == "up")
             {
-                if (index == 0) return true;
+                if (index == 0) return 1;
 
                 var current = ordered[index];
                 var prev = ordered[index - 1];
@@ -221,12 +308,12 @@ namespace Application.ServiceManager
 
                 await _memberMovieListItemRepository.UpdateAsync(prev);
                 await _memberMovieListItemRepository.UpdateAsync(current);
-                return true;
+                return 1;
             }
 
             if (direction == "down")
             {
-                if (index == ordered.Count - 1) return true;
+                if (index == ordered.Count - 1) return 1;
 
                 var current = ordered[index];
                 var next = ordered[index + 1];
@@ -237,52 +324,53 @@ namespace Application.ServiceManager
 
                 await _memberMovieListItemRepository.UpdateAsync(next);
                 await _memberMovieListItemRepository.UpdateAsync(current);
-                return true;
+                return 1;
             }
 
-            return false;
+            return 0;
         }
 
-        // ✅ Tek listeyi boşalt (itemları sil, liste kalsın)
-        public async Task<bool> ClearListItemsAsync(int listId)
-        {
-            var list = await _memberMovieListRepository.GetByIdAsync(listId);
-            if (list == null)
-                return false;
-
-            var items = await _memberMovieListItemRepository.GetAllAsync(i => i.MemberMovieListId == listId);
-
-            foreach (var it in items)
-                await _memberMovieListItemRepository.DeleteAsync(it);
-
-            return true;
-        }
-
-        // ✅ Listeyi sil (aktif sipariş yoksa)
-        // return: 0 yok, -1 aktif sipariş var, 1 başarılı
-        public async Task<int> DeleteListAsync(int listId)
+        // Tek listeyi boşalt (itemları sil, liste kalsın)
+        // return: 1 ok, -1 kilitli, 0 bulunamadı
+        public async Task<int> ClearListItemsAsync(int listId)
         {
             var list = await _memberMovieListRepository.GetByIdAsync(listId);
             if (list == null)
                 return 0;
 
-            // aktif sipariş var mı? (memberId repo istiyor)
-            var hasActive = await _deliveryRequestRepository.HasActiveRequestForListAsync(list.MemberId, listId);
-            if (hasActive)
+            if (await IsListLockedAsync(listId))
                 return -1;
 
-            // önce itemları sil
+            var items = await _memberMovieListItemRepository.GetAllAsync(i => i.MemberMovieListId == listId);
+
+            foreach (var it in items)
+                await _memberMovieListItemRepository.DeleteAsync(it);
+
+            return 1;
+        }
+
+        // Listeyi sil (aktif sipariş yoksa)
+        // return: 0 yok, -1 kilitli, 1 başarılı
+        public async Task<int> DeleteListAsync(int listId)
+        {
+            if (listId <= 0) return 0;
+
+            var list = await _memberMovieListRepository.GetByIdAsync(listId);
+            if (list == null) return 0;
+
+            if (await IsListLockedAsync(listId))
+                return -1;
+
             var items = await _memberMovieListItemRepository.GetAllAsync(i => i.MemberMovieListId == listId);
             foreach (var it in items)
                 await _memberMovieListItemRepository.DeleteAsync(it);
 
-            // sonra listeyi sil
             await _memberMovieListRepository.DeleteAsync(list);
             return 1;
         }
 
-        // ✅ Toplu temizlik: siparişe girmemiş listelerin itemlarını sil
-        // dönen: kaç liste boşaltıldı
+
+        // Toplu temizlik: siparişe girmemiş listelerin itemlarını sil
         public async Task<int> ClearAllNonOrderedListsAsync(int memberId)
         {
             var lists = await _memberMovieListRepository.GetAllAsync(l => l.MemberId == memberId);
@@ -290,8 +378,8 @@ namespace Application.ServiceManager
 
             foreach (var list in lists)
             {
-                var hasActive = await _deliveryRequestRepository.HasActiveRequestForListAsync(memberId, list.ID);
-                if (hasActive)
+                var locked = await _deliveryRequestRepository.HasActiveRequestForListAsync(memberId, list.ID);
+                if (locked)
                     continue;
 
                 var items = await _memberMovieListItemRepository.GetAllAsync(i => i.MemberMovieListId == list.ID);
@@ -305,6 +393,12 @@ namespace Application.ServiceManager
             }
 
             return cleared;
+        }
+
+        // MVC'nin "kilitli mi" sorabilmesi için
+        public async Task<bool> IsListLockedPublicAsync(int listId)
+        {
+            return await IsListLockedAsync(listId);
         }
     }
 }

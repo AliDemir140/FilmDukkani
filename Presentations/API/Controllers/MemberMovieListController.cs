@@ -74,23 +74,34 @@ namespace API.Controllers
             if (dto.Priority <= 0)
                 dto.Priority = 1;
 
-            var ok = await _service.AddItemToListAsync(dto);
+            var result = await _service.AddItemToListAsync(dto);
 
-            if (!ok)
+            if (result == -1)
+                return Conflict("Bu liste aktif bir siparişe bağlı olduğu için kilitlidir. Film eklenemez. İptal talebi oluşturabilirsiniz.");
+
+            if (result == 0)
                 return BadRequest("Bu film zaten listede mevcut.");
 
             return Ok("Film listeye eklendi.");
         }
 
+        // ✅ ServiceManager int result uyumlu
+        // Return:
+        //  1  -> silindi
+        //  0  -> item yok
+        // -1  -> kilitli
         [HttpDelete("delete-item")]
         public async Task<IActionResult> DeleteItem(int id)
         {
             if (id <= 0)
                 return BadRequest("id zorunludur.");
 
-            var ok = await _service.DeleteItemAsync(id);
+            var result = await _service.DeleteItemAsync(id);
 
-            if (!ok)
+            if (result == -1)
+                return Conflict("Bu liste aktif bir siparişe bağlı olduğu için kilitlidir. Film silinemez.");
+
+            if (result == 0)
                 return NotFound("Liste elemanı bulunamadı.");
 
             return Ok("Liste elemanı silindi.");
@@ -117,6 +128,11 @@ namespace API.Controllers
             });
         }
 
+        // ✅ ServiceManager int result uyumlu
+        // Return:
+        //  1  -> ok
+        //  0  -> hata
+        // -1  -> kilitli
         [HttpPost("move-item")]
         public async Task<IActionResult> MoveItem(int listId, int itemId, string direction)
         {
@@ -127,16 +143,23 @@ namespace API.Controllers
             if (direction != "up" && direction != "down")
                 return BadRequest("direction sadece 'up' veya 'down' olabilir.");
 
-            var ok = await _service.MoveItemAsync(listId, itemId, direction);
+            var result = await _service.MoveItemAsync(listId, itemId, direction);
 
-            if (!ok)
+            if (result == -1)
+                return Conflict("Bu liste aktif bir siparişe bağlı olduğu için kilitlidir. Öncelik değiştirilemez.");
+
+            if (result == 0)
                 return BadRequest("Öncelik güncellenemedi.");
 
             return Ok("Öncelik güncellendi.");
         }
 
-        // ✅ Liste adını değiştir
-        // PUT: api/MemberMovieList/update-name
+        // ✅ ServiceManager int result uyumlu
+        // Return:
+        //  1  -> ok
+        //  0  -> hata
+        // -1  -> kilitli
+        // -2  -> aynı isim
         [HttpPut("update-name")]
         public async Task<IActionResult> UpdateName([FromBody] UpdateMemberMovieListNameDto dto)
         {
@@ -150,30 +173,52 @@ namespace API.Controllers
             if (string.IsNullOrWhiteSpace(dto.Name))
                 return BadRequest("Liste adı zorunludur.");
 
-            var ok = await _service.UpdateListNameAsync(dto);
-            if (!ok)
-                return BadRequest("Liste adı güncellenemedi. (Aynı isim kullanılmış olabilir)");
+            var result = await _service.UpdateListNameAsync(dto);
+
+            if (result == -1)
+                return Conflict("Bu liste aktif bir siparişe bağlı olduğu için kilitlidir. İsim değiştirilemez.");
+
+            if (result == -2)
+                return Conflict("Bu isim zaten kullanılıyor.");
+
+            if (result == 0)
+                return BadRequest("Liste adı güncellenemedi.");
 
             return Ok("Liste adı güncellendi.");
         }
 
-        // ✅ Tek listeyi boşalt (liste kalsın, itemlar silinsin)
-        // DELETE: api/MemberMovieList/clear-list-items?listId=5
+        // GET: api/MemberMovieList/is-locked?listId=5
+        [HttpGet("is-locked")]
+        public async Task<IActionResult> IsLocked(int listId)
+        {
+            if (listId <= 0)
+                return BadRequest("listId zorunludur.");
+
+            var exists = await _service.ListExistsAsync(listId);
+            if (!exists)
+                return NotFound("Liste bulunamadı.");
+
+            var locked = await _service.IsListLockedPublicAsync(listId);
+            return Ok(new { locked });
+        }
+
         [HttpDelete("clear-list-items")]
         public async Task<IActionResult> ClearListItems(int listId)
         {
             if (listId <= 0)
                 return BadRequest("listId zorunludur.");
 
-            var ok = await _service.ClearListItemsAsync(listId);
-            if (!ok)
-                return BadRequest("Liste boşaltılamadı.");
+            var result = await _service.ClearListItemsAsync(listId);
+
+            if (result == -1)
+                return Conflict("Bu liste aktif bir siparişe bağlı olduğu için kilitlidir. Boşaltılamaz. İptal talebi oluşturabilirsiniz.");
+
+            if (result == 0)
+                return NotFound("Liste bulunamadı.");
 
             return Ok("Liste boşaltıldı.");
         }
 
-        // ✅ Listeyi sil (sadece aktif sipariş yoksa)
-        // DELETE: api/MemberMovieList/delete-list?listId=5
         [HttpDelete("delete-list")]
         public async Task<IActionResult> DeleteList(int listId)
         {
@@ -191,8 +236,6 @@ namespace API.Controllers
             return Ok("Liste silindi.");
         }
 
-        // ✅ Toplu temizlik: siparişe girmemiş tüm listeleri boşalt
-        // POST: api/MemberMovieList/clear-all-nonordered?memberId=1
         [HttpPost("clear-all-nonordered")]
         public async Task<IActionResult> ClearAllNonOrdered(int memberId)
         {

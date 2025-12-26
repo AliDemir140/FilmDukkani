@@ -15,12 +15,48 @@
     <div><b>İstek Tarihi:</b> @Model.RequestedDate.ToString("dd.MM.yyyy HH:mm")</div>
     <div><b>Teslimat Tarihi:</b> @Model.DeliveryDate.ToString("dd.MM.yyyy")</div>
     <div><b>Durum:</b> @Model.Status</div>
+
+    @* ✅ Eğer DTO'ya CancelReason eklersen aşağısı otomatik çalışır *@
+    @if (Model.Status == DeliveryStatus.CancelRequested)
+    {
+        <div class="mt-2 p-2 border rounded bg-light">
+            <b>İptal Talebi:</b> Admin onayı bekliyor.
+            @if (!string.IsNullOrWhiteSpace(Model.CancelReason))
+            {
+                <div><b>Sebep:</b> @Model.CancelReason</div>
+            }
+            @if (Model.CancelRequestedAt.HasValue)
+            {
+                <div><b>Talep Tarihi:</b> @Model.CancelRequestedAt.Value.ToString("dd.MM.yyyy HH:mm")</div>
+            }
+        </div>
+    }
 </div>
 
 <div class="mb-3 d-flex gap-2 flex-wrap">
+    @* ✅ 1) CancelRequested ise: Onay / Red *@
+    @if (Model.Status == DeliveryStatus.CancelRequested)
+    {
+        <form asp-action="ApproveCancel" method="post"
+              onsubmit="return confirm('İptal talebini ONAYLIYOR musun? Sipariş iptal edilecek ve varsa ayrılan kopyalar geri açılacak.');">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+            <button type="submit" class="btn btn-danger">İptali Onayla</button>
+        </form>
+
+        <form asp-action="RejectCancel" method="post"
+              onsubmit="return confirm('İptal talebini REDDEDİYOR musun? Sipariş önceki durumuna geri dönecek.');">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+            <button type="submit" class="btn btn-outline-secondary">İptali Reddet</button>
+        </form>
+    }
+
+    @* ✅ 2) Eski admin iptali (istersen kaldırırız) *@
     @if (Model.Status == DeliveryStatus.Pending || Model.Status == DeliveryStatus.Prepared)
     {
-        <form asp-action="Cancel" method="post">
+        <form asp-action="Cancel" method="post"
+              onsubmit="return confirm('Bu siparişi admin olarak direkt iptal etmek istiyor musun?');">
             @Html.AntiForgeryToken()
             <input type="hidden" name="id" value="@Model.Id" />
             <button type="submit" class="btn btn-danger">İptal</button>

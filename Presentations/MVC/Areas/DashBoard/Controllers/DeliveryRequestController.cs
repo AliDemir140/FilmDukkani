@@ -17,7 +17,6 @@ namespace MVC.Areas.DashBoard.Controllers
             _deliveryService = deliveryService;
         }
 
-        // /DashBoard/DeliveryRequest?status=Prepared
         public async Task<IActionResult> Index(string? status)
         {
             if (!string.IsNullOrWhiteSpace(status) &&
@@ -33,7 +32,6 @@ namespace MVC.Areas.DashBoard.Controllers
             return View(all);
         }
 
-        // /DashBoard/DeliveryRequest/Details/5
         public async Task<IActionResult> Details(int id)
         {
             var dto = await _deliveryService.GetRequestDetailAsync(id);
@@ -43,7 +41,6 @@ namespace MVC.Areas.DashBoard.Controllers
             return View(dto);
         }
 
-        // Yarını hazırla
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> PrepareTomorrow()
@@ -52,7 +49,7 @@ namespace MVC.Areas.DashBoard.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // İptal
+        // ❌ Eski direkt iptal kalsın istersen:
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Cancel(int id)
@@ -61,7 +58,24 @@ namespace MVC.Areas.DashBoard.Controllers
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        // Kurye çıktı
+        // ✅ Yeni: iptal talebini ONAYLA
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ApproveCancel(int id)
+        {
+            await _deliveryService.ApproveCancelAsync(id);
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        // ✅ Yeni: iptal talebini REDDET
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RejectCancel(int id)
+        {
+            await _deliveryService.RejectCancelAsync(id);
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkShipped(int id)
@@ -70,7 +84,6 @@ namespace MVC.Areas.DashBoard.Controllers
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        // Teslim edildi
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkDelivered(int id)
@@ -79,7 +92,6 @@ namespace MVC.Areas.DashBoard.Controllers
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        // Süreci bitir
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkCompleted(int id)
@@ -88,7 +100,6 @@ namespace MVC.Areas.DashBoard.Controllers
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        // İade al
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ReturnItem(ReturnDeliveryItemDto dto, int requestId)

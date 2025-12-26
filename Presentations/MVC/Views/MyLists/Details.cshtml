@@ -7,6 +7,7 @@
     ViewData["Title"] = "Liste Detayı";
     var listName = ViewBag.ListName as string ?? "Liste";
     int listId = ViewBag.ListId != null ? (int)ViewBag.ListId : 0;
+    bool isLocked = ViewBag.IsLocked != null && (bool)ViewBag.IsLocked;
 
     var ordered = (Model ?? new List<Application.DTOs.MemberMovieListDTOs.MemberMovieListItemDto>())
         .OrderBy(x => x.Priority)
@@ -21,63 +22,64 @@
     <div>
         <h2 class="mb-1">@listName</h2>
 
-        <!-- ✅ Rename -->
+        @if (isLocked)
+        {
+            <div class="text-warning mt-2">
+                <i class="fa-solid fa-lock"></i>
+                Bu liste aktif siparişe bağlı olduğu için kilitli. Film ekleyemez / boşaltamaz / silemezsin.
+            </div>
+            <div class="mt-2">
+                <a asp-controller="MyDeliveryRequests" asp-action="Index" class="btn btn-outline-warning btn-sm">
+                    Siparişlerime Git (İptal Talebi Aç)
+                </a>
+            </div>
+        }
+
         <form asp-controller="MyLists" asp-action="Rename" method="post" class="d-flex gap-2 mt-2" style="max-width:520px;">
             @Html.AntiForgeryToken()
             <input type="hidden" name="listId" value="@listId" />
             <input type="text" name="name" class="form-control" value="@listName" />
-            <button type="submit" class="btn btn-outline-light">
-                Kaydet
-            </button>
+            <button type="submit" class="btn btn-outline-light">Kaydet</button>
         </form>
     </div>
 
     <div class="d-flex gap-2">
         @if (!cartHasItems)
         {
-            <form asp-controller="MyLists"
-                  asp-action="AddListToCart"
-                  method="post"
-                  class="d-inline">
+            <form asp-controller="MyLists" asp-action="AddListToCart" method="post" class="d-inline">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="listId" value="@listId" />
-                <button type="submit" class="btn btn-danger">
+                <button type="submit" class="btn btn-danger" @(isLocked ? "disabled" : "")>
                     <i class="fa-solid fa-cart-shopping"></i> Listeyi Sepete Ekle
                 </button>
             </form>
         }
         else
         {
-            <a asp-controller="Cart"
-               asp-action="Index"
-               class="btn btn-outline-warning">
+            <a asp-controller="Cart" asp-action="Index" class="btn btn-outline-warning">
                 <i class="fa-solid fa-cart-shopping"></i> Sepete Git
             </a>
         }
 
-        <!-- ✅ Listeyi boşalt -->
         <form asp-controller="MyLists" asp-action="ClearList" method="post" class="d-inline"
               onsubmit="return confirm('Liste içindeki tüm filmler silinsin mi? (Liste kalır)');">
             @Html.AntiForgeryToken()
             <input type="hidden" name="listId" value="@listId" />
-            <button type="submit" class="btn btn-outline-danger">
+            <button type="submit" class="btn btn-outline-danger" @(isLocked ? "disabled" : "")>
                 <i class="fa-solid fa-broom"></i> Listeyi Boşalt
             </button>
         </form>
 
-        <!-- ✅ Listeyi sil -->
         <form asp-controller="MyLists" asp-action="DeleteList" method="post" class="d-inline"
               onsubmit="return confirm('Liste tamamen silinsin mi? (Sadece aktif sipariş yoksa)');">
             @Html.AntiForgeryToken()
             <input type="hidden" name="listId" value="@listId" />
-            <button type="submit" class="btn btn-danger">
+            <button type="submit" class="btn btn-danger" @(isLocked ? "disabled" : "")>
                 <i class="fa-solid fa-trash"></i> Listeyi Sil
             </button>
         </form>
 
-        <a asp-controller="MyLists"
-           asp-action="Index"
-           class="btn btn-outline-secondary">
+        <a asp-controller="MyLists" asp-action="Index" class="btn btn-outline-secondary">
             ← Listelerime Dön
         </a>
     </div>
@@ -85,19 +87,14 @@
 
 @if (TempData["Success"] != null)
 {
-    <div class="alert alert-success mb-3">
-        @TempData["Success"]
-    </div>
+    <div class="alert alert-success mb-3">@TempData["Success"]</div>
 }
-
 @if (TempData["Error"] != null)
 {
-    <div class="alert alert-danger mb-3">
-        @TempData["Error"]
-    </div>
+    <div class="alert alert-danger mb-3">@TempData["Error"]</div>
 }
 
-@if (ordered == null || !ordered.Any())
+@if (!ordered.Any())
 {
     <div class="alert alert-info">
         Bu listede henüz film bulunmuyor.
@@ -135,48 +132,32 @@ else
                             <td>@item.AddedDate.ToString("dd.MM.yyyy HH:mm")</td>
 
                             <td class="text-end">
-                                <!-- ↑ -->
-                                <form asp-controller="MyLists"
-                                      asp-action="MoveItem"
-                                      method="post"
-                                      class="d-inline">
+                                <form asp-controller="MyLists" asp-action="MoveItem" method="post" class="d-inline">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="itemId" value="@item.Id" />
                                     <input type="hidden" name="listId" value="@listId" />
                                     <input type="hidden" name="direction" value="up" />
-                                    <button type="submit"
-                                            class="btn btn-sm btn-outline-light me-1"
-                                            @(isFirst ? "disabled" : "")>
+                                    <button type="submit" class="btn btn-sm btn-outline-light me-1" @(isFirst || isLocked ? "disabled" : "")>
                                         <i class="fa-solid fa-arrow-up"></i>
                                     </button>
                                 </form>
 
-                                <!-- ↓ -->
-                                <form asp-controller="MyLists"
-                                      asp-action="MoveItem"
-                                      method="post"
-                                      class="d-inline">
+                                <form asp-controller="MyLists" asp-action="MoveItem" method="post" class="d-inline">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="itemId" value="@item.Id" />
                                     <input type="hidden" name="listId" value="@listId" />
                                     <input type="hidden" name="direction" value="down" />
-                                    <button type="submit"
-                                            class="btn btn-sm btn-outline-light me-2"
-                                            @(isLast ? "disabled" : "")>
+                                    <button type="submit" class="btn btn-sm btn-outline-light me-2" @(isLast || isLocked ? "disabled" : "")>
                                         <i class="fa-solid fa-arrow-down"></i>
                                     </button>
                                 </form>
 
-                                <!-- Sil -->
-                                <form asp-controller="MyLists"
-                                      asp-action="DeleteItem"
-                                      method="post"
-                                      class="d-inline"
+                                <form asp-controller="MyLists" asp-action="DeleteItem" method="post" class="d-inline"
                                       onsubmit="return confirm('Bu filmi listeden silmek istiyor musun?');">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="itemId" value="@item.Id" />
                                     <input type="hidden" name="listId" value="@listId" />
-                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" @(isLocked ? "disabled" : "")>
                                         <i class="fa-solid fa-trash"></i> Sil
                                     </button>
                                 </form>

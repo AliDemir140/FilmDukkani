@@ -8,7 +8,10 @@ namespace Application.Repositories
     {
         Task<List<DeliveryRequestListDto>> GetByMemberAsync(int memberId);
 
-        // Aynı liste için aktif sipariş var mı? (Pending/Prepared/Shipped/Delivered)
+        // Liste kilidi: Pending/Prepared/Shipped/Delivered/CancelRequested iken true
         Task<bool> HasActiveRequestForListAsync(int memberId, int listId);
+
+        // Admin ekranı için: iptal talepleri
+        Task<List<DeliveryRequestListDto>> GetCancelRequestedAsync();
     }
 }

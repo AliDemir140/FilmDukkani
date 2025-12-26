@@ -14,6 +14,8 @@
 
     var memberLists = ViewBag.MemberLists as List<SelectListItem> ?? new List<SelectListItem>();
     var hasLists = memberLists.Any();
+
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
 }
 
 <div class="card h-100 border-0 product-card">
@@ -73,20 +75,24 @@
             }
             else
             {
-                <form asp-controller="MemberMovieListItems"
-                      asp-action="Add"
+                <form asp-controller="Product"
+                      asp-action="AddToList"
                       method="post">
                     @Html.AntiForgeryToken()
 
                     <input type="hidden" name="movieId" value="@Model.Id" />
-                    <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                    <input type="hidden" name="returnUrl" value="@returnUrl" />
 
-                    <select name="listId" class="form-select form-select-sm mb-2">
+                    <select name="listId" class="form-select form-select-sm mb-2" required>
+                        <option value="">Liste seç</option>
                         @foreach (var l in memberLists)
                         {
                             <option value="@l.Value">@l.Text</option>
                         }
                     </select>
+
+                    @* İstersen priority açarsın (şimdilik gizli 1 bırakıyorum) *@
+                    <input type="hidden" name="priority" value="1" />
 
                     <button type="submit" class="btn btn-danger btn-sm w-100">
                         Listeye Ekle

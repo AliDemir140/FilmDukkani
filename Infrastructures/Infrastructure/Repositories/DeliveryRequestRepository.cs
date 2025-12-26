@@ -32,7 +32,6 @@ namespace Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        // Aynı liste için aktif sipariş kontrolü
         public async Task<bool> HasActiveRequestForListAsync(int memberId, int listId)
         {
             return await _context.DeliveryRequests
@@ -43,7 +42,27 @@ namespace Infrastructure.Repositories
                     (r.Status == DeliveryStatus.Pending ||
                      r.Status == DeliveryStatus.Prepared ||
                      r.Status == DeliveryStatus.Shipped ||
-                     r.Status == DeliveryStatus.Delivered));
+                     r.Status == DeliveryStatus.Delivered ||
+                     r.Status == DeliveryStatus.CancelRequested));
+        }
+
+        public async Task<List<DeliveryRequestListDto>> GetCancelRequestedAsync()
+        {
+            return await _context.DeliveryRequests
+                .AsNoTracking()
+                .Where(r => r.Status == DeliveryStatus.CancelRequested)
+                .OrderByDescending(r => r.ID)
+                .Join(_context.MemberMovieLists.AsNoTracking(),
+                      r => r.MemberMovieListId,
+                      l => l.ID,
+                      (r, l) => new DeliveryRequestListDto
+                      {
+                          Id = r.ID,
+                          ListName = l.Name ?? "-",
+                          DeliveryDate = r.DeliveryDate,
+                          Status = r.Status
+                      })
+                .ToListAsync();
         }
     }
 }

@@ -8,6 +8,15 @@
     <h2 class="mb-0">Siparişlerim</h2>
 </div>
 
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success mb-3">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger mb-3">@TempData["Error"]</div>
+}
+
 @if (Model == null || !Model.Any())
 {
     <div class="card dark-card">
@@ -18,9 +27,7 @@
                 Sepete film ekleyip “Teslimatı Onayla” dediğinde siparişlerin burada görünecek.
             </p>
 
-            <a asp-controller="Product"
-               asp-action="Index"
-               class="btn btn-danger">
+            <a asp-controller="Product" asp-action="Index" class="btn btn-danger">
                 Filmlere Git
             </a>
         </div>
@@ -40,7 +47,8 @@ else
                         <th style="width:90px;">#</th>
                         <th>Liste Adı</th>
                         <th style="width:160px;">Teslimat Tarihi</th>
-                        <th style="width:140px;">Durum</th>
+                        <th style="width:160px;">Durum</th>
+                        <th style="width:360px;">İptal Talebi</th>
                         <th class="text-center" style="width:120px;">Detay</th>
                     </tr>
                 </thead>
@@ -69,6 +77,9 @@ else
                                     case Domain.Enums.DeliveryStatus.Completed:
                                         <span class="badge bg-success">Tamamlandı</span>
                                         break;
+                                    case Domain.Enums.DeliveryStatus.CancelRequested:
+                                        <span class="badge bg-warning text-dark">İptal Talebi (Bekliyor)</span>
+                                        break;
                                     case Domain.Enums.DeliveryStatus.Cancelled:
                                         <span class="badge bg-danger">İptal</span>
                                         break;
@@ -77,10 +88,41 @@ else
                                         break;
                                 }
                             </td>
+
+                            <td>
+                                @{
+                                    bool canRequestCancel = item.Status == Domain.Enums.DeliveryStatus.Pending
+                                    || item.Status == Domain.Enums.DeliveryStatus.Prepared;
+                                }
+
+                                @if (!canRequestCancel)
+                                {
+                                    <span class="text-muted">-</span>
+                                }
+                                else
+                                {
+                                    <form asp-action="RequestCancel" method="post" class="d-flex gap-2">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="requestId" value="@item.Id" />
+
+                                        <select class="form-select form-select-sm" name="reason" required>
+                                            <option value="">Sebep seç</option>
+                                            <option>Yanlış listeyle sipariş verdim</option>
+                                            <option>Teslimat tarihi uygun değil</option>
+                                            <option>Filmlerimi değiştirmek istiyorum</option>
+                                            <option>Artık istemiyorum</option>
+                                        </select>
+
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                onclick="return confirm('İptal talebi oluşturulsun mu? (Admin onayı gerekecek)');">
+                                            İptal Talebi
+                                        </button>
+                                    </form>
+                                }
+                            </td>
+
                             <td class="text-center">
-                                <a asp-action="Details"
-                                   asp-route-id="@item.Id"
-                                   class="btn btn-sm btn-outline-light">
+                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-light">
                                     Detay
                                 </a>
                             </td>
