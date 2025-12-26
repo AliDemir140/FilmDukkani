@@ -1,8 +1,10 @@
 ﻿using Application.Repositories;
 using Application.ServiceManager;
+using Application.Interfaces;
 using Infrastructure.Persistence;
 using Infrastructure.Persistence.SeedData;
 using Infrastructure.Repositories;
+using Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -14,11 +16,9 @@ namespace Infrastructure.DependencyResolvers
     {
         public static void RegisterServices(IServiceCollection services, IConfiguration configuration)
         {
-            // DATABASE
             services.AddDbContext<FilmDukkaniDbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
-            // IDENTITY
             services.AddIdentity<IdentityUser, IdentityRole>(options =>
             {
                 options.Password.RequireDigit = true;
@@ -30,13 +30,10 @@ namespace Infrastructure.DependencyResolvers
             .AddEntityFrameworkStores<FilmDukkaniDbContext>()
             .AddDefaultTokenProviders();
 
-            // GENERIC REPOSITORY
             services.AddScoped(typeof(IRepository<>), typeof(BaseRepository<>));
 
-            // SEED DATA
             services.AddScoped<DatabaseSeeder>();
 
-            // REPOSITORIES
             services.AddScoped<IMovieRepository, MovieRepository>();
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<IMemberRepository, MemberRepository>();
@@ -52,7 +49,6 @@ namespace Infrastructure.DependencyResolvers
             services.AddScoped<IMovieCopyRepository, MovieCopyRepository>();
             services.AddScoped<IDamagedMovieRepository, DamagedMovieRepository>();
 
-            // SERVICE MANAGERS
             services.AddScoped<CategoryServiceManager>();
             services.AddScoped<MovieServiceManager>();
             services.AddScoped<MemberServiceManager>();
@@ -69,8 +65,9 @@ namespace Infrastructure.DependencyResolvers
             services.AddScoped<WarehouseServiceManager>();
             services.AddScoped<AccountingReportServiceManager>();
 
-            // AUTH / USER
             services.AddScoped<UserServiceManager>();
+
+            services.AddScoped<IEmailService, FakeEmailService>();
         }
     }
 }
