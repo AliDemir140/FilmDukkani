@@ -7,11 +7,8 @@ namespace Infrastructure.Repositories
 {
     public class MovieRepository : BaseRepository<Movie>, IMovieRepository
     {
-        private readonly FilmDukkaniDbContext _context;
-
         public MovieRepository(FilmDukkaniDbContext context) : base(context)
         {
-            _context = context;
         }
 
         public async Task<List<Movie>> GetMoviesWithCategoryAsync()

@@ -15,7 +15,6 @@ namespace API.Controllers
             _deliveryService = deliveryService;
         }
 
-        // Teslimat isteği oluştur
         [HttpPost("create")]
         public async Task<IActionResult> Create([FromBody] CreateDeliveryRequestDto dto)
         {
@@ -30,14 +29,9 @@ namespace API.Controllers
             if (newId == -1)
                 return Conflict("Bu liste için zaten aktif bir sipariş var. (Bekliyor/Hazırlanıyor/Kuryede/Teslim Edildi)");
 
-            return Ok(new
-            {
-                Message = "Teslimat isteği oluşturuldu.",
-                RequestId = newId
-            });
+            return Ok(new { Message = "Teslimat isteği oluşturuldu.", RequestId = newId });
         }
 
-        // Yarının teslimatlarını hazırla
         [HttpPost("prepare-tomorrow")]
         public async Task<IActionResult> PrepareTomorrow()
         {
@@ -45,7 +39,6 @@ namespace API.Controllers
             return Ok("Yarının teslimatları hazırlandı.");
         }
 
-        // Teslimat isteği detay
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)
         {
@@ -56,7 +49,42 @@ namespace API.Controllers
             return Ok(request);
         }
 
-        // Teslimat iptal
+        // ✅ USER: iptal talebi oluştur
+        // POST: api/DeliveryRequest/{id}/cancel-request?memberId=1&reason=...
+        [HttpPost("{id}/cancel-request")]
+        public async Task<IActionResult> CancelRequestByUser(int id, int memberId, [FromQuery] string? reason)
+        {
+            if (id <= 0 || memberId <= 0)
+                return BadRequest("id ve memberId zorunludur.");
+
+            var result = await _deliveryService.UserCancelRequestAsync(memberId, id, reason ?? "");
+
+            if (result == 0) return NotFound("Teslimat isteği bulunamadı.");
+            if (result == -1) return Forbid();
+            if (result == -2) return BadRequest("Bu sipariş iptal talebi alamaz (Tamamlandı/İptal).");
+            if (result == -3) return Conflict("Bu sipariş için zaten bekleyen bir iptal talebi var.");
+            if (result == -4) return BadRequest("İptal için geç kaldın. (En geç 1 gün önce)");
+
+            return Ok("İptal talebi oluşturuldu. Admin onayı bekleniyor.");
+        }
+
+        // ✅ ADMIN: iptal talebine karar ver
+        // POST: api/DeliveryRequest/{id}/cancel-decision?approve=true
+        [HttpPost("{id}/cancel-decision")]
+        public async Task<IActionResult> CancelDecision(int id, bool approve)
+        {
+            if (id <= 0)
+                return BadRequest("id zorunludur.");
+
+            var result = await _deliveryService.AdminDecideCancelAsync(id, approve);
+
+            if (result == 0) return NotFound("Teslimat isteği bulunamadı.");
+            if (result == -1) return BadRequest("İptal talebi yok veya zaten karar verilmiş.");
+
+            return Ok(approve ? "İptal onaylandı." : "İptal reddedildi.");
+        }
+
+        // (Eski direkt cancel endpoint’i istersen kaldırırız; admin onaya bağladık.)
         [HttpPut("{id}/cancel")]
         public async Task<IActionResult> Cancel(int id)
         {
@@ -67,7 +95,6 @@ namespace API.Controllers
             return Ok("Teslimat isteği iptal edildi.");
         }
 
-        // Teslim edildi (listeden düşer, süreç kapanır)
         [HttpPut("{id}/mark-delivered")]
         public async Task<IActionResult> MarkDelivered(int id)
         {
@@ -78,7 +105,6 @@ namespace API.Controllers
             return Ok("Teslimat teslim edildi ve süreç tamamlandı.");
         }
 
-        // Film iade işlemi
         [HttpPost("return-item")]
         public async Task<IActionResult> ReturnItem([FromBody] ReturnDeliveryItemDto dto)
         {
@@ -92,7 +118,6 @@ namespace API.Controllers
             return Ok("İade işlemi tamamlandı.");
         }
 
-        // Kullanıcının kendi teslimatları
         [HttpGet("member/{memberId}")]
         public async Task<IActionResult> GetByMember(int memberId)
         {

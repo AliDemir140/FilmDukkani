@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Json;
+﻿using System.Net;
+using System.Net.Http.Json;
 using Application.DTOs.MemberMovieListDTOs;
 using Microsoft.AspNetCore.Mvc;
 using MVC.Constants;
@@ -131,8 +132,20 @@ namespace MVC.Controllers
                     $"{ApiBaseUrl}/api/MemberMovieList/list-items?listId={id}"
                 ) ?? new List<MemberMovieListItemDto>();
 
+                // ✅ kilit bilgisini al
+                bool locked = false;
+                try
+                {
+                    var lockRes = await client.GetFromJsonAsync<Dictionary<string, bool>>(
+                        $"{ApiBaseUrl}/api/MemberMovieList/is-locked?listId={id}"
+                    );
+                    locked = lockRes != null && lockRes.ContainsKey("locked") && lockRes["locked"];
+                }
+                catch { /* sessiz geç */ }
+
                 ViewBag.ListName = selectedList.Name;
                 ViewBag.ListId = selectedList.Id;
+                ViewBag.IsLocked = locked;
 
                 return View(items);
             }
@@ -311,7 +324,6 @@ namespace MVC.Controllers
             }
         }
 
-        // ✅ Tek listeyi boşalt (liste kalsın)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ClearList(int listId)
@@ -337,6 +349,12 @@ namespace MVC.Controllers
                 var client = _httpClientFactory.CreateClient();
                 var res = await client.DeleteAsync($"{ApiBaseUrl}/api/MemberMovieList/clear-list-items?listId={listId}");
 
+                if (res.StatusCode == HttpStatusCode.Conflict)
+                {
+                    TempData["Error"] = "Bu liste aktif siparişe bağlı olduğu için kilitli. Listeyi boşaltamazsın. İptal talebi oluştur.";
+                    return RedirectToAction(nameof(Details), new { id = listId });
+                }
+
                 if (!res.IsSuccessStatusCode)
                 {
                     TempData["Error"] = "Liste boşaltılamadı.";
@@ -353,7 +371,6 @@ namespace MVC.Controllers
             }
         }
 
-        // ✅ Toplu temizlik: siparişe girmemiş listeleri boşalt
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ClearAllNonOrdered()
@@ -392,7 +409,6 @@ namespace MVC.Controllers
             }
         }
 
-        // ✅ Liste adını değiştir (detaydan)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Rename(int listId, string name)
@@ -437,7 +453,6 @@ namespace MVC.Controllers
             }
         }
 
-        // ✅ Listeyi sil (aktif sipariş yoksa)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteList(int listId)
@@ -464,7 +479,7 @@ namespace MVC.Controllers
 
                 var res = await client.DeleteAsync($"{ApiBaseUrl}/api/MemberMovieList/delete-list?listId={listId}");
 
-                if (res.StatusCode == System.Net.HttpStatusCode.Conflict)
+                if (res.StatusCode == HttpStatusCode.Conflict)
                 {
                     TempData["Error"] = "Bu liste için aktif sipariş var. Liste silinemez.";
                     return RedirectToAction(nameof(Details), new { id = listId });

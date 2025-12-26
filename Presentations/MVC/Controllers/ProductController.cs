@@ -3,6 +3,7 @@ using Application.ServiceManager;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using MVC.Constants;
+using System.Net;
 using System.Net.Http.Json;
 
 namespace MVC.Controllers
@@ -26,14 +27,11 @@ namespace MVC.Controllers
             _configuration = configuration;
         }
 
-        // /Product?categoryId=1&q=matrix
         public async Task<IActionResult> Index(int? categoryId, string? q)
         {
-            // Kategoriler
             var categories = await _categoryService.GetCategoriesAsync();
             ViewBag.Categories = new SelectList(categories, "Id", "CategoryName", categoryId);
 
-            // Filmler
             var movies = await _movieService.GetMoviesAsync();
 
             if (categoryId.HasValue && categoryId.Value > 0)
@@ -52,9 +50,7 @@ namespace MVC.Controllers
             ViewBag.Query = q ?? "";
             ViewBag.SelectedCategoryId = categoryId;
 
-            // Login varsa listeleri çek (dropdown için)
             await LoadMemberListsForViewAsync();
-
             return View(movies);
         }
 
@@ -64,10 +60,81 @@ namespace MVC.Controllers
             if (movie == null)
                 return NotFound();
 
-            // Detay sayfasında da listeye eklemek istersen kullanırsın
             await LoadMemberListsForViewAsync();
-
             return View(movie);
+        }
+
+        // ✅ YENİ: Film -> Listeye ekle
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddToList(int movieId, int listId, int? priority, string? returnUrl = null)
+        {
+            var memberId = HttpContext.Session.GetInt32(SessionKeys.MemberId);
+            if (memberId == null)
+                return RedirectToAction("Login", "Auth");
+
+            if (movieId <= 0 || listId <= 0)
+            {
+                TempData["Error"] = "Geçersiz istek.";
+                return RedirectToLocal(returnUrl);
+            }
+
+            var apiBaseUrl = _configuration["ApiSettings:BaseUrl"];
+            if (string.IsNullOrWhiteSpace(apiBaseUrl))
+            {
+                TempData["Error"] = "API BaseUrl bulunamadı.";
+                return RedirectToLocal(returnUrl);
+            }
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient();
+
+                var dto = new CreateMemberMovieListItemDto
+                {
+                    MemberMovieListId = listId,
+                    MovieId = movieId,
+                    Priority = priority.HasValue && priority.Value > 0 ? priority.Value : 1
+                };
+
+                var res = await client.PostAsJsonAsync($"{apiBaseUrl}/api/MemberMovieList/add-item", dto);
+
+                // ✅ Kilitli liste: API 409 dönüyor
+                if (res.StatusCode == HttpStatusCode.Conflict)
+                {
+                    var msg = await res.Content.ReadAsStringAsync();
+                    TempData["Error"] = string.IsNullOrWhiteSpace(msg)
+                        ? "Bu liste aktif siparişe bağlı olduğu için kilitlidir. Film eklenemez."
+                        : msg;
+                    return RedirectToLocal(returnUrl);
+                }
+
+                if (!res.IsSuccessStatusCode)
+                {
+                    // API bazen string, bazen validation json dönebilir -> string olarak alıyoruz
+                    var msg = await res.Content.ReadAsStringAsync();
+                    TempData["Error"] = string.IsNullOrWhiteSpace(msg)
+                        ? "Film listeye eklenemedi."
+                        : msg;
+                    return RedirectToLocal(returnUrl);
+                }
+
+                TempData["Success"] = "Film listeye eklendi.";
+                return RedirectToLocal(returnUrl);
+            }
+            catch
+            {
+                TempData["Error"] = "Film listeye eklenemedi. API çalışıyor mu kontrol et.";
+                return RedirectToLocal(returnUrl);
+            }
+        }
+
+        private IActionResult RedirectToLocal(string? returnUrl)
+        {
+            if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+                return Redirect(returnUrl);
+
+            return RedirectToAction(nameof(Index));
         }
 
         private async Task LoadMemberListsForViewAsync()

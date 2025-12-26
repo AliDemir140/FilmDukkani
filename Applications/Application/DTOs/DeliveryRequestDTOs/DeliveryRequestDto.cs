@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using Domain.Enums;
 
-
 namespace Application.DTOs.DeliveryRequestDTOs
 {
     public class DeliveryRequestDto
@@ -10,16 +9,23 @@ namespace Application.DTOs.DeliveryRequestDTOs
         public int Id { get; set; }
 
         public int MemberId { get; set; }
-        public string MemberFullName { get; set; }
+        public string MemberFullName { get; set; } = string.Empty;
 
         public int MemberMovieListId { get; set; }
-        public string ListName { get; set; }
+        public string ListName { get; set; } = string.Empty;
 
         public DateTime RequestedDate { get; set; }
         public DateTime DeliveryDate { get; set; }
 
         public DeliveryStatus Status { get; set; }
         public string StatusText => Status.ToString();
+
+        // İptal talebi alanları
+        public string? CancelReason { get; set; }
+        public DateTime? CancelRequestedAt { get; set; }
+        public DeliveryStatus? CancelPreviousStatus { get; set; }
+        public DateTime? CancelDecisionAt { get; set; }
+        public bool? CancelApproved { get; set; } // true=onay, false=red, null=bekliyor
 
         public List<DeliveryRequestItemDto> Items { get; set; } = new();
     }

@@ -39,6 +39,25 @@ namespace Application.ServiceManager
             _damagedMovieRepository = damagedMovieRepository;
         }
 
+        // =========================================================
+        // ✅ CONTROLLER UYUMLULUK (CS1061 fix)
+        // Controller bunları çağırıyor:
+        //   UserCancelRequestAsync(memberId, requestId, reason)
+        //   AdminDecideCancelAsync(requestId, approve)
+        // Bizdeki mevcut metotlara map’liyoruz.
+        // =========================================================
+        public async Task<int> UserCancelRequestAsync(int memberId, int requestId, string reason)
+        {
+            return await RequestCancelAsync(requestId, memberId, reason);
+        }
+
+        public async Task<int> AdminDecideCancelAsync(int requestId, bool approve)
+        {
+            return approve
+                ? await ApproveCancelAsync(requestId)
+                : await RejectCancelAsync(requestId);
+        }
+
         // Teslimat tarihi: en az 2 gün sonrası, pazar olamaz
         private static bool IsValidDeliveryDate(DateTime deliveryDate)
         {
@@ -57,16 +76,13 @@ namespace Application.ServiceManager
             return DateTime.Today <= deliveryDate.Date.AddDays(-1);
         }
 
-        // ✅ KURAL: aynı liste için aktif sipariş varken yeni sipariş açılmasın
+        // KURAL: aynı liste için aktif sipariş varken yeni sipariş açılmasın
         private async Task<bool> HasActiveRequestForListAsync(int listId)
         {
-            var listRequests = await _deliveryRequestRepository.GetAllAsync(r =>
-                r.MemberMovieListId == listId &&
-                r.Status != DeliveryStatus.Cancelled &&
-                r.Status != DeliveryStatus.Completed
-            );
+            var list = await _memberMovieListRepository.GetByIdAsync(listId);
+            if (list == null) return false;
 
-            return listRequests.Any();
+            return await _deliveryRequestRepository.HasActiveRequestForListAsync(list.MemberId, listId);
         }
 
         // ✅ Teslimat isteği oluştur
@@ -77,11 +93,10 @@ namespace Application.ServiceManager
         public async Task<int> CreateDeliveryRequestAsync(int memberId, int listId, DateTime deliveryDate)
         {
             if (!IsValidDeliveryDate(deliveryDate))
-                return 0; // tarih kuralı bozuk
+                return 0;
 
-            // ✅ aktif sipariş kontrolü
             if (await HasActiveRequestForListAsync(listId))
-                return -1; // aktif sipariş var
+                return -1;
 
             var request = new DeliveryRequest
             {
@@ -96,13 +111,118 @@ namespace Application.ServiceManager
             return request.ID;
         }
 
-        // DTO ile oluştur
         public async Task<int> CreateDeliveryRequestAsync(CreateDeliveryRequestDto dto)
         {
             return await CreateDeliveryRequestAsync(dto.MemberId, dto.MemberMovieListId, dto.DeliveryDate);
         }
 
-        // Yarının teslimatlarını hazırla
+        // ✅ KULLANICI: iptal talebi açar -> Status = CancelRequested
+        // Return:
+        //  0  -> request yok
+        // -1  -> yetkisiz
+        // -2  -> statü uygun değil (Completed/Cancelled)
+        // -3  -> zaten CancelRequested
+        // -4  -> iptal tarihi kuralı (en geç 1 gün önce)
+        //  1  -> ok
+        public async Task<int> RequestCancelAsync(int requestId, int memberId, string reason)
+        {
+            var request = await _deliveryRequestRepository.GetByIdAsync(requestId);
+            if (request == null) return 0;
+
+            if (request.MemberId != memberId) return -1;
+
+            if (request.Status == DeliveryStatus.Completed || request.Status == DeliveryStatus.Cancelled)
+                return -2;
+
+            if (request.Status == DeliveryStatus.CancelRequested)
+                return -3;
+
+            if (!IsCancelAllowed(request.DeliveryDate))
+                return -4;
+
+            reason = (reason ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(reason))
+                reason = "Kullanıcı iptal talebi oluşturdu.";
+
+            request.CancelPreviousStatus = request.Status;
+            request.CancelReason = reason;
+            request.CancelRequestedAt = DateTime.Now;
+            request.CancelApproved = null;
+            request.CancelDecisionAt = null;
+
+            request.Status = DeliveryStatus.CancelRequested;
+
+            await _deliveryRequestRepository.UpdateAsync(request);
+            return 1;
+        }
+
+        // ✅ ADMIN: iptal talebini ONAYLA -> Cancelled
+        // Return:
+        //  0 -> request yok
+        // -1 -> CancelRequested değil
+        // -2 -> iptal tarihi kuralı
+        //  1 -> ok
+        public async Task<int> ApproveCancelAsync(int requestId)
+        {
+            var request = await _deliveryRequestRepository.GetByIdAsync(requestId);
+            if (request == null) return 0;
+
+            if (request.Status != DeliveryStatus.CancelRequested)
+                return -1;
+
+            if (!IsCancelAllowed(request.DeliveryDate))
+                return -2;
+
+            // Prepared ve sonrası: item/copy varsa geri aç + itemları sil
+            var items = await _deliveryRequestItemRepository
+                .GetAllAsync(i => i.DeliveryRequestId == request.ID);
+
+            if (items != null && items.Any())
+            {
+                foreach (var item in items)
+                {
+                    var copy = await _movieCopyRepository.GetByIdAsync(item.MovieCopyId);
+                    if (copy != null && !copy.IsDamaged)
+                    {
+                        copy.IsAvailable = true;
+                        await _movieCopyRepository.UpdateAsync(copy);
+                    }
+
+                    await _deliveryRequestItemRepository.DeleteAsync(item);
+                }
+            }
+
+            request.Status = DeliveryStatus.Cancelled;
+            request.CancelApproved = true;
+            request.CancelDecisionAt = DateTime.Now;
+
+            await _deliveryRequestRepository.UpdateAsync(request);
+            return 1;
+        }
+
+        // ADMIN: iptal talebini REDDET -> eski statüye dön
+        // Return:
+        //  0 -> request yok
+        // -1 -> CancelRequested değil
+        //  1 -> ok
+        public async Task<int> RejectCancelAsync(int requestId)
+        {
+            var request = await _deliveryRequestRepository.GetByIdAsync(requestId);
+            if (request == null) return 0;
+
+            if (request.Status != DeliveryStatus.CancelRequested)
+                return -1;
+
+            request.CancelApproved = false;
+            request.CancelDecisionAt = DateTime.Now;
+
+            var back = request.CancelPreviousStatus ?? DeliveryStatus.Pending;
+            request.Status = back;
+
+            await _deliveryRequestRepository.UpdateAsync(request);
+            return 1;
+        }
+
         public async Task PrepareTomorrowDeliveriesAsync()
         {
             DateTime tomorrow = DateTime.Today.AddDays(1);
@@ -142,7 +262,6 @@ namespace Application.ServiceManager
                     var selectedCopy = copies.FirstOrDefault();
                     if (selectedCopy == null) continue;
 
-                    // Kopyayı rezerve et
                     selectedCopy.IsAvailable = false;
                     await _movieCopyRepository.UpdateAsync(selectedCopy);
 
@@ -168,7 +287,6 @@ namespace Application.ServiceManager
             }
         }
 
-        // Tek request detay
         public async Task<DeliveryRequestDto?> GetRequestDetailAsync(int requestId)
         {
             var request = await _deliveryRequestRepository.GetByIdAsync(requestId);
@@ -177,13 +295,11 @@ namespace Application.ServiceManager
             var member = await _memberRepository.GetByIdAsync(request.MemberId);
             var list = await _memberMovieListRepository.GetByIdAsync(request.MemberMovieListId);
 
-            // Request item’ları (hazırlanmışsa burada olur)
             var items = await _deliveryRequestItemRepository
                 .GetAllAsync(i => i.DeliveryRequestId == request.ID);
 
             var itemDtos = new List<DeliveryRequestItemDto>();
 
-            // 1) Eğer item varsa normal akış
             if (items != null && items.Any())
             {
                 foreach (var item in items)
@@ -203,7 +319,6 @@ namespace Application.ServiceManager
             }
             else
             {
-                // 2) Item yoksa (Pending aşaması) → LISTE item’larından “planlanan” filmleri göster
                 int maxMoviesToShow = 0;
 
                 if (member != null)
@@ -213,7 +328,6 @@ namespace Application.ServiceManager
                         maxMoviesToShow = plan.MaxMoviesPerMonth;
                 }
 
-                // Plan bulunamazsa da en azından ilk 5’i gösterelim
                 if (maxMoviesToShow <= 0)
                     maxMoviesToShow = 5;
 
@@ -230,7 +344,6 @@ namespace Application.ServiceManager
                 {
                     var movie = await _movieRepository.GetByIdAsync(li.MovieId);
 
-                    // Id=0 -> DB’de DeliveryRequestItem yok, bu “planlanan” satır
                     itemDtos.Add(new DeliveryRequestItemDto
                     {
                         Id = 0,
@@ -253,11 +366,17 @@ namespace Application.ServiceManager
                 RequestedDate = request.RequestedDate,
                 DeliveryDate = request.DeliveryDate,
                 Status = request.Status,
+
+                CancelReason = request.CancelReason,
+                CancelRequestedAt = request.CancelRequestedAt,
+                CancelApproved = request.CancelApproved,
+                CancelDecisionAt = request.CancelDecisionAt,
+                CancelPreviousStatus = request.CancelPreviousStatus,
+
                 Items = itemDtos
             };
         }
 
-        // Index: tüm requestler
         public async Task<List<DeliveryRequestDto>> GetAllRequestsAsync()
         {
             var requests = await _deliveryRequestRepository.GetAllAsync();
@@ -272,7 +391,6 @@ namespace Application.ServiceManager
             return result;
         }
 
-        // Index: status filtre
         public async Task<List<DeliveryRequestDto>> GetRequestsByStatusAsync(DeliveryStatus status)
         {
             var requests = await _deliveryRequestRepository.GetAllAsync(r => r.Status == status);
@@ -287,7 +405,7 @@ namespace Application.ServiceManager
             return result;
         }
 
-        // İptal: sadece Pending / Prepared (kopyaları geri açar)
+        // Admin tarafında direkt iptal (eski davranış) istersen kalsın:
         public async Task<bool> CancelRequestAsync(int requestId)
         {
             var request = await _deliveryRequestRepository.GetByIdAsync(requestId);
@@ -299,22 +417,19 @@ namespace Application.ServiceManager
             if (!IsCancelAllowed(request.DeliveryDate))
                 return false;
 
-            if (request.Status == DeliveryStatus.Prepared)
+            var items = await _deliveryRequestItemRepository
+                .GetAllAsync(i => i.DeliveryRequestId == request.ID);
+
+            foreach (var item in items)
             {
-                var items = await _deliveryRequestItemRepository
-                    .GetAllAsync(i => i.DeliveryRequestId == request.ID);
-
-                foreach (var item in items)
+                var copy = await _movieCopyRepository.GetByIdAsync(item.MovieCopyId);
+                if (copy != null && !copy.IsDamaged)
                 {
-                    var copy = await _movieCopyRepository.GetByIdAsync(item.MovieCopyId);
-                    if (copy != null && !copy.IsDamaged)
-                    {
-                        copy.IsAvailable = true;
-                        await _movieCopyRepository.UpdateAsync(copy);
-                    }
-
-                    await _deliveryRequestItemRepository.DeleteAsync(item);
+                    copy.IsAvailable = true;
+                    await _movieCopyRepository.UpdateAsync(copy);
                 }
+
+                await _deliveryRequestItemRepository.DeleteAsync(item);
             }
 
             request.Status = DeliveryStatus.Cancelled;
@@ -323,7 +438,6 @@ namespace Application.ServiceManager
             return true;
         }
 
-        // Kurye çıktı: Prepared -> Shipped
         public async Task<bool> MarkShippedAsync(int requestId)
         {
             var request = await _deliveryRequestRepository.GetByIdAsync(requestId);
@@ -338,7 +452,6 @@ namespace Application.ServiceManager
             return true;
         }
 
-        // Teslim edildi: Shipped -> Delivered (listeden düşürür)
         public async Task<bool> MarkDeliveredAsync(int requestId)
         {
             var request = await _deliveryRequestRepository.GetByIdAsync(requestId);
@@ -350,7 +463,6 @@ namespace Application.ServiceManager
             var items = await _deliveryRequestItemRepository
                 .GetAllAsync(i => i.DeliveryRequestId == request.ID);
 
-            // Teslim edilen filmleri listeden düş
             foreach (var item in items)
             {
                 var listItem = await _memberMovieListItemRepository.GetByIdAsync(item.MemberMovieListItemId);
@@ -364,7 +476,6 @@ namespace Application.ServiceManager
             return true;
         }
 
-        // Süreci bitir: Delivered -> Completed (tüm item'lar iade edilmiş olmalı)
         public async Task<bool> MarkCompletedAsync(int requestId)
         {
             var request = await _deliveryRequestRepository.GetByIdAsync(requestId);
@@ -385,7 +496,6 @@ namespace Application.ServiceManager
             return true;
         }
 
-        // Film iade
         public async Task<bool> ReturnDeliveryItemAsync(ReturnDeliveryItemDto dto)
         {
             var item = await _deliveryRequestItemRepository.GetByIdAsync(dto.DeliveryRequestItemId);
@@ -418,7 +528,6 @@ namespace Application.ServiceManager
                 await _damagedMovieRepository.AddAsync(damaged);
             }
 
-            // Delivered durumundaysa ve tüm item'lar iade olduysa otomatik Completed yap
             var request = await _deliveryRequestRepository.GetByIdAsync(item.DeliveryRequestId);
             if (request != null && request.Status == DeliveryStatus.Delivered)
             {
