@@ -6,12 +6,33 @@
 
 <h3>Sepetim</h3>
 
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
 @if (!Model.Any())
 {
     <div class="alert alert-warning">Sepetiniz boş.</div>
 }
 else
 {
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div></div>
+
+        <form asp-action="Clear" method="post" class="m-0">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-outline-danger"
+                    onclick="return confirm('Sepetteki tüm ürünler silinsin mi?');">
+                Sepeti Boşalt
+            </button>
+        </form>
+    </div>
+
     <table class="table table-hover align-middle">
         <thead>
             <tr>
@@ -52,6 +73,4 @@ else
             Sepeti Onayla
         </a>
     }
-
-
 }

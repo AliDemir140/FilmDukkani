@@ -86,6 +86,20 @@ namespace MVC.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // Sepeti tek tuşla boşalt
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Clear()
+        {
+            HttpContext.Session.Remove(SessionKeys.Cart);
+
+            // ekstra garanti: key dursun ama boş liste olsun istersen
+            HttpContext.Session.SetObject(SessionKeys.Cart, new List<CartItem>());
+
+            TempData["Success"] = "Sepet temizlendi.";
+            return RedirectToAction(nameof(Index));
+        }
+
         // Üyenin listelerini API'den çekip SelectListItem'a çevirir
         private async Task<List<SelectListItem>> GetMemberListsSelectAsync(int memberId)
         {
@@ -114,7 +128,7 @@ namespace MVC.Controllers
             }
         }
 
-        // ✅ Min 5 film kuralı kontrol (API: check-minimum)
+        // Min 5 film kuralı kontrol (API: check-minimum)
         private async Task<(bool ok, int currentCount, int minimumRequired)> CheckMinimumAsync(int listId)
         {
             if (string.IsNullOrWhiteSpace(ApiBaseUrl))
@@ -139,7 +153,7 @@ namespace MVC.Controllers
             }
         }
 
-        // ✅ JS burayı çağıracak: /Cart/CheckMinimum?listId=...
+        // JS burayı çağıracak: /Cart/CheckMinimum?listId=...
         [HttpGet]
         public async Task<IActionResult> CheckMinimum(int listId)
         {
@@ -173,7 +187,7 @@ namespace MVC.Controllers
             }
         }
 
-        // ✅ Sepetteki filmleri seçilen listeye otomatik ekle
+        // Sepetteki filmleri seçilen listeye otomatik ekle
         private async Task AddCartMoviesToListAsync(int listId, List<CartItem> cart)
         {
             if (string.IsNullOrWhiteSpace(ApiBaseUrl))
@@ -266,7 +280,6 @@ namespace MVC.Controllers
             if (memberId == null)
                 return RedirectToAction("Login", "Auth");
 
-            // ModelState invalid olursa listeyi geri doldur
             if (!ModelState.IsValid)
             {
                 model.CartItems = cart;
@@ -289,10 +302,8 @@ namespace MVC.Controllers
                 return View(model);
             }
 
-            // ✅ Sepet filmlerini listeye yaz
             await AddCartMoviesToListAsync(model.SelectedListId, cart);
 
-            // ✅ Min 5 kontrol (POST güvenlik)
             var min = await CheckMinimumAsync(model.SelectedListId);
             ViewBag.HasMinimum = min.ok;
             ViewBag.MinRequired = min.minimumRequired;
@@ -307,14 +318,12 @@ namespace MVC.Controllers
                 return View(model);
             }
 
-            // ✅ Sipariş oluştur
             var requestId = await _deliveryRequestService.CreateDeliveryRequestAsync(
                 memberId.Value,
                 model.SelectedListId,
                 model.DeliveryDate
             );
 
-            // ✅ 0: tarih kuralı
             if (requestId == 0)
             {
                 model.CartItems = cart;
@@ -326,7 +335,6 @@ namespace MVC.Controllers
                 return View(model);
             }
 
-            // ✅ -1: aynı liste için aktif sipariş var (DOĞRU MESAJ)
             if (requestId == -1)
             {
                 model.CartItems = cart;
@@ -338,9 +346,9 @@ namespace MVC.Controllers
                 return View(model);
             }
 
-            // ✅ Başarılı: sepeti GARANTİ temizle
+            // Başarılı: sepeti GARANTİ temizle
             HttpContext.Session.Remove(SessionKeys.Cart);
-            HttpContext.Session.SetObject(SessionKeys.Cart, new List<CartItem>()); // ekstra garanti
+            HttpContext.Session.SetObject(SessionKeys.Cart, new List<CartItem>());
 
             return RedirectToAction(nameof(Success), new { id = requestId });
         }
