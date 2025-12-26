@@ -39,13 +39,6 @@ namespace Application.ServiceManager
             _damagedMovieRepository = damagedMovieRepository;
         }
 
-        // =========================================================
-        // ✅ CONTROLLER UYUMLULUK (CS1061 fix)
-        // Controller bunları çağırıyor:
-        //   UserCancelRequestAsync(memberId, requestId, reason)
-        //   AdminDecideCancelAsync(requestId, approve)
-        // Bizdeki mevcut metotlara map’liyoruz.
-        // =========================================================
         public async Task<int> UserCancelRequestAsync(int memberId, int requestId, string reason)
         {
             return await RequestCancelAsync(requestId, memberId, reason);
@@ -58,7 +51,6 @@ namespace Application.ServiceManager
                 : await RejectCancelAsync(requestId);
         }
 
-        // Teslimat tarihi: en az 2 gün sonrası, pazar olamaz
         private static bool IsValidDeliveryDate(DateTime deliveryDate)
         {
             var today = DateTime.Today;
@@ -70,13 +62,11 @@ namespace Application.ServiceManager
             return true;
         }
 
-        // İptal: en geç 1 gün öncesine kadar
         private static bool IsCancelAllowed(DateTime deliveryDate)
         {
             return DateTime.Today <= deliveryDate.Date.AddDays(-1);
         }
 
-        // KURAL: aynı liste için aktif sipariş varken yeni sipariş açılmasın
         private async Task<bool> HasActiveRequestForListAsync(int listId)
         {
             var list = await _memberMovieListRepository.GetByIdAsync(listId);
@@ -85,11 +75,6 @@ namespace Application.ServiceManager
             return await _deliveryRequestRepository.HasActiveRequestForListAsync(list.MemberId, listId);
         }
 
-        // ✅ Teslimat isteği oluştur
-        // Return:
-        //  0  -> geçersiz tarih
-        // -1  -> aynı liste için aktif sipariş var
-        // >0  -> requestId
         public async Task<int> CreateDeliveryRequestAsync(int memberId, int listId, DateTime deliveryDate)
         {
             if (!IsValidDeliveryDate(deliveryDate))
@@ -116,14 +101,6 @@ namespace Application.ServiceManager
             return await CreateDeliveryRequestAsync(dto.MemberId, dto.MemberMovieListId, dto.DeliveryDate);
         }
 
-        // ✅ KULLANICI: iptal talebi açar -> Status = CancelRequested
-        // Return:
-        //  0  -> request yok
-        // -1  -> yetkisiz
-        // -2  -> statü uygun değil (Completed/Cancelled)
-        // -3  -> zaten CancelRequested
-        // -4  -> iptal tarihi kuralı (en geç 1 gün önce)
-        //  1  -> ok
         public async Task<int> RequestCancelAsync(int requestId, int memberId, string reason)
         {
             var request = await _deliveryRequestRepository.GetByIdAsync(requestId);
@@ -156,12 +133,6 @@ namespace Application.ServiceManager
             return 1;
         }
 
-        // ✅ ADMIN: iptal talebini ONAYLA -> Cancelled
-        // Return:
-        //  0 -> request yok
-        // -1 -> CancelRequested değil
-        // -2 -> iptal tarihi kuralı
-        //  1 -> ok
         public async Task<int> ApproveCancelAsync(int requestId)
         {
             var request = await _deliveryRequestRepository.GetByIdAsync(requestId);
@@ -173,7 +144,6 @@ namespace Application.ServiceManager
             if (!IsCancelAllowed(request.DeliveryDate))
                 return -2;
 
-            // Prepared ve sonrası: item/copy varsa geri aç + itemları sil
             var items = await _deliveryRequestItemRepository
                 .GetAllAsync(i => i.DeliveryRequestId == request.ID);
 
@@ -200,11 +170,6 @@ namespace Application.ServiceManager
             return 1;
         }
 
-        // ADMIN: iptal talebini REDDET -> eski statüye dön
-        // Return:
-        //  0 -> request yok
-        // -1 -> CancelRequested değil
-        //  1 -> ok
         public async Task<int> RejectCancelAsync(int requestId)
         {
             var request = await _deliveryRequestRepository.GetByIdAsync(requestId);
@@ -240,7 +205,8 @@ namespace Application.ServiceManager
                 var plan = await _membershipPlanRepository.GetByIdAsync(member.MembershipPlanId);
                 if (plan == null) continue;
 
-                int maxMoviesToSend = plan.MaxMoviesPerMonth;
+                int maxMoviesToSend = plan.MaxChangePerMonth;
+                if (maxMoviesToSend <= 0) continue;
 
                 var list = await _memberMovieListRepository.GetByIdAsync(request.MemberMovieListId);
                 if (list == null) continue;
@@ -325,7 +291,7 @@ namespace Application.ServiceManager
                 {
                     var plan = await _membershipPlanRepository.GetByIdAsync(member.MembershipPlanId);
                     if (plan != null)
-                        maxMoviesToShow = plan.MaxMoviesPerMonth;
+                        maxMoviesToShow = plan.MaxChangePerMonth;
                 }
 
                 if (maxMoviesToShow <= 0)
@@ -405,7 +371,6 @@ namespace Application.ServiceManager
             return result;
         }
 
-        // Admin tarafında direkt iptal (eski davranış) istersen kalsın:
         public async Task<bool> CancelRequestAsync(int requestId)
         {
             var request = await _deliveryRequestRepository.GetByIdAsync(requestId);
