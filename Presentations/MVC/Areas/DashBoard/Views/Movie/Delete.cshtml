@@ -1,5 +1,5 @@
 ﻿@using Application.DTOs.MovieDTOs
-@model UpdateMovieDto
+@model MovieDetailDto
 
 @{
     ViewData["Title"] = "Film Sil";
@@ -18,14 +18,10 @@
             <strong>@Model.Title</strong> filmi silinsin mi?
         </div>
 
-        <form asp-area="DashBoard" asp-controller="Movie" asp-action="Delete" method="post">
+        <form asp-area="DashBoard" asp-controller="Movie" asp-action="DeleteConfirmed" method="post">
             @Html.AntiForgeryToken()
 
-            <input type="hidden" asp-for="Id" />
-            <input type="hidden" asp-for="Title" />
-            <input type="hidden" asp-for="Description" />
-            <input type="hidden" asp-for="ReleaseYear" />
-            <input type="hidden" asp-for="CategoryId" />
+            <input type="hidden" name="id" value="@Model.Id" />
 
             <button class="btn btn-danger" type="submit">Evet, Sil</button>
             <a class="btn btn-secondary" asp-area="DashBoard" asp-controller="Movie" asp-action="Index">Vazgeç</a>

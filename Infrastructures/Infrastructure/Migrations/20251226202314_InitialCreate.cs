@@ -136,6 +136,32 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Movies",
+                columns: table => new
+                {
+                    ID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Title = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    OriginalTitle = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    Description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
+                    ReleaseYear = table.Column<int>(type: "int", nullable: false),
+                    TechnicalDetails = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    AudioFeatures = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: true),
+                    SubtitleLanguages = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: true),
+                    TrailerUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    CoverImageUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    Barcode = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Supplier = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    Status = table.Column<byte>(type: "tinyint", nullable: false, defaultValue: (byte)0),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Movies", x => x.ID);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Shelves",
                 columns: table => new
                 {
@@ -258,39 +284,6 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Movies",
-                columns: table => new
-                {
-                    ID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Title = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    OriginalTitle = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    Description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
-                    ReleaseYear = table.Column<int>(type: "int", nullable: false),
-                    TechnicalDetails = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    AudioFeatures = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: true),
-                    SubtitleLanguages = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: true),
-                    TrailerUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    CoverImageUrl = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    Barcode = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    Supplier = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    CategoryId = table.Column<int>(type: "int", nullable: false),
-                    Status = table.Column<byte>(type: "tinyint", nullable: false, defaultValue: (byte)0),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Movies", x => x.ID);
-                    table.ForeignKey(
-                        name: "FK_Movies_Categories_CategoryId",
-                        column: x => x.CategoryId,
-                        principalTable: "Categories",
-                        principalColumn: "ID",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "Members",
                 columns: table => new
                 {
@@ -380,34 +373,27 @@ namespace Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "MovieCopies",
+                name: "MovieCategories",
                 columns: table => new
                 {
-                    ID = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
                     MovieId = table.Column<int>(type: "int", nullable: false),
-                    Barcode = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    ShelfId = table.Column<int>(type: "int", nullable: true),
-                    IsAvailable = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
-                    IsDamaged = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    CategoryId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_MovieCopies", x => x.ID);
+                    table.PrimaryKey("PK_MovieCategories", x => new { x.MovieId, x.CategoryId });
                     table.ForeignKey(
-                        name: "FK_MovieCopies_Movies_MovieId",
+                        name: "FK_MovieCategories_Categories_CategoryId",
+                        column: x => x.CategoryId,
+                        principalTable: "Categories",
+                        principalColumn: "ID",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_MovieCategories_Movies_MovieId",
                         column: x => x.MovieId,
                         principalTable: "Movies",
                         principalColumn: "ID",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_MovieCopies_Shelves_ShelfId",
-                        column: x => x.ShelfId,
-                        principalTable: "Shelves",
-                        principalColumn: "ID",
-                        onDelete: ReferentialAction.SetNull);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -436,6 +422,37 @@ namespace Infrastructure.Migrations
                         principalTable: "Movies",
                         principalColumn: "ID",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "MovieCopies",
+                columns: table => new
+                {
+                    ID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    MovieId = table.Column<int>(type: "int", nullable: false),
+                    Barcode = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    ShelfId = table.Column<int>(type: "int", nullable: true),
+                    IsAvailable = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
+                    IsDamaged = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MovieCopies", x => x.ID);
+                    table.ForeignKey(
+                        name: "FK_MovieCopies_Movies_MovieId",
+                        column: x => x.MovieId,
+                        principalTable: "Movies",
+                        principalColumn: "ID",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_MovieCopies_Shelves_ShelfId",
+                        column: x => x.ShelfId,
+                        principalTable: "Shelves",
+                        principalColumn: "ID",
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -494,6 +511,11 @@ namespace Infrastructure.Migrations
                     RequestedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     DeliveryDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Status = table.Column<byte>(type: "tinyint", nullable: false),
+                    CancelReason = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    CancelRequestedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CancelPreviousStatus = table.Column<byte>(type: "tinyint", nullable: true),
+                    CancelDecisionAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    CancelApproved = table.Column<bool>(type: "bit", nullable: true),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
@@ -663,9 +685,11 @@ namespace Infrastructure.Migrations
                 column: "MemberId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DeliveryRequests_MemberMovieListId",
+                name: "UX_DeliveryRequests_ActivePerList",
                 table: "DeliveryRequests",
-                column: "MemberMovieListId");
+                column: "MemberMovieListId",
+                unique: true,
+                filter: "[Status] IN (0,1,2,3)");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Directors_FirstName_LastName",
@@ -715,6 +739,11 @@ namespace Infrastructure.Migrations
                 columns: new[] { "MovieId", "AwardId", "Year" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_MovieCategories_CategoryId",
+                table: "MovieCategories",
+                column: "CategoryId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_MovieCopies_Barcode",
                 table: "MovieCopies",
                 column: "Barcode",
@@ -740,11 +769,6 @@ namespace Infrastructure.Migrations
                 table: "MovieDirectors",
                 columns: new[] { "MovieId", "DirectorId" },
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Movies_CategoryId",
-                table: "Movies",
-                column: "CategoryId");
         }
 
         /// <inheritdoc />
@@ -778,6 +802,9 @@ namespace Infrastructure.Migrations
                 name: "MovieAwards");
 
             migrationBuilder.DropTable(
+                name: "MovieCategories");
+
+            migrationBuilder.DropTable(
                 name: "MovieDirectors");
 
             migrationBuilder.DropTable(
@@ -802,6 +829,9 @@ namespace Infrastructure.Migrations
                 name: "Awards");
 
             migrationBuilder.DropTable(
+                name: "Categories");
+
+            migrationBuilder.DropTable(
                 name: "Directors");
 
             migrationBuilder.DropTable(
@@ -815,9 +845,6 @@ namespace Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "Members");
-
-            migrationBuilder.DropTable(
-                name: "Categories");
 
             migrationBuilder.DropTable(
                 name: "MembershipPlans");

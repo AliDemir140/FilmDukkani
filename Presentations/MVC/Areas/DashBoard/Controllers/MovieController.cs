@@ -19,10 +19,10 @@ namespace MVC.Areas.DashBoard.Controllers
             _categoryService = categoryService;
         }
 
-        private async Task LoadCategoriesAsync(int? selectedId = null)
+        private async Task LoadCategoriesAsync(List<int>? selectedIds = null)
         {
             var categories = await _categoryService.GetCategoriesAsync();
-            ViewBag.Categories = new SelectList(categories, "Id", "CategoryName", selectedId);
+            ViewBag.Categories = new MultiSelectList(categories, "Id", "CategoryName", selectedIds);
         }
 
         public async Task<IActionResult> Index()
@@ -44,15 +44,15 @@ namespace MVC.Areas.DashBoard.Controllers
         {
             if (!ModelState.IsValid)
             {
-                await LoadCategoriesAsync(dto.CategoryId);
+                await LoadCategoriesAsync(dto.CategoryIds);
                 return View(dto);
             }
 
             var ok = await _movieService.AddMovie(dto);
             if (!ok)
             {
-                ModelState.AddModelError("", "Kategori bulunamadı.");
-                await LoadCategoriesAsync(dto.CategoryId);
+                ModelState.AddModelError("", "Kategori bulunamadı veya seçim geçersiz.");
+                await LoadCategoriesAsync(dto.CategoryIds);
                 return View(dto);
             }
 
@@ -65,7 +65,7 @@ namespace MVC.Areas.DashBoard.Controllers
             var dto = await _movieService.GetMovie(id);
             if (dto == null) return NotFound();
 
-            await LoadCategoriesAsync(dto.CategoryId);
+            await LoadCategoriesAsync(dto.CategoryIds);
             return View(dto);
         }
 
@@ -75,7 +75,7 @@ namespace MVC.Areas.DashBoard.Controllers
         {
             if (!ModelState.IsValid)
             {
-                await LoadCategoriesAsync(dto.CategoryId);
+                await LoadCategoriesAsync(dto.CategoryIds);
                 return View(dto);
             }
 
@@ -83,7 +83,7 @@ namespace MVC.Areas.DashBoard.Controllers
             if (!ok)
             {
                 ModelState.AddModelError("", "Güncelleme yapılamadı. Film veya kategori bulunamadı.");
-                await LoadCategoriesAsync(dto.CategoryId);
+                await LoadCategoriesAsync(dto.CategoryIds);
                 return View(dto);
             }
 

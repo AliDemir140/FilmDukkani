@@ -14,7 +14,8 @@ namespace Infrastructure.Repositories
         public async Task<List<Movie>> GetMoviesWithCategoryAsync()
         {
             return await _context.Movies
-                .Include(m => m.Category)
+                .Include(m => m.MovieCategories)
+                    .ThenInclude(mc => mc.Category)
                 .AsNoTracking()
                 .ToListAsync();
         }
@@ -22,7 +23,8 @@ namespace Infrastructure.Repositories
         public async Task<Movie?> GetMovieWithCategoryAsync(int id)
         {
             return await _context.Movies
-                .Include(m => m.Category)
+                .Include(m => m.MovieCategories)
+                    .ThenInclude(mc => mc.Category)
                 .FirstOrDefaultAsync(m => m.ID == id);
         }
     }

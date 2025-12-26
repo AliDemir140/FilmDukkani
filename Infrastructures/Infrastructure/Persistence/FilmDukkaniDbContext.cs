@@ -38,5 +38,7 @@ namespace Infrastructure.Persistence
         public DbSet<Shelf> Shelves { get; set; }
         public DbSet<MovieCopy> MovieCopies { get; set; }
         public DbSet<DamagedMovie> DamagedMovies { get; set; }
+        public DbSet<MovieCategory> MovieCategories { get; set; }
+
     }
 }

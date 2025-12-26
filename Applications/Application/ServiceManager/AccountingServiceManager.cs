@@ -1,8 +1,6 @@
-﻿// Dosya: Application/ServiceManager/AccountingServiceManager.cs
-
-using Application.DTOs.AccountingDTOs;
-using Application.DTOs.MembershipPlanDTOs;
+﻿using Application.DTOs.AccountingDTOs;
 using Application.Repositories;
+using Domain.Entities;
 using Domain.Enums;
 using System;
 using System.Collections.Generic;
@@ -22,9 +20,8 @@ namespace Application.ServiceManager
         private readonly IMovieCopyRepository _movieCopyRepository;
         private readonly IDamagedMovieRepository _damagedMovieRepository;
 
-        // Basit maliyet varsayımları (Purchase modülü gelince gerçek maliyete bağlanacak)
         private const decimal ESTIMATED_DAMAGE_UNIT_COST = 50m;
-        private const decimal ESTIMATED_DELIVERY_UNIT_COST = 0m; // şimdilik 0, istersen 1-2 gibi bir değer verilebilir
+        private const decimal ESTIMATED_DELIVERY_UNIT_COST = 0m;
 
         public AccountingServiceManager(
             IMemberRepository memberRepository,
@@ -46,9 +43,6 @@ namespace Application.ServiceManager
             _damagedMovieRepository = damagedMovieRepository;
         }
 
-        // -----------------------------
-        // 1) Genel Kar/Zarar Özeti
-        // -----------------------------
         public async Task<ProfitLossSummaryDto> GetProfitLossSummaryAsync(DateTime startDate, DateTime endDate)
         {
             if (endDate < startDate)
@@ -57,14 +51,11 @@ namespace Application.ServiceManager
             startDate = startDate.Date;
             endDate = endDate.Date;
 
-            // 1) Üyeler (bu aralıkta aktif olma ihtimali olanlar)
             var members = await _memberRepository.GetAllAsync(m => m.MembershipStartDate.Date <= endDate);
 
-            // 2) Planları bir kere çekip dictionary yap (N+1 azaltmak için)
             var plans = await _membershipPlanRepository.GetAllAsync();
             var planById = plans.ToDictionary(p => p.ID, p => p);
 
-            // 3) Teslimat istekleri (aralıkta olanlar)
             var requests = await _deliveryRequestRepository.GetAllAsync(r =>
                 r.DeliveryDate.Date >= startDate &&
                 r.DeliveryDate.Date <= endDate &&
@@ -72,15 +63,12 @@ namespace Application.ServiceManager
 
             var requestIds = new HashSet<int>(requests.Select(r => r.ID));
 
-            // 4) Itemlar (requestIds ile ilişkili olanlar)
             var allItems = await _deliveryRequestItemRepository.GetAllAsync();
             var itemsInRange = allItems.Where(i => requestIds.Contains(i.DeliveryRequestId)).ToList();
 
-            // 5) Bozuk film kayıtları (CreatedDate aralık filtre)
             var damaged = await _damagedMovieRepository.GetAllAsync();
             var damagedInRange = damaged.Where(d => d.CreatedDate.Date >= startDate && d.CreatedDate.Date <= endDate).ToList();
 
-            // GELİR: üyelik ücretleri (aralığa göre ay sayısı * plan fiyatı)
             decimal totalRevenue = 0m;
 
             foreach (var m in members)
@@ -88,17 +76,14 @@ namespace Application.ServiceManager
                 if (!planById.TryGetValue(m.MembershipPlanId, out var plan))
                     continue;
 
-                // Üyenin üyelik başlangıcı aralıkta değilse aralığın başından itibaren say
                 var effectiveStart = m.MembershipStartDate.Date > startDate ? m.MembershipStartDate.Date : startDate;
 
-                // Ay sayısı (inclusive) - basit ve stabil hesap
                 int months = MonthsInclusive(effectiveStart, endDate);
                 if (months < 0) months = 0;
 
                 totalRevenue += (plan.Price * months);
             }
 
-            // MALİYET: (1) bozuk film maliyeti + (2) teslimat işlem maliyeti (opsiyonel)
             decimal totalCost =
                 (damagedInRange.Count * ESTIMATED_DAMAGE_UNIT_COST) +
                 (itemsInRange.Count * ESTIMATED_DELIVERY_UNIT_COST);
@@ -113,9 +98,6 @@ namespace Application.ServiceManager
             };
         }
 
-        // -----------------------------
-        // 2) Üye Bazlı Kar/Zarar
-        // -----------------------------
         public async Task<List<MemberProfitReportDto>> GetMemberProfitReportAsync(DateTime startDate, DateTime endDate)
         {
             if (endDate < startDate)
@@ -139,10 +121,6 @@ namespace Application.ServiceManager
             var allItems = await _deliveryRequestItemRepository.GetAllAsync();
             var itemsInRange = allItems.Where(i => requestById.ContainsKey(i.DeliveryRequestId)).ToList();
 
-            // DamagedMovie -> MovieCopyId -> MovieCopy -> Member? yok. O yüzden üye bazlı damaged'ı item.IsDamaged üzerinden sayıyoruz.
-            // (DamagedMovie daha çok stok/film bazlı rapora yarıyor.)
-
-            // Üyeye göre item sayıları
             var itemsByMemberId = itemsInRange
                 .GroupBy(i => requestById[i.DeliveryRequestId].MemberId)
                 .ToDictionary(g => g.Key, g => g.ToList());
@@ -160,7 +138,7 @@ namespace Application.ServiceManager
                 decimal revenue = (plan != null) ? plan.Price * months : 0m;
 
                 itemsByMemberId.TryGetValue(m.ID, out var memberItems);
-                memberItems ??= new List<Domain.Entities.DeliveryRequestItem>();
+                memberItems ??= new List<DeliveryRequestItem>();
 
                 int deliveredCount = memberItems.Count;
                 int damagedCount = memberItems.Count(x => x.IsDamaged);
@@ -188,9 +166,6 @@ namespace Application.ServiceManager
                 .ToList();
         }
 
-        // -----------------------------
-        // 3) Film Bazlı Kar/Zarar
-        // -----------------------------
         public async Task<List<MovieProfitReportDto>> GetMovieProfitReportAsync(DateTime startDate, DateTime endDate)
         {
             if (endDate < startDate)
@@ -210,22 +185,20 @@ namespace Application.ServiceManager
             var itemsInRange = allItems.Where(i => requestIds.Contains(i.DeliveryRequestId)).ToList();
 
             var movies = await _movieRepository.GetAllAsync();
+
             var categories = await _categoryRepository.GetAllAsync();
             var categoryById = categories.ToDictionary(c => c.ID, c => c.CategoryName);
 
-            // MovieCopyId -> MovieId ile DamagedMovie sayısını daha doğru almak için:
             var copies = await _movieCopyRepository.GetAllAsync();
             var movieIdByCopyId = copies.ToDictionary(c => c.ID, c => c.MovieId);
 
             var damaged = await _damagedMovieRepository.GetAllAsync();
             var damagedInRange = damaged.Where(d => d.CreatedDate.Date >= startDate && d.CreatedDate.Date <= endDate).ToList();
 
-            // Film bazlı gönderim sayısı (DeliveryRequestItem.MovieId)
             var deliveredByMovieId = itemsInRange
                 .GroupBy(i => i.MovieId)
                 .ToDictionary(g => g.Key, g => g.ToList());
 
-            // Film bazlı bozuk sayısı (DamagedMovie -> MovieCopyId -> MovieId)
             var damagedCountByMovieId = new Dictionary<int, int>();
             foreach (var d in damagedInRange)
             {
@@ -238,20 +211,22 @@ namespace Application.ServiceManager
                 }
             }
 
-            // Gelir dağıtımı: Üyelik gelirini filme “paylaştırmak” tam muhasebe değildir.
-            // Bu yüzden film bazında revenue = 0 bırakmak yerine, basit bir metrik koyuyoruz:
-            // "teslim edilen adet" üzerinden proxy gelir (istersen 5₺/adet gibi)
-            const decimal ESTIMATED_REVENUE_PER_DELIVERY_ITEM = 0m; // istersen 1m/5m yap
+            const decimal ESTIMATED_REVENUE_PER_DELIVERY_ITEM = 0m;
 
             var result = new List<MovieProfitReportDto>();
 
             foreach (var movie in movies)
             {
                 deliveredByMovieId.TryGetValue(movie.ID, out var movieItems);
-                movieItems ??= new List<Domain.Entities.DeliveryRequestItem>();
+                movieItems ??= new List<DeliveryRequestItem>();
 
                 int deliveredCount = movieItems.Count;
                 int damagedCount = damagedCountByMovieId.TryGetValue(movie.ID, out var dc) ? dc : 0;
+
+                int primaryCategoryId = GetPrimaryCategoryId(movie);
+                string? primaryCategoryName = primaryCategoryId > 0 && categoryById.TryGetValue(primaryCategoryId, out var catName)
+                    ? catName
+                    : null;
 
                 decimal revenue = deliveredCount * ESTIMATED_REVENUE_PER_DELIVERY_ITEM;
                 decimal cost =
@@ -262,8 +237,8 @@ namespace Application.ServiceManager
                 {
                     MovieId = movie.ID,
                     MovieTitle = movie.Title,
-                    CategoryId = movie.CategoryId,
-                    CategoryName = categoryById.TryGetValue(movie.CategoryId, out var catName) ? catName : null,
+                    CategoryId = primaryCategoryId,
+                    CategoryName = primaryCategoryName,
                     DeliveredCount = deliveredCount,
                     DamagedCount = damagedCount,
                     TotalRevenue = revenue,
@@ -277,9 +252,6 @@ namespace Application.ServiceManager
                 .ToList();
         }
 
-        // -----------------------------
-        // 4) Kategori Bazlı Kar/Zarar
-        // -----------------------------
         public async Task<List<CategoryProfitReportDto>> GetCategoryProfitReportAsync(DateTime startDate, DateTime endDate)
         {
             if (endDate < startDate)
@@ -290,7 +262,6 @@ namespace Application.ServiceManager
 
             var categories = await _categoryRepository.GetAllAsync();
             var movies = await _movieRepository.GetAllAsync();
-
             var movieById = movies.ToDictionary(m => m.ID, m => m);
 
             var requests = await _deliveryRequestRepository.GetAllAsync(r =>
@@ -303,7 +274,6 @@ namespace Application.ServiceManager
             var allItems = await _deliveryRequestItemRepository.GetAllAsync();
             var itemsInRange = allItems.Where(i => requestIds.Contains(i.DeliveryRequestId)).ToList();
 
-            // Kategori bazlı delivered
             var deliveredByCategoryId = new Dictionary<int, int>();
 
             foreach (var item in itemsInRange)
@@ -311,13 +281,16 @@ namespace Application.ServiceManager
                 if (!movieById.TryGetValue(item.MovieId, out var movie))
                     continue;
 
-                if (!deliveredByCategoryId.ContainsKey(movie.CategoryId))
-                    deliveredByCategoryId[movie.CategoryId] = 0;
+                var categoryIds = GetCategoryIds(movie);
+                foreach (var catId in categoryIds)
+                {
+                    if (!deliveredByCategoryId.ContainsKey(catId))
+                        deliveredByCategoryId[catId] = 0;
 
-                deliveredByCategoryId[movie.CategoryId]++;
+                    deliveredByCategoryId[catId]++;
+                }
             }
 
-            // DamagedMovie -> MovieCopy -> Movie -> Category
             var copies = await _movieCopyRepository.GetAllAsync();
             var movieIdByCopyId = copies.ToDictionary(c => c.ID, c => c.MovieId);
 
@@ -334,13 +307,16 @@ namespace Application.ServiceManager
                 if (!movieById.TryGetValue(movieId, out var movie))
                     continue;
 
-                if (!damagedByCategoryId.ContainsKey(movie.CategoryId))
-                    damagedByCategoryId[movie.CategoryId] = 0;
+                var categoryIds = GetCategoryIds(movie);
+                foreach (var catId in categoryIds)
+                {
+                    if (!damagedByCategoryId.ContainsKey(catId))
+                        damagedByCategoryId[catId] = 0;
 
-                damagedByCategoryId[movie.CategoryId]++;
+                    damagedByCategoryId[catId]++;
+                }
             }
 
-            // Proxy gelir: teslim item üzerinden (istersen 0 değil 1/5/10 yap)
             const decimal ESTIMATED_REVENUE_PER_DELIVERY_ITEM = 0m;
 
             var result = new List<CategoryProfitReportDto>();
@@ -372,15 +348,29 @@ namespace Application.ServiceManager
                 .ToList();
         }
 
-        // -----------------------------
-        // Helpers
-        // -----------------------------
         private static int MonthsInclusive(DateTime from, DateTime to)
         {
             if (to < from) return 0;
             int fromMonths = (from.Year * 12) + from.Month;
             int toMonths = (to.Year * 12) + to.Month;
             return (toMonths - fromMonths) + 1;
+        }
+
+        private static int GetPrimaryCategoryId(Movie movie)
+        {
+            var catId = movie.MovieCategories?
+                .Select(x => x.CategoryId)
+                .FirstOrDefault() ?? 0;
+
+            return catId;
+        }
+
+        private static List<int> GetCategoryIds(Movie movie)
+        {
+            return movie.MovieCategories?
+                .Select(x => x.CategoryId)
+                .Distinct()
+                .ToList() ?? new List<int>();
         }
     }
 }

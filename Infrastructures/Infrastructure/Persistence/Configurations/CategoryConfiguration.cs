@@ -13,11 +13,6 @@ namespace Infrastructure.Persistence.Configurations
             builder.Property(x => x.CategoryName)
                    .IsRequired()
                    .HasMaxLength(100);
-
-            builder.HasMany(c => c.Movies)
-                   .WithOne(m => m.Category)
-                   .HasForeignKey(m => m.CategoryId)
-                   .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }
