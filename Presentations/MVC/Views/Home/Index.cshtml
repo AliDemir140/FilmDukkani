@@ -49,5 +49,26 @@
             </div>
         }
 
+        <div class="fd-section-title" style="margin-top:26px;">
+            <span class="dot"></span>
+            En Çok Kiralananlar
+        </div>
+        <div class="fd-subtle">En çok tercih edilen içerikler</div>
+
+        @if (Model.TopRented == null || Model.TopRented.Count == 0)
+        {
+            <div class="fd-empty mt-3">Henüz yeterli kiralama verisi yok.</div>
+        }
+        else
+        {
+            <div class="fd-rail mt-3">
+                @foreach (var movie in Model.TopRented)
+                {
+                    ViewData["Chip"] = "Top";
+                    @await Html.PartialAsync("~/Views/Shared/_ShowcaseCard.cshtml", movie)
+                }
+            </div>
+        }
+
     </div>
 </div>

@@ -1,5 +1,6 @@
 ﻿using Application.Repositories;
 using Domain.Entities;
+using Domain.Enums;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -91,47 +92,40 @@ namespace Infrastructure.Repositories
                 .ToListAsync();
         }
 
-        public async Task<List<Movie>> SearchMoviesAsync(int? categoryId, string? q)
+        public async Task<List<Movie>> GetTopRentedMoviesAsync(int take)
         {
-            const string trCollation = "Turkish_CI_AI";
+            if (take <= 0) take = 10;
 
-            var query = _context.Movies
+            var top = await _context.DeliveryRequestItems
+                .AsNoTracking()
+                .Join(_context.DeliveryRequests.AsNoTracking(),
+                      i => i.DeliveryRequestId,
+                      r => r.ID,
+                      (i, r) => new { i.MovieId, r.Status })
+                .Where(x => x.Status == DeliveryStatus.Delivered || x.Status == DeliveryStatus.Completed)
+                .GroupBy(x => x.MovieId)
+                .Select(g => new { MovieId = g.Key, Count = g.Count() })
+                .OrderByDescending(x => x.Count)
+                .Take(take)
+                .ToListAsync();
+
+            if (top.Count == 0)
+                return new List<Movie>();
+
+            var ids = top.Select(x => x.MovieId).ToList();
+
+            var movies = await _context.Movies
                 .Include(m => m.MovieCategories)
                 .ThenInclude(mc => mc.Category)
-                .Include(m => m.MovieActors)
-                .ThenInclude(ma => ma.Actor)
-                .Include(m => m.MovieDirectors)
-                .ThenInclude(md => md.Director)
-                .AsQueryable();
+                .Where(m => ids.Contains(m.ID))
+                .ToListAsync();
 
-            if (categoryId.HasValue && categoryId.Value > 0)
-            {
-                var cid = categoryId.Value;
-                query = query.Where(m => m.MovieCategories.Any(mc => mc.CategoryId == cid));
-            }
+            var order = ids.Select((id, index) => new { id, index })
+                           .ToDictionary(x => x.id, x => x.index);
 
-            if (!string.IsNullOrWhiteSpace(q))
-            {
-                var keyword = q.Trim();
-                var like = $"%{keyword}%";
-
-                query = query.Where(m =>
-                    EF.Functions.Like(EF.Functions.Collate(m.Title, trCollation), like) ||
-                    (m.OriginalTitle != null && EF.Functions.Like(EF.Functions.Collate(m.OriginalTitle, trCollation), like)) ||
-                    m.MovieActors.Any(ma =>
-                        EF.Functions.Like(EF.Functions.Collate(ma.Actor.FirstName, trCollation), like) ||
-                        EF.Functions.Like(EF.Functions.Collate(ma.Actor.LastName, trCollation), like) ||
-                        EF.Functions.Like(EF.Functions.Collate(ma.Actor.FirstName + " " + ma.Actor.LastName, trCollation), like)
-                    ) ||
-                    m.MovieDirectors.Any(md =>
-                        EF.Functions.Like(EF.Functions.Collate(md.Director.FirstName, trCollation), like) ||
-                        EF.Functions.Like(EF.Functions.Collate(md.Director.LastName, trCollation), like) ||
-                        EF.Functions.Like(EF.Functions.Collate(md.Director.FirstName + " " + md.Director.LastName, trCollation), like)
-                    )
-                );
-            }
-
-            return await query.ToListAsync();
+            return movies
+                .OrderBy(m => order.TryGetValue(m.ID, out var idx) ? idx : int.MaxValue)
+                .ToList();
         }
     }
 }

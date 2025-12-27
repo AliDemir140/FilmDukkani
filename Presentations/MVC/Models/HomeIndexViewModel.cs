@@ -7,5 +7,6 @@ namespace MVC.Models
     {
         public List<MovieDto> EditorsChoice { get; set; } = new();
         public List<MovieDto> NewReleases { get; set; } = new();
+        public List<MovieDto> TopRented { get; set; } = new();
     }
 }

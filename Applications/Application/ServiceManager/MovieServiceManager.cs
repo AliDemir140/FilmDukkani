@@ -39,6 +39,12 @@ namespace Application.ServiceManager
             return MapToMovieDtoList(movies);
         }
 
+        public async Task<List<MovieDto>> GetTopRentedAsync(int take)
+        {
+            var movies = await _movieRepository.GetTopRentedMoviesAsync(take);
+            return MapToMovieDtoList(movies);
+        }
+
         public async Task<bool> AddMovie(CreateMovieDto dto)
         {
             if (dto.CategoryIds == null || dto.CategoryIds.Count == 0)

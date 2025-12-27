@@ -36,6 +36,13 @@ namespace API.Controllers
             return Ok(movies);
         }
 
+        [HttpGet("showcase/top-rented")]
+        public async Task<IActionResult> GetTopRented([FromQuery] int take = 10)
+        {
+            var movies = await _movieServiceManager.GetTopRentedAsync(take);
+            return Ok(movies);
+        }
+
         [HttpPost("add-movie")]
         public async Task<IActionResult> AddMovie([FromBody] CreateMovieDto movieDto)
         {

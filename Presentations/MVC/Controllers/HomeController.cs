@@ -23,7 +23,8 @@ namespace MVC.Controllers
             var model = new HomeIndexViewModel
             {
                 EditorsChoice = await _movieApiService.GetEditorsChoiceAsync(),
-                NewReleases = await _movieApiService.GetNewReleasesAsync()
+                NewReleases = await _movieApiService.GetNewReleasesAsync(),
+                TopRented = await _movieApiService.GetTopRentedAsync(10)
             };
 
             return View(model);

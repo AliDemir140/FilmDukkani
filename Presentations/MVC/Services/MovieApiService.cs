@@ -44,5 +44,14 @@ namespace MVC.Services
             var result = await _httpClient.GetFromJsonAsync<List<MovieDto>>(url);
             return result ?? new List<MovieDto>();
         }
+
+        public async Task<List<MovieDto>> GetTopRentedAsync(int take = 10)
+        {
+            if (take <= 0) take = 10;
+
+            var url = $"{BaseUrl}/api/movie/showcase/top-rented?take={take}";
+            var result = await _httpClient.GetFromJsonAsync<List<MovieDto>>(url);
+            return result ?? new List<MovieDto>();
+        }
     }
 }
