@@ -21,6 +21,8 @@
     var reviews = ViewBag.Reviews as List<ReviewDto> ?? new List<ReviewDto>();
 
     var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+
+    var ratingText = Model.ReviewCount == 0 ? "0" : Model.AverageRating.ToString("0.0");
 }
 
 <div class="container py-4">
@@ -47,7 +49,7 @@
                 }
 
                 <span class="badge bg-dark border">
-                    Puan: @(Model.ReviewCount == 0 ? "0" : Model.AverageRating.ToString("0.0")) (@Model.ReviewCount)
+                    Puan: @ratingText (@Model.ReviewCount)
                 </span>
             </div>
 
@@ -84,7 +86,6 @@
             </div>
 
             <div class="mt-3">
-
                 @if (!loggedIn)
                 {
                     <div class="fd-login-hint">
@@ -110,108 +111,39 @@
                 }
                 else
                 {
-                    <form asp-controller="Product" asp-action="AddToList" method="post" class="mt-2">
-                        @Html.AntiForgeryToken()
+                    <div class="fd-panel mt-2">
+                        <div class="fd-panel-title">Listeye Ekle</div>
 
-                        <input type="hidden" name="movieId" value="@Model.Id" />
-                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                        <form asp-controller="Product" asp-action="AddToList" method="post" class="mt-2">
+                            @Html.AntiForgeryToken()
 
-                        <div class="fd-actions">
-                            <select class="form-select"
-                                    name="listId"
-                                    required>
-                                @foreach (var item in memberLists)
-                                {
-                                    <option value="@item.Value">@item.Text</option>
-                                }
-                            </select>
+                            <input type="hidden" name="movieId" value="@Model.Id" />
+                            <input type="hidden" name="returnUrl" value="@returnUrl" />
 
-                            <input class="form-control"
-                                   name="priority"
-                                   type="number"
-                                   min="1"
-                                   placeholder="Öncelik"
-                                   style="max-width:140px;" />
-
-                            <button type="submit" class="btn btn-danger">
-                                Listeye Ekle
-                            </button>
-                        </div>
-                    </form>
-                }
-
-            </div>
-
-            <div class="mt-4">
-                <h5 class="mb-2">Yorumlar</h5>
-
-                @if (!loggedIn)
-                {
-                    <div class="fd-login-hint">Yorum yapmak için giriş yap.</div>
-                }
-                else
-                {
-                    <form asp-controller="Product" asp-action="AddReview" method="post" class="mt-2">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="movieId" value="@Model.Id" />
-
-                        <div class="row g-2">
-                            <div class="col-12 col-md-3">
-                                <select name="rating" class="form-select" required>
-                                    <option value="5">5</option>
-                                    <option value="4">4</option>
-                                    <option value="3">3</option>
-                                    <option value="2">2</option>
-                                    <option value="1">1</option>
-                                </select>
-                            </div>
-                            <div class="col-12 col-md-9">
-                                <input name="comment" class="form-control" maxlength="500" placeholder="Yorum" />
-                            </div>
-                        </div>
-
-                        <div class="mt-2">
-                            <button type="submit" class="btn btn-danger">Kaydet</button>
-                        </div>
-                    </form>
-                }
-
-                <div class="mt-3">
-                    @if (reviews.Count == 0)
-                    {
-                        <div class="fd-login-hint">Henüz yorum yok.</div>
-                    }
-                    else
-                    {
-                        foreach (var r in reviews)
-                        {
-                            <div class="border rounded p-3 mb-2">
-                                <div class="d-flex justify-content-between">
-                                    <div>
-                                        <div><strong>@r.MemberFullName</strong></div>
-                                        <div>Puan: @r.Rating</div>
-                                        <div class="text-muted">@r.CreatedAt.ToString("dd.MM.yyyy HH:mm")</div>
-                                    </div>
-
-                                    @if (loggedIn && r.IsOwner)
+                            <div class="fd-actions">
+                                <select class="form-select"
+                                        name="listId"
+                                        required>
+                                    @foreach (var item in memberLists)
                                     {
-                                        <form asp-controller="Product" asp-action="DeleteReview" method="post">
-                                            @Html.AntiForgeryToken()
-                                            <input type="hidden" name="movieId" value="@Model.Id" />
-                                            <input type="hidden" name="reviewId" value="@r.Id" />
-                                            <button type="submit" class="btn btn-outline-danger btn-sm">Sil</button>
-                                        </form>
+                                        <option value="@item.Value">@item.Text</option>
                                     }
-                                </div>
+                                </select>
 
-                                @if (!string.IsNullOrWhiteSpace(r.Comment))
-                                {
-                                    <div class="mt-2">@r.Comment</div>
-                                }
+                                <input class="form-control"
+                                       name="priority"
+                                       type="number"
+                                       min="1"
+                                       placeholder="Öncelik"
+                                       style="max-width:140px;" />
+
+                                <button type="submit" class="btn btn-danger">
+                                    Listeye Ekle
+                                </button>
                             </div>
-                        }
-                    }
-                </div>
+                        </form>
+                    </div>
+                }
             </div>
 
             @if (Model.CategoryNames != null && Model.CategoryNames.Count > 0)
@@ -226,4 +158,139 @@
 
         </div>
     </div>
+
+    <div class="row g-4 mt-2">
+        <div class="col-12">
+            <div class="fd-panel">
+                <div class="fd-panel-head">
+                    <div>
+                        <div class="fd-panel-title">Yorumlar</div>
+                        <div class="fd-panel-sub">
+                            Ortalama: @ratingText / 5 · Toplam: @Model.ReviewCount
+                        </div>
+                    </div>
+
+                    <div class="fd-panel-badges">
+                        <span class="badge bg-dark border">Puan: @ratingText</span>
+                        <span class="badge bg-dark border">@Model.ReviewCount Yorum</span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-1">
+
+                    <div class="col-12 col-lg-4">
+                        @if (!loggedIn)
+                        {
+                            <div class="fd-login-hint mt-0">
+                                Yorum yapmak için giriş yap.
+                                <a class="btn btn-danger btn-sm ms-2"
+                                   asp-controller="Auth"
+                                   asp-action="Login"
+                                   asp-route-returnUrl="@returnUrl">
+                                    Giriş
+                                </a>
+                            </div>
+                        }
+                        else
+                        {
+                            <form asp-controller="Product" asp-action="AddReview" method="post" class="fd-review-form">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="movieId" value="@Model.Id" />
+
+                                <div class="fd-form-title">Yorum Ekle</div>
+
+                                <div class="row g-2">
+                                    <div class="col-12">
+                                        <label class="form-label fd-form-label">Puan</label>
+                                        <select name="rating" class="form-select" required>
+                                            <option value="5">5</option>
+                                            <option value="4">4</option>
+                                            <option value="3">3</option>
+                                            <option value="2">2</option>
+                                            <option value="1">1</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="col-12">
+                                        <label class="form-label fd-form-label">Yorum</label>
+                                        <textarea name="comment"
+                                              class="form-control"
+                                              maxlength="500"
+                                              rows="3"
+                                              placeholder="Yorumunu yaz..."></textarea>
+                                        <div class="fd-form-help">Maksimum 500 karakter</div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-2 d-grid">
+                                    <button type="submit" class="btn btn-danger">Kaydet</button>
+                                </div>
+                            </form>
+                        }
+                    </div>
+
+                    <div class="col-12 col-lg-8">
+                        @if (reviews.Count == 0)
+                        {
+                            <div class="fd-empty2 mt-0">Henüz yorum yok.</div>
+                        }
+                        else
+                        {
+                            <div class="fd-review-list">
+                                @foreach (var r in reviews)
+                                {
+                                    var initials = string.Empty;
+                                    if (!string.IsNullOrWhiteSpace(r.MemberFullName))
+                                    {
+                                        var parts = r.MemberFullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                                        if (parts.Length >= 1) initials += parts[0].Substring(0, 1).ToUpper();
+                                        if (parts.Length >= 2) initials += parts[1].Substring(0, 1).ToUpper();
+                                        if (initials.Length == 0) initials = "U";
+                                    }
+                                    else
+                                    {
+                                        initials = "U";
+                                    }
+
+                                    <div class="fd-review">
+                                        <div class="fd-review-left">
+                                            <div class="fd-avatar">@initials</div>
+                                        </div>
+
+                                        <div class="fd-review-body">
+                                            <div class="fd-review-head">
+                                                <div class="fd-review-name">@r.MemberFullName</div>
+                                                <div class="fd-review-meta">@r.CreatedAt.ToString("dd.MM.yyyy HH:mm")</div>
+                                            </div>
+
+                                            <div class="fd-review-row">
+                                                <span class="badge bg-dark border">Puan: @r.Rating</span>
+
+                                                @if (loggedIn && r.IsOwner)
+                                                {
+                                                    <form asp-controller="Product" asp-action="DeleteReview" method="post" class="ms-auto">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="movieId" value="@Model.Id" />
+                                                        <input type="hidden" name="reviewId" value="@r.Id" />
+                                                        <button type="submit" class="btn btn-outline-danger btn-sm">Sil</button>
+                                                    </form>
+                                                }
+                                            </div>
+
+                                            @if (!string.IsNullOrWhiteSpace(r.Comment))
+                                            {
+                                                <div class="fd-review-comment">@r.Comment</div>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
