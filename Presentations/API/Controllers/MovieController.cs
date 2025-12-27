@@ -16,9 +16,9 @@ namespace API.Controllers
         }
 
         [HttpGet("movies")]
-        public async Task<IActionResult> GetMovies()
+        public async Task<IActionResult> GetMovies([FromQuery] int? categoryId, [FromQuery] string? q)
         {
-            var movies = await _movieServiceManager.GetMoviesAsync();
+            var movies = await _movieServiceManager.SearchMoviesAsync(categoryId, q);
             return Ok(movies);
         }
 

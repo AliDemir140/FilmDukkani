@@ -21,6 +21,12 @@ namespace Application.ServiceManager
             return MapToMovieDtoList(movies);
         }
 
+        public async Task<List<MovieDto>> SearchMoviesAsync(int? categoryId, string? q)
+        {
+            var movies = await _movieRepository.SearchMoviesAsync(categoryId, q);
+            return MapToMovieDtoList(movies);
+        }
+
         public async Task<List<MovieDto>> GetEditorsChoiceAsync()
         {
             var movies = await _movieRepository.GetEditorsChoiceMoviesAsync();
@@ -32,7 +38,6 @@ namespace Application.ServiceManager
             var movies = await _movieRepository.GetNewReleaseMoviesAsync();
             return MapToMovieDtoList(movies);
         }
-
 
         public async Task<bool> AddMovie(CreateMovieDto dto)
         {
@@ -156,7 +161,6 @@ namespace Application.ServiceManager
             await _movieRepository.DeleteAsync(movie);
             return true;
         }
-
 
         public async Task<bool> UpdateMovie(UpdateMovieDto dto)
         {

@@ -9,5 +9,7 @@ namespace Application.Repositories
 
         Task<List<Movie>> GetEditorsChoiceMoviesAsync();
         Task<List<Movie>> GetNewReleaseMoviesAsync();
+
+        Task<List<Movie>> SearchMoviesAsync(int? categoryId, string? q);
     }
 }
