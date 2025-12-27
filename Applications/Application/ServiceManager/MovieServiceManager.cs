@@ -18,47 +18,20 @@ namespace Application.ServiceManager
         public async Task<List<MovieDto>> GetMoviesAsync()
         {
             var movies = await _movieRepository.GetMoviesWithCategoryAsync();
-
-            return movies
-                .Select(m =>
-                {
-                    var categoryIds = m.MovieCategories?
-                        .Select(x => x.CategoryId)
-                        .Distinct()
-                        .ToList() ?? new List<int>();
-
-                    var categoryNames = m.MovieCategories?
-                        .Select(x => x.Category != null ? x.Category.CategoryName : null)
-                        .Where(x => !string.IsNullOrWhiteSpace(x))
-                        .Select(x => x!)
-                        .Distinct()
-                        .ToList() ?? new List<string>();
-
-                    return new MovieDto
-                    {
-                        Id = m.ID,
-                        Title = m.Title,
-                        OriginalTitle = m.OriginalTitle,
-                        Description = m.Description,
-                        ReleaseYear = m.ReleaseYear,
-                        TechnicalDetails = m.TechnicalDetails,
-                        AudioFeatures = m.AudioFeatures,
-                        SubtitleLanguages = m.SubtitleLanguages,
-                        TrailerUrl = m.TrailerUrl,
-                        CoverImageUrl = m.CoverImageUrl,
-                        Barcode = m.Barcode,
-                        Supplier = m.Supplier,
-
-                        CategoryIds = categoryIds,
-                        CategoryNames = categoryNames,
-
-                        CategoryId = categoryIds.FirstOrDefault(),
-                        CategoryName = categoryNames.FirstOrDefault()
-                    };
-                })
-                .ToList();
+            return MapToMovieDtoList(movies);
         }
 
+        public async Task<List<MovieDto>> GetEditorsChoiceAsync()
+        {
+            var movies = await _movieRepository.GetEditorsChoiceMoviesAsync();
+            return MapToMovieDtoList(movies);
+        }
+
+        public async Task<List<MovieDto>> GetNewReleasesAsync()
+        {
+            var movies = await _movieRepository.GetNewReleaseMoviesAsync();
+            return MapToMovieDtoList(movies);
+        }
 
 
         public async Task<bool> AddMovie(CreateMovieDto dto)
@@ -90,6 +63,8 @@ namespace Application.ServiceManager
                 CoverImageUrl = dto.CoverImageUrl,
                 Barcode = dto.Barcode,
                 Supplier = dto.Supplier,
+                IsEditorsChoice = dto.IsEditorsChoice,
+                IsNewRelease = dto.IsNewRelease,
                 MovieCategories = distinctIds.Select(cid => new MovieCategory
                 {
                     CategoryId = cid
@@ -103,7 +78,8 @@ namespace Application.ServiceManager
         public async Task<UpdateMovieDto?> GetMovie(int id)
         {
             var movie = await _movieRepository.GetMovieWithCategoryAsync(id);
-            if (movie == null) return null;
+            if (movie == null)
+                return null;
 
             var categoryIds = movie.MovieCategories?
                 .Select(x => x.CategoryId)
@@ -124,6 +100,8 @@ namespace Application.ServiceManager
                 CoverImageUrl = movie.CoverImageUrl,
                 Barcode = movie.Barcode,
                 Supplier = movie.Supplier,
+                IsEditorsChoice = movie.IsEditorsChoice,
+                IsNewRelease = movie.IsNewRelease,
                 CategoryIds = categoryIds
             };
         }
@@ -151,16 +129,18 @@ namespace Application.ServiceManager
                 Title = movie.Title,
                 Description = movie.Description ?? string.Empty,
                 ReleaseYear = movie.ReleaseYear,
+                IsEditorsChoice = movie.IsEditorsChoice,
+                IsNewRelease = movie.IsNewRelease,
                 CategoryIds = categoryIds,
                 CategoryNames = categoryNames,
-
+                CategoryId = categoryIds.FirstOrDefault(),
+                CategoryName = categoryNames.FirstOrDefault(),
                 OriginalTitle = movie.OriginalTitle ?? string.Empty,
                 TechnicalDetails = movie.TechnicalDetails ?? string.Empty,
                 AudioFeatures = movie.AudioFeatures ?? string.Empty,
                 SubtitleLanguages = movie.SubtitleLanguages ?? string.Empty,
                 TrailerUrl = movie.TrailerUrl ?? string.Empty,
                 CoverImageUrl = movie.CoverImageUrl ?? string.Empty,
-
                 Actors = new List<string>(),
                 Directors = new List<string>(),
                 Awards = new List<MovieAwardInfoDto>()
@@ -169,13 +149,14 @@ namespace Application.ServiceManager
 
         public async Task<bool> DeleteMovie(int id)
         {
-            var movie = await _movieRepository.GetByIdAsync(id);
+            var movie = await _movieRepository.GetMovieWithCategoryAsync(id);
             if (movie == null)
                 return false;
 
             await _movieRepository.DeleteAsync(movie);
             return true;
         }
+
 
         public async Task<bool> UpdateMovie(UpdateMovieDto dto)
         {
@@ -208,6 +189,8 @@ namespace Application.ServiceManager
             movie.CoverImageUrl = dto.CoverImageUrl;
             movie.Barcode = dto.Barcode;
             movie.Supplier = dto.Supplier;
+            movie.IsEditorsChoice = dto.IsEditorsChoice;
+            movie.IsNewRelease = dto.IsNewRelease;
 
             movie.MovieCategories ??= new List<MovieCategory>();
 
@@ -229,6 +212,48 @@ namespace Application.ServiceManager
 
             await _movieRepository.UpdateAsync(movie);
             return true;
+        }
+
+        private static List<MovieDto> MapToMovieDtoList(List<Movie> movies)
+        {
+            return movies
+                .Select(m =>
+                {
+                    var categoryIds = m.MovieCategories?
+                        .Select(x => x.CategoryId)
+                        .Distinct()
+                        .ToList() ?? new List<int>();
+
+                    var categoryNames = m.MovieCategories?
+                        .Select(x => x.Category != null ? x.Category.CategoryName : null)
+                        .Where(x => !string.IsNullOrWhiteSpace(x))
+                        .Select(x => x!)
+                        .Distinct()
+                        .ToList() ?? new List<string>();
+
+                    return new MovieDto
+                    {
+                        Id = m.ID,
+                        Title = m.Title,
+                        OriginalTitle = m.OriginalTitle,
+                        Description = m.Description,
+                        ReleaseYear = m.ReleaseYear,
+                        TechnicalDetails = m.TechnicalDetails,
+                        AudioFeatures = m.AudioFeatures,
+                        SubtitleLanguages = m.SubtitleLanguages,
+                        TrailerUrl = m.TrailerUrl,
+                        CoverImageUrl = m.CoverImageUrl,
+                        Barcode = m.Barcode,
+                        Supplier = m.Supplier,
+                        IsEditorsChoice = m.IsEditorsChoice,
+                        IsNewRelease = m.IsNewRelease,
+                        CategoryIds = categoryIds,
+                        CategoryNames = categoryNames,
+                        CategoryId = categoryIds.FirstOrDefault(),
+                        CategoryName = categoryNames.FirstOrDefault()
+                    };
+                })
+                .ToList();
         }
     }
 }

@@ -32,6 +32,36 @@
         </div>
     </div>
 
+    <div class="row g-3 mt-1">
+        <div class="col-12 col-md-6">
+            <div class="form-check mt-4">
+                <input class="form-check-input" asp-for="IsEditorsChoice" />
+                <label class="form-check-label" asp-for="IsEditorsChoice">Editör Seçimi</label>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6">
+            <div class="form-check mt-4">
+                <input class="form-check-input" asp-for="IsNewRelease" />
+                <label class="form-check-label" asp-for="IsNewRelease">Yeni Çıkan</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mt-3">
+        <div class="col-12 col-md-6">
+            <label class="form-label">Kapak Resmi URL</label>
+            <input asp-for="CoverImageUrl" class="form-control" />
+            <span asp-validation-for="CoverImageUrl" class="text-danger"></span>
+        </div>
+
+        <div class="col-12 col-md-6">
+            <label class="form-label">Fragman URL</label>
+            <input asp-for="TrailerUrl" class="form-control" />
+            <span asp-validation-for="TrailerUrl" class="text-danger"></span>
+        </div>
+    </div>
+
     <div class="mb-3 mt-3">
         <label class="form-label">Açıklama</label>
         <textarea asp-for="Description" class="form-control" rows="4"></textarea>

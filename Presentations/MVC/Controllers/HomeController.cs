@@ -1,21 +1,32 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using MVC.Models;
+using MVC.Services;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace MVC.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly MovieApiService _movieApiService;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger, MovieApiService movieApiService)
         {
             _logger = logger;
+            _movieApiService = movieApiService;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View();
+            var model = new HomeIndexViewModel
+            {
+                EditorsChoice = await _movieApiService.GetEditorsChoiceAsync(),
+                NewReleases = await _movieApiService.GetNewReleasesAsync()
+            };
+
+            return View(model);
         }
 
         public IActionResult Privacy()

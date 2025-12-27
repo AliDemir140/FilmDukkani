@@ -1,0 +1,55 @@
+﻿@using Application.DTOs.MovieDTOs
+@model MovieDto
+
+@{
+    var chip = ViewData["Chip"] as string ?? "Detay";
+    var cover = !string.IsNullOrWhiteSpace(Model.CoverImageUrl)
+        ? Model.CoverImageUrl
+        : $"https://picsum.photos/400/600?random={Model.Id}";
+}
+
+<a class="fd-cardlink"
+   asp-controller="Product"
+   asp-action="Details"
+   asp-route-id="@Model.Id"
+   aria-label="@Model.Title detay">
+
+    <div class="fd-card">
+        <div class="fd-poster">
+            <div class="fd-chip">@chip</div>
+            <div class="fd-play">▶</div>
+
+            <img src="@cover" alt="@Model.Title" loading="lazy" />
+        </div>
+
+        <div class="fd-body">
+            <div class="fd-title">@Model.Title</div>
+
+            <div class="fd-meta">
+                <span class="pill">@Model.ReleaseYear</span>
+                @if (Model.CategoryNames != null && Model.CategoryNames.Count > 0)
+                {
+                    <span class="pill">@Model.CategoryNames.First()</span>
+                }
+                else if (!string.IsNullOrWhiteSpace(Model.CategoryName))
+                {
+                    <span class="pill">@Model.CategoryName</span>
+                }
+            </div>
+
+            @if (Model.CategoryNames != null && Model.CategoryNames.Count > 0)
+            {
+                <div class="fd-tags">
+                    @foreach (var t in Model.CategoryNames.Take(3))
+                    {
+                        <span class="fd-tag">@t</span>
+                    }
+                </div>
+            }
+
+            <p class="fd-desc">
+                @(string.IsNullOrWhiteSpace(Model.Description) ? "Açıklama bulunmuyor." : Model.Description)
+            </p>
+        </div>
+    </div>
+</a>

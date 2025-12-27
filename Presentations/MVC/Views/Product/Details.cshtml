@@ -1,4 +1,6 @@
 ﻿@using Application.DTOs.MovieDTOs
+@using Microsoft.AspNetCore.Mvc.Rendering
+@using MVC.Constants
 @model MovieDetailDto
 
 @{
@@ -6,79 +8,143 @@
 
     var cover = !string.IsNullOrWhiteSpace(Model.CoverImageUrl)
         ? Model.CoverImageUrl
-        : $"https://picsum.photos/900/600?random={Model.Id}";
+        : $"https://picsum.photos/1200/700?random={Model.Id}";
+
+    var token = Context.Session.GetString(SessionKeys.JwtToken);
+    var memberId = Context.Session.GetInt32(SessionKeys.MemberId);
+    var loggedIn = !string.IsNullOrWhiteSpace(token) && memberId.HasValue;
+
+    var memberLists = ViewBag.MemberLists as List<SelectListItem> ?? new List<SelectListItem>();
+    var hasLists = memberLists.Any();
+
+    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
 }
 
-<div class="row g-4">
-    <div class="col-12 col-lg-5">
-        <div class="card border-0 product-card">
-            <div class="ratio ratio-4x3 overflow-hidden rounded">
-                <img src="@cover"
-                     class="w-100 h-100"
-                     style="object-fit:cover;"
-                     alt="@Model.Title" />
+<div class="container py-4">
+
+    <div class="row g-4 align-items-start">
+
+        <div class="col-12 col-lg-6">
+            <div class="fd-detail-poster fd-detail-poster--cinema">
+                <div class="fd-detail-bg" style="background-image:url('@cover')"></div>
+                <img src="@cover" alt="@Model.Title" loading="lazy" />
             </div>
         </div>
-    </div>
 
-    <div class="col-12 col-lg-7">
-        <h2 class="mb-1">@Model.Title</h2>
+        <div class="col-12 col-lg-6">
 
-        @if (!string.IsNullOrWhiteSpace(Model.OriginalTitle))
-        {
-            <div class="text-muted mb-2">@Model.OriginalTitle</div>
-        }
+            <h2 class="fd-detail-title">@Model.Title</h2>
 
-        <div class="d-flex flex-wrap gap-2 mb-3">
-            <span class="badge bg-danger">@Model.ReleaseYear</span>
+            <div class="fd-detail-meta">
+                <span class="badge bg-danger">@Model.ReleaseYear</span>
 
-            @if (!string.IsNullOrWhiteSpace(Model.CategoryName))
+                @if (Model.CategoryNames != null && Model.CategoryNames.Count > 0)
+                {
+                    <span class="badge bg-dark border">@Model.CategoryNames.First()</span>
+                }
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.Description))
             {
-                <span class="badge bg-secondary">@Model.CategoryName</span>
+                <p class="fd-detail-desc mt-3">
+                    @Model.Description
+                </p>
             }
-        </div>
 
-        @if (!string.IsNullOrWhiteSpace(Model.Description))
-        {
-            <p class="text-muted">@Model.Description</p>
-        }
-
-        <div class="card border-0 product-card p-3">
-            <div class="row g-2">
-                <div class="col-12 col-md-4">
-                    <div class="small text-muted">Altyazı</div>
-                    <div>@(string.IsNullOrWhiteSpace(Model.SubtitleLanguages) ? "-" : Model.SubtitleLanguages)</div>
+            <div class="fd-detail-specs mt-3">
+                <div class="fd-spec">
+                    <div class="fd-spec-label">Altyazı</div>
+                    <div class="fd-spec-val">@(!string.IsNullOrWhiteSpace(Model.SubtitleLanguages) ? Model.SubtitleLanguages : "-")</div>
                 </div>
 
-                <div class="col-12 col-md-4">
-                    <div class="small text-muted">Ses</div>
-                    <div>@(string.IsNullOrWhiteSpace(Model.AudioFeatures) ? "-" : Model.AudioFeatures)</div>
+                <div class="fd-spec">
+                    <div class="fd-spec-label">Ses</div>
+                    <div class="fd-spec-val">@(!string.IsNullOrWhiteSpace(Model.AudioFeatures) ? Model.AudioFeatures : "-")</div>
                 </div>
 
-                <div class="col-12 col-md-4">
-                    <div class="small text-muted">Teknik</div>
-                    <div>@(string.IsNullOrWhiteSpace(Model.TechnicalDetails) ? "-" : Model.TechnicalDetails)</div>
+                <div class="fd-spec">
+                    <div class="fd-spec-label">Teknik</div>
+                    <div class="fd-spec-val">@(!string.IsNullOrWhiteSpace(Model.TechnicalDetails) ? Model.TechnicalDetails : "-")</div>
                 </div>
             </div>
-        </div>
 
-        <div class="d-flex gap-2 mt-3 flex-wrap">
-            <a class="btn btn-outline-light" asp-action="Index">Geri</a>
-
-            @if (!string.IsNullOrWhiteSpace(Model.TrailerUrl))
-            {
-                <a class="btn btn-danger" href="@Model.TrailerUrl" target="_blank">
-                    Fragman
+            <div class="d-flex gap-2 mt-3">
+                <a class="btn btn-outline-light"
+                   asp-controller="Product"
+                   asp-action="Index">
+                    Geri
                 </a>
+            </div>
+
+            <div class="mt-3">
+
+                @if (!loggedIn)
+                {
+                    <div class="fd-login-hint">
+                        Listeye eklemek için giriş yap.
+                        <a class="btn btn-danger btn-sm ms-2"
+                           asp-controller="Auth"
+                           asp-action="Login"
+                           asp-route-returnUrl="@returnUrl">
+                            Giriş
+                        </a>
+                    </div>
+                }
+                else if (!hasLists)
+                {
+                    <div class="fd-login-hint">
+                        Listeye eklemek için önce liste oluşturmalısın.
+                        <a class="btn btn-danger btn-sm ms-2"
+                           asp-controller="MyLists"
+                           asp-action="Create">
+                            + Liste Oluştur
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <form asp-controller="Product" asp-action="AddToList" method="post" class="mt-2">
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden" name="movieId" value="@Model.Id" />
+                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+                        <div class="fd-actions">
+                            <select class="form-select"
+                                    name="listId"
+                                    required>
+                                @foreach (var item in memberLists)
+                                {
+                                    <option value="@item.Value">@item.Text</option>
+                                }
+                            </select>
+
+                            <input class="form-control"
+                                   name="priority"
+                                   type="number"
+                                   min="1"
+                                   placeholder="Öncelik"
+                                   style="max-width:140px;" />
+
+                            <button type="submit" class="btn btn-danger">
+                                Listeye Ekle
+                            </button>
+                        </div>
+                    </form>
+                }
+
+            </div>
+
+            @if (Model.CategoryNames != null && Model.CategoryNames.Count > 0)
+            {
+                <div class="fd-tags mt-3">
+                    @foreach (var t in Model.CategoryNames)
+                    {
+                        <span class="fd-tag">@t</span>
+                    }
+                </div>
             }
 
-
-            <a class="btn btn-outline-light"
-               asp-controller="Cart"
-               asp-action="Add"
-               asp-route-id="@Model.Id">
-                Sepete Ekle
-            </a>
         </div>
     </div>
 </div>

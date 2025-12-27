@@ -1,59 +1,62 @@
 ﻿@using Application.DTOs.MovieDTOs
 @model List<MovieDto>
 
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success mb-3">
-        @TempData["Success"]
-    </div>
-}
-
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger mb-3">
-        @TempData["Error"]
-    </div>
-}
-
 @{
     ViewData["Title"] = "Film Kataloğu";
-    var q = (string)(ViewBag.Query ?? "");
+    var query = ViewBag.Query as string ?? "";
 }
 
-<div class="d-flex align-items-center justify-content-between mb-3">
-    <h3 class="mb-0">Film Kataloğu</h3>
-</div>
+<div class="container fd-catalog-wrap">
 
-<form method="get" class="row g-2 align-items-end mb-3">
-    <div class="col-12 col-md-4">
-        <label class="form-label">Kategori</label>
-        <select class="form-select" name="categoryId" asp-items="ViewBag.Categories">
-            <option value="">Hepsi</option>
-        </select>
-    </div>
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert fd-alert fd-alert-success alert-dismissible fade show mt-3 fd-alert-top" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
 
-    <div class="col-12 col-md-6">
-        <label class="form-label">Arama</label>
-        <input class="form-control" type="text" name="q" value="@q" placeholder="Film adı..." />
-    </div>
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert fd-alert fd-alert-danger alert-dismissible fade show mt-3 fd-alert-top" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
 
-    <div class="col-12 col-md-2 d-grid">
-        <button class="btn btn-primary" type="submit">Filtrele</button>
-    </div>
-</form>
+    <div class="fd-catalog-title">Film Kataloğu</div>
 
-@if (Model == null || !Model.Any())
-{
-    <div class="alert alert-warning">Film bulunamadı.</div>
-}
-else
-{
-    <div class="row g-3">
-        @foreach (var m in Model)
-        {
-            <div class="col-12 col-sm-6 col-lg-4 col-xl-3">
-                @await Html.PartialAsync("~/Views/Shared/_ProductCard.cshtml", m)
+    <form method="get" class="fd-filterbar">
+        <div class="row g-3 align-items-end">
+            <div class="col-12 col-lg-4">
+                <label>Kategori</label>
+                <select name="categoryId" class="form-select" asp-items="ViewBag.Categories"></select>
             </div>
-        }
-    </div>
-}
+
+            <div class="col-12 col-lg-6">
+                <label>Arama</label>
+                <input name="q" value="@query" class="form-control" placeholder="Film adı..." />
+            </div>
+
+            <div class="col-12 col-lg-2 d-grid">
+                <button class="btn btn-primary" type="submit">Filtrele</button>
+            </div>
+        </div>
+    </form>
+
+    @if (Model == null || Model.Count == 0)
+    {
+        <div class="fd-empty2">Film bulunamadı.</div>
+    }
+    else
+    {
+        <div class="fd-grid">
+            @foreach (var m in Model)
+            {
+                <div>
+                    @await Html.PartialAsync("~/Views/Shared/_ProductCard.cshtml", m)
+                </div>
+            }
+        </div>
+    }
+</div>

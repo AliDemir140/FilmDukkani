@@ -1,104 +1,105 @@
 ﻿@using Application.DTOs.MovieDTOs
 @using Microsoft.AspNetCore.Mvc.Rendering
 @using MVC.Constants
-@using Microsoft.AspNetCore.Http
 @model MovieDto
 
 @{
     var cover = !string.IsNullOrWhiteSpace(Model.CoverImageUrl)
         ? Model.CoverImageUrl
-        : $"https://picsum.photos/400/600?random={Model.Id}";
+        : $"https://picsum.photos/800/450?random={Model.Id}";
 
     var token = Context.Session.GetString(SessionKeys.JwtToken);
-    bool isLoggedIn = !string.IsNullOrEmpty(token);
+    var memberId = Context.Session.GetInt32(SessionKeys.MemberId);
+    var loggedIn = !string.IsNullOrWhiteSpace(token) && memberId.HasValue;
 
-    var memberLists = ViewBag.MemberLists as List<SelectListItem> ?? new List<SelectListItem>();
-    var hasLists = memberLists.Any();
+    var lists = ViewBag.MemberLists as List<SelectListItem> ?? new List<SelectListItem>();
+    var hasLists = lists.Any();
 
     var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
 }
 
-<div class="card h-100 border-0 product-card">
-    <div class="ratio ratio-4x3 overflow-hidden rounded-top">
-        <img src="@cover"
-             alt="@Model.Title"
-             class="w-100 h-100"
-             style="object-fit:cover;" />
-    </div>
+<div class="fd-cardwrap">
+    <div class="fd-card fd-card--full">
+        @* Kartın her yeri tıklanınca Detay *@
+        <a class="fd-cardlink fd-cardlink--overlay"
+           asp-controller="Product"
+           asp-action="Details"
+           asp-route-id="@Model.Id"
+           aria-label="@Model.Title detay">
+        </a>
 
-    <div class="card-body">
-        <h6 class="card-title mb-1 text-truncate" title="@Model.Title">
-            @Model.Title
-        </h6>
+        <div class="fd-poster fd-poster--land">
+            <div class="fd-chip">Detay</div>
+            <div class="fd-play">▶</div>
 
-        <div class="small text-muted mb-2">
-            @Model.ReleaseYear
-            @if (!string.IsNullOrWhiteSpace(Model.CategoryName))
-            {
-                <span> • @Model.CategoryName</span>
-            }
+            <img src="@cover" alt="@Model.Title" loading="lazy" />
         </div>
 
-        @if (!string.IsNullOrWhiteSpace(Model.Description))
-        {
-            <p class="card-text small text-muted"
-               style="min-height:40px; max-height:40px; overflow:hidden;">
-                @Model.Description
+        <div class="fd-body">
+            <div class="fd-title">@Model.Title</div>
+
+            <div class="fd-meta">
+                <span class="pill">@Model.ReleaseYear</span>
+
+                @* MovieDto’nda CategoryNames varsa ilkini göster, yoksa CategoryName *@
+                @if (Model.CategoryNames != null && Model.CategoryNames.Count > 0)
+                {
+                    <span class="pill">@Model.CategoryNames.First()</span>
+                }
+                else if (!string.IsNullOrWhiteSpace(Model.CategoryName))
+                {
+                    <span class="pill">@Model.CategoryName</span>
+                }
+            </div>
+
+            @if (Model.CategoryNames != null && Model.CategoryNames.Count > 0)
+            {
+                <div class="fd-tags">
+                    @foreach (var t in Model.CategoryNames.Take(3))
+                    {
+                        <span class="fd-tag">@t</span>
+                    }
+                </div>
+            }
+
+            <p class="fd-desc">
+                @(string.IsNullOrWhiteSpace(Model.Description) ? "Açıklama bulunmuyor." : Model.Description)
             </p>
-        }
-    </div>
-
-    <div class="card-footer bg-transparent border-0 pt-0">
-        <div class="d-grid gap-2">
-            <a class="btn btn-outline-dark"
-               asp-controller="Product"
-               asp-action="Details"
-               asp-route-id="@Model.Id">
-                Detay
-            </a>
-
-            @if (!isLoggedIn)
-            {
-                <a class="btn btn-danger"
-                   asp-controller="Auth"
-                   asp-action="Login">
-                    Listeye eklemek için giriş yap
-                </a>
-            }
-            else if (!hasLists)
-            {
-                <a class="btn btn-danger"
-                   asp-controller="MyLists"
-                   asp-action="Create">
-                    + Önce liste oluştur
-                </a>
-            }
-            else
-            {
-                <form asp-controller="Product"
-                      asp-action="AddToList"
-                      method="post">
-                    @Html.AntiForgeryToken()
-
-                    <input type="hidden" name="movieId" value="@Model.Id" />
-                    <input type="hidden" name="returnUrl" value="@returnUrl" />
-
-                    <select name="listId" class="form-select form-select-sm mb-2" required>
-                        <option value="">Liste seç</option>
-                        @foreach (var l in memberLists)
-                        {
-                            <option value="@l.Value">@l.Text</option>
-                        }
-                    </select>
-
-                    @* İstersen priority açarsın (şimdilik gizli 1 bırakıyorum) *@
-                    <input type="hidden" name="priority" value="1" />
-
-                    <button type="submit" class="btn btn-danger btn-sm w-100">
-                        Listeye Ekle
-                    </button>
-                </form>
-            }
         </div>
     </div>
+
+    @* Alt aksiyon bölümü: login/listeye ekleme *@
+    @if (!loggedIn)
+    {
+        <div class="fd-login-hint">Listeye eklemek için giriş yap.</div>
+    }
+    else if (!hasLists)
+    {
+        <div class="fd-login-hint">Önce bir liste oluşturmalısın.</div>
+    }
+    else
+    {
+        <form asp-controller="Product" asp-action="AddToList" method="post" class="mt-2 fd-formzone">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="movieId" value="@Model.Id" />
+            <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+            <div class="fd-actions">
+                <select class="form-select fd-select" name="listId" required>
+                    @foreach (var item in lists)
+                    {
+                        <option value="@item.Value">@item.Text</option>
+                    }
+                </select>
+
+                <input class="form-control fd-input"
+                       name="priority"
+                       type="number"
+                       min="1"
+                       placeholder="Öncelik" />
+
+                <button type="submit" class="btn btn-danger">Ekle</button>
+            </div>
+        </form>
+    }
 </div>
