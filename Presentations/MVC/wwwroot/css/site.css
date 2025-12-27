@@ -651,3 +651,138 @@ body {
     font-weight: 650;
     font-size: 13px;
 }
+.fd-panel {
+    border: 1px solid rgba(255,255,255,.08);
+    background: rgba(0,0,0,.28);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 16px;
+}
+
+.fd-panel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    padding-bottom: 12px;
+}
+
+.fd-panel-title {
+    font-weight: 850;
+    color: var(--fd-text);
+    letter-spacing: .2px;
+    font-size: 18px;
+}
+
+.fd-panel-sub {
+    color: rgba(154,167,189,.95);
+    font-size: 12.5px;
+    margin-top: 4px;
+}
+
+.fd-panel-badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.fd-review-form {
+    border: 1px solid rgba(255,255,255,.08);
+    background: rgba(255,255,255,.03);
+    border-radius: 14px;
+    padding: 14px;
+}
+
+.fd-form-title {
+    font-weight: 800;
+    font-size: 14px;
+    margin-bottom: 10px;
+    color: rgba(255,255,255,.92);
+}
+
+.fd-form-label {
+    color: rgba(255,255,255,.78);
+    font-size: 12px;
+    margin-bottom: 6px;
+}
+
+.fd-form-help {
+    color: rgba(154,167,189,.85);
+    font-size: 11px;
+    margin-top: 6px;
+}
+
+.fd-review-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 520px;
+    overflow: auto;
+    padding-right: 4px;
+}
+
+    .fd-review-list::-webkit-scrollbar {
+        width: 10px;
+    }
+
+    .fd-review-list::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,.10);
+        border-radius: 999px;
+    }
+
+.fd-review {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 12px;
+    border: 1px solid rgba(255,255,255,.08);
+    background: rgba(255,255,255,.03);
+    border-radius: 14px;
+    padding: 12px;
+}
+
+.fd-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 850;
+    background: rgba(255,45,45,.16);
+    border: 1px solid rgba(255,45,45,.25);
+    color: rgba(255,255,255,.92);
+}
+
+.fd-review-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: baseline;
+}
+
+.fd-review-name {
+    font-weight: 850;
+    color: rgba(255,255,255,.92);
+}
+
+.fd-review-meta {
+    color: rgba(154,167,189,.90);
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.fd-review-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.fd-review-comment {
+    margin-top: 10px;
+    color: rgba(234,240,255,.90);
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
