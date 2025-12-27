@@ -1,6 +1,6 @@
-﻿using Application.Repositories;
+﻿using Application.Interfaces;
+using Application.Repositories;
 using Application.ServiceManager;
-using Application.Interfaces;
 using Infrastructure.Persistence;
 using Infrastructure.Persistence.SeedData;
 using Infrastructure.Repositories;
@@ -49,6 +49,8 @@ namespace Infrastructure.DependencyResolvers
             services.AddScoped<IMovieCopyRepository, MovieCopyRepository>();
             services.AddScoped<IDamagedMovieRepository, DamagedMovieRepository>();
 
+            services.AddScoped<IReviewRepository, ReviewRepository>();
+
             services.AddScoped<CategoryServiceManager>();
             services.AddScoped<MovieServiceManager>();
             services.AddScoped<MemberServiceManager>();
@@ -64,6 +66,8 @@ namespace Infrastructure.DependencyResolvers
             services.AddScoped<DamagedMovieServiceManager>();
             services.AddScoped<WarehouseServiceManager>();
             services.AddScoped<AccountingReportServiceManager>();
+
+            services.AddScoped<ReviewServiceManager>();
 
             services.AddScoped<UserServiceManager>();
 

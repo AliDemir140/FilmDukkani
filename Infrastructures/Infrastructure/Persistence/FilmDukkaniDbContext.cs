@@ -1,12 +1,11 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Domain.Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Domain.Entities;
 
 namespace Infrastructure.Persistence
 {
-    public class FilmDukkaniDbContext
-        : IdentityDbContext<IdentityUser>
+    public class FilmDukkaniDbContext : IdentityDbContext<IdentityUser>
     {
         public FilmDukkaniDbContext(DbContextOptions<FilmDukkaniDbContext> options)
             : base(options)
@@ -20,7 +19,6 @@ namespace Infrastructure.Persistence
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(FilmDukkaniDbContext).Assembly);
         }
 
-        // DBSET
         public DbSet<Movie> Movies { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Member> Members { get; set; }
@@ -40,5 +38,6 @@ namespace Infrastructure.Persistence
         public DbSet<DamagedMovie> DamagedMovies { get; set; }
         public DbSet<MovieCategory> MovieCategories { get; set; }
 
+        public DbSet<Review> Reviews { get; set; }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Application.DTOs.MemberMovieListDTOs;
+using Application.DTOs.ReviewDTOs;
 using Application.ServiceManager;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -48,7 +49,105 @@ namespace MVC.Controllers
                 return NotFound();
 
             await LoadMemberListsForViewAsync();
+            await LoadReviewsForViewAsync(id);
+
             return View(movie);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddReview(int movieId, byte rating, string? comment)
+        {
+            var memberId = HttpContext.Session.GetInt32(SessionKeys.MemberId);
+            if (memberId == null)
+                return RedirectToAction("Login", "Auth");
+
+            var apiBaseUrl = _configuration["ApiSettings:BaseUrl"];
+            if (string.IsNullOrWhiteSpace(apiBaseUrl))
+            {
+                TempData["Error"] = "API BaseUrl bulunamadı.";
+                return RedirectToAction(nameof(Details), new { id = movieId });
+            }
+
+            if (movieId <= 0 || rating < 1 || rating > 5)
+            {
+                TempData["Error"] = "Geçersiz puan.";
+                return RedirectToAction(nameof(Details), new { id = movieId });
+            }
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient();
+
+                var dto = new CreateReviewDto
+                {
+                    MovieId = movieId,
+                    MemberId = memberId.Value,
+                    Rating = rating,
+                    Comment = comment
+                };
+
+                var res = await client.PostAsJsonAsync($"{apiBaseUrl}/api/Review/add-or-update", dto);
+
+                if (!res.IsSuccessStatusCode)
+                {
+                    var msg = await res.Content.ReadAsStringAsync();
+                    TempData["Error"] = string.IsNullOrWhiteSpace(msg) ? "Yorum kaydedilemedi." : msg;
+                    return RedirectToAction(nameof(Details), new { id = movieId });
+                }
+
+                TempData["Success"] = "Yorum kaydedildi.";
+                return RedirectToAction(nameof(Details), new { id = movieId });
+            }
+            catch
+            {
+                TempData["Error"] = "Yorum kaydedilemedi. API çalışıyor mu kontrol et.";
+                return RedirectToAction(nameof(Details), new { id = movieId });
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteReview(int movieId, int reviewId)
+        {
+            var memberId = HttpContext.Session.GetInt32(SessionKeys.MemberId);
+            if (memberId == null)
+                return RedirectToAction("Login", "Auth");
+
+            var apiBaseUrl = _configuration["ApiSettings:BaseUrl"];
+            if (string.IsNullOrWhiteSpace(apiBaseUrl))
+            {
+                TempData["Error"] = "API BaseUrl bulunamadı.";
+                return RedirectToAction(nameof(Details), new { id = movieId });
+            }
+
+            if (movieId <= 0 || reviewId <= 0)
+            {
+                TempData["Error"] = "Geçersiz istek.";
+                return RedirectToAction(nameof(Details), new { id = movieId });
+            }
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient();
+
+                var res = await client.DeleteAsync($"{apiBaseUrl}/api/Review/{reviewId}?memberId={memberId.Value}");
+
+                if (!res.IsSuccessStatusCode)
+                {
+                    var msg = await res.Content.ReadAsStringAsync();
+                    TempData["Error"] = string.IsNullOrWhiteSpace(msg) ? "Yorum silinemedi." : msg;
+                    return RedirectToAction(nameof(Details), new { id = movieId });
+                }
+
+                TempData["Success"] = "Yorum silindi.";
+                return RedirectToAction(nameof(Details), new { id = movieId });
+            }
+            catch
+            {
+                TempData["Error"] = "Yorum silinemedi. API çalışıyor mu kontrol et.";
+                return RedirectToAction(nameof(Details), new { id = movieId });
+            }
         }
 
         [HttpPost]
@@ -154,6 +253,34 @@ namespace MVC.Controllers
             catch
             {
                 ViewBag.MemberLists = new List<SelectListItem>();
+            }
+        }
+
+        private async Task LoadReviewsForViewAsync(int movieId)
+        {
+            var apiBaseUrl = _configuration["ApiSettings:BaseUrl"];
+            if (string.IsNullOrWhiteSpace(apiBaseUrl))
+            {
+                ViewBag.Reviews = new List<ReviewDto>();
+                return;
+            }
+
+            var memberId = HttpContext.Session.GetInt32(SessionKeys.MemberId);
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient();
+
+                var url = $"{apiBaseUrl}/api/Review/movie/{movieId}";
+                if (memberId.HasValue)
+                    url += $"?currentMemberId={memberId.Value}";
+
+                var reviews = await client.GetFromJsonAsync<List<ReviewDto>>(url);
+                ViewBag.Reviews = reviews ?? new List<ReviewDto>();
+            }
+            catch
+            {
+                ViewBag.Reviews = new List<ReviewDto>();
             }
         }
     }
