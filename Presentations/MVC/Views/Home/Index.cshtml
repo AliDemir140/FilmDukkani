@@ -1,8 +1,53 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model MVC.Models.HomeIndexViewModel
+
+@{
+    ViewData["Title"] = "Vitrin";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="fd-hero">
+    <div class="container">
+
+        <div class="fd-section-title">
+            <span class="dot"></span>
+            Editör Seçimi
+        </div>
+        <div class="fd-subtle">Öne çıkan içerikler</div>
+
+        @if (Model.EditorsChoice == null || Model.EditorsChoice.Count == 0)
+        {
+            <div class="fd-empty mt-3">Editör seçimi için film bulunamadı.</div>
+        }
+        else
+        {
+            <div class="fd-rail mt-3">
+                @foreach (var movie in Model.EditorsChoice)
+                {
+                    ViewData["Chip"] = "Editör";
+                    @await Html.PartialAsync("~/Views/Shared/_ShowcaseCard.cshtml", movie)
+                }
+            </div>
+        }
+
+        <div class="fd-section-title" style="margin-top:26px;">
+            <span class="dot"></span>
+            Yeni Çıkanlar
+        </div>
+        <div class="fd-subtle">Son eklenen içerikler</div>
+
+        @if (Model.NewReleases == null || Model.NewReleases.Count == 0)
+        {
+            <div class="fd-empty mt-3">Yeni çıkanlar için film bulunamadı.</div>
+        }
+        else
+        {
+            <div class="fd-rail mt-3">
+                @foreach (var movie in Model.NewReleases)
+                {
+                    ViewData["Chip"] = "Yeni";
+                    @await Html.PartialAsync("~/Views/Shared/_ShowcaseCard.cshtml", movie)
+                }
+            </div>
+        }
+
+    </div>
 </div>

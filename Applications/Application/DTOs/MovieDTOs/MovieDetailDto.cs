@@ -8,11 +8,12 @@
         public string? Description { get; set; }
         public int ReleaseYear { get; set; }
 
-        // Geriye dönük uyumluluk
+        public bool IsEditorsChoice { get; set; }
+        public bool IsNewRelease { get; set; }
+
         public int CategoryId { get; set; }
         public string? CategoryName { get; set; }
 
-        // Many-to-Many
         public List<int> CategoryIds { get; set; } = new();
         public List<string> CategoryNames { get; set; } = new();
 

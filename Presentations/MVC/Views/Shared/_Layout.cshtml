@@ -184,6 +184,26 @@
     </header>
 
     <main class="container-fluid py-4">
+
+        @* GLOBAL TEMP DATA ALERTS (hangi sayfaya redirect olursa olsun mesaj burada görünür) *@
+        <div class="container">
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert fd-alert fd-alert-success alert-dismissible fade show mt-3 fd-alert-top" role="alert">
+                    @TempData["Success"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert fd-alert fd-alert-danger alert-dismissible fade show mt-3 fd-alert-top" role="alert">
+                    @TempData["Error"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            }
+        </div>
+
         @if (isDashBoard)
         {
             <div class="row">

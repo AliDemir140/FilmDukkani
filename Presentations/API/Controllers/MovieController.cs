@@ -15,7 +15,6 @@ namespace API.Controllers
             _movieServiceManager = movieServiceManager;
         }
 
-        // GET: api/movie/movies
         [HttpGet("movies")]
         public async Task<IActionResult> GetMovies()
         {
@@ -23,18 +22,33 @@ namespace API.Controllers
             return Ok(movies);
         }
 
-        // POST: api/movie/add-movie
+        [HttpGet("showcase/editors-choice")]
+        public async Task<IActionResult> GetEditorsChoice()
+        {
+            var movies = await _movieServiceManager.GetEditorsChoiceAsync();
+            return Ok(movies);
+        }
+
+        [HttpGet("showcase/new-releases")]
+        public async Task<IActionResult> GetNewReleases()
+        {
+            var movies = await _movieServiceManager.GetNewReleasesAsync();
+            return Ok(movies);
+        }
+
         [HttpPost("add-movie")]
         public async Task<IActionResult> AddMovie([FromBody] CreateMovieDto movieDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            await _movieServiceManager.AddMovie(movieDto);
+            var ok = await _movieServiceManager.AddMovie(movieDto);
+            if (!ok)
+                return BadRequest("Film eklenemedi.");
+
             return Ok("Film eklendi.");
         }
 
-        // GET: api/movie/get-movie?id=5
         [HttpGet("get-movie")]
         public async Task<IActionResult> GetMovie(int id)
         {
@@ -45,7 +59,6 @@ namespace API.Controllers
             return Ok(movie);
         }
 
-        // DELETE: api/movie/delete-movie?id=5
         [HttpDelete("delete-movie")]
         public async Task<IActionResult> DeleteMovie(int id)
         {
@@ -57,8 +70,6 @@ namespace API.Controllers
             return Ok("Film silindi.");
         }
 
-
-        // PUT: api/movie/update-movie
         [HttpPut("update-movie")]
         public async Task<IActionResult> UpdateMovie([FromBody] UpdateMovieDto updateMovie)
         {
@@ -73,7 +84,6 @@ namespace API.Controllers
             return Ok("Film güncellendi.");
         }
 
-        // GET api/Movie/{id}/detail
         [HttpGet("{id}/detail")]
         public async Task<IActionResult> GetMovieDetail(int id)
         {
@@ -83,6 +93,5 @@ namespace API.Controllers
 
             return Ok(movieDetail);
         }
-
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Infrastructure.DependencyResolvers;
 using MVC.Filters;
+using MVC.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,7 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 // HTTP CLIENT
-builder.Services.AddHttpClient();
+builder.Services.AddHttpClient<MovieApiService>();
 
 // SESSION
 builder.Services.AddSession(options =>

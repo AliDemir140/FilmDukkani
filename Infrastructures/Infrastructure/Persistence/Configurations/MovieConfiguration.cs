@@ -49,6 +49,17 @@ namespace Infrastructure.Persistence.Configurations
                    .HasConversion<byte>()
                    .HasDefaultValue(MovieStatus.Available)
                    .IsRequired();
+
+            builder.Property(m => m.IsEditorsChoice)
+                   .HasDefaultValue(false)
+                   .IsRequired();
+
+            builder.Property(m => m.IsNewRelease)
+                   .HasDefaultValue(false)
+                   .IsRequired();
+
+            builder.HasIndex(m => m.IsEditorsChoice);
+            builder.HasIndex(m => m.IsNewRelease);
         }
     }
 }

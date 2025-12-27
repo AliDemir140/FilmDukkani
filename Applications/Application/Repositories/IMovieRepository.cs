@@ -6,5 +6,8 @@ namespace Application.Repositories
     {
         Task<List<Movie>> GetMoviesWithCategoryAsync();
         Task<Movie?> GetMovieWithCategoryAsync(int id);
+
+        Task<List<Movie>> GetEditorsChoiceMoviesAsync();
+        Task<List<Movie>> GetNewReleaseMoviesAsync();
     }
 }

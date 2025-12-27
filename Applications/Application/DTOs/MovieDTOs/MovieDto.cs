@@ -17,11 +17,12 @@
         public string? Barcode { get; set; }
         public string? Supplier { get; set; }
 
-        // Geriye dönük uyumluluk (UI filtre + kart gösterimi için)
+        public bool IsEditorsChoice { get; set; }
+        public bool IsNewRelease { get; set; }
+
         public int CategoryId { get; set; }
         public string? CategoryName { get; set; }
 
-        // Many-to-Many
         public List<int> CategoryIds { get; set; } = new();
         public List<string> CategoryNames { get; set; } = new();
     }

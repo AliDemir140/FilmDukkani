@@ -39,6 +39,9 @@ namespace Application.DTOs.MovieDTOs
         [MaxLength(100, ErrorMessage = "Tedarikçi adı en fazla 100 karakter olabilir.")]
         public string? Supplier { get; set; }
 
+        public bool IsEditorsChoice { get; set; }
+        public bool IsNewRelease { get; set; }
+
         [Required(ErrorMessage = "En az 1 kategori seçmelisiniz.")]
         public List<int> CategoryIds { get; set; } = new();
     }
