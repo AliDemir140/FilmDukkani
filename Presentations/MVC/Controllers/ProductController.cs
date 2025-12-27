@@ -32,20 +32,7 @@ namespace MVC.Controllers
             var categories = await _categoryService.GetCategoriesAsync();
             ViewBag.Categories = new SelectList(categories, "Id", "CategoryName", categoryId);
 
-            var movies = await _movieService.GetMoviesAsync();
-
-            if (categoryId.HasValue && categoryId.Value > 0)
-                movies = movies.Where(m => m.CategoryIds.Contains(categoryId.Value)).ToList();
-
-            if (!string.IsNullOrWhiteSpace(q))
-            {
-                var keyword = q.Trim().ToLower();
-                movies = movies
-                    .Where(m =>
-                        (!string.IsNullOrWhiteSpace(m.Title) && m.Title.ToLower().Contains(keyword)) ||
-                        (!string.IsNullOrWhiteSpace(m.OriginalTitle) && m.OriginalTitle.ToLower().Contains(keyword)))
-                    .ToList();
-            }
+            var movies = await _movieService.SearchMoviesAsync(categoryId, q);
 
             ViewBag.Query = q ?? "";
             ViewBag.SelectedCategoryId = categoryId;
@@ -64,7 +51,6 @@ namespace MVC.Controllers
             return View(movie);
         }
 
-        // ✅ YENİ: Film -> Listeye ekle
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddToList(int movieId, int listId, int? priority, string? returnUrl = null)
@@ -99,7 +85,6 @@ namespace MVC.Controllers
 
                 var res = await client.PostAsJsonAsync($"{apiBaseUrl}/api/MemberMovieList/add-item", dto);
 
-                // ✅ Kilitli liste: API 409 dönüyor
                 if (res.StatusCode == HttpStatusCode.Conflict)
                 {
                     var msg = await res.Content.ReadAsStringAsync();
@@ -111,7 +96,6 @@ namespace MVC.Controllers
 
                 if (!res.IsSuccessStatusCode)
                 {
-                    // API bazen string, bazen validation json dönebilir -> string olarak alıyoruz
                     var msg = await res.Content.ReadAsStringAsync();
                     TempData["Error"] = string.IsNullOrWhiteSpace(msg)
                         ? "Film listeye eklenemedi."

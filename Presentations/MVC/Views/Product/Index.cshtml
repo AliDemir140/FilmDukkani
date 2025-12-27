@@ -30,12 +30,14 @@
         <div class="row g-3 align-items-end">
             <div class="col-12 col-lg-4">
                 <label>Kategori</label>
-                <select name="categoryId" class="form-select" asp-items="ViewBag.Categories"></select>
+                <select name="categoryId" class="form-select" asp-items="ViewBag.Categories">
+                    <option value="">Hepsi</option>
+                </select>
             </div>
 
             <div class="col-12 col-lg-6">
                 <label>Arama</label>
-                <input name="q" value="@query" class="form-control" placeholder="Film adı..." />
+                <input name="q" value="@query" class="form-control" placeholder="Film adı, oyuncu, yönetmen..." />
             </div>
 
             <div class="col-12 col-lg-2 d-grid">

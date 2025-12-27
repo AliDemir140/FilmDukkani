@@ -90,5 +90,48 @@ namespace Infrastructure.Repositories
                 .ThenInclude(mc => mc.Category)
                 .ToListAsync();
         }
+
+        public async Task<List<Movie>> SearchMoviesAsync(int? categoryId, string? q)
+        {
+            const string trCollation = "Turkish_CI_AI";
+
+            var query = _context.Movies
+                .Include(m => m.MovieCategories)
+                .ThenInclude(mc => mc.Category)
+                .Include(m => m.MovieActors)
+                .ThenInclude(ma => ma.Actor)
+                .Include(m => m.MovieDirectors)
+                .ThenInclude(md => md.Director)
+                .AsQueryable();
+
+            if (categoryId.HasValue && categoryId.Value > 0)
+            {
+                var cid = categoryId.Value;
+                query = query.Where(m => m.MovieCategories.Any(mc => mc.CategoryId == cid));
+            }
+
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                var keyword = q.Trim();
+                var like = $"%{keyword}%";
+
+                query = query.Where(m =>
+                    EF.Functions.Like(EF.Functions.Collate(m.Title, trCollation), like) ||
+                    (m.OriginalTitle != null && EF.Functions.Like(EF.Functions.Collate(m.OriginalTitle, trCollation), like)) ||
+                    m.MovieActors.Any(ma =>
+                        EF.Functions.Like(EF.Functions.Collate(ma.Actor.FirstName, trCollation), like) ||
+                        EF.Functions.Like(EF.Functions.Collate(ma.Actor.LastName, trCollation), like) ||
+                        EF.Functions.Like(EF.Functions.Collate(ma.Actor.FirstName + " " + ma.Actor.LastName, trCollation), like)
+                    ) ||
+                    m.MovieDirectors.Any(md =>
+                        EF.Functions.Like(EF.Functions.Collate(md.Director.FirstName, trCollation), like) ||
+                        EF.Functions.Like(EF.Functions.Collate(md.Director.LastName, trCollation), like) ||
+                        EF.Functions.Like(EF.Functions.Collate(md.Director.FirstName + " " + md.Director.LastName, trCollation), like)
+                    )
+                );
+            }
+
+            return await query.ToListAsync();
+        }
     }
 }
