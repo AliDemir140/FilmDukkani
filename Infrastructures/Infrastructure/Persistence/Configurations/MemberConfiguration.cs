@@ -28,15 +28,39 @@ namespace Infrastructure.Persistence.Configurations
                    .HasMaxLength(200);
 
             builder.Property(m => m.Phone)
+                   .IsRequired()
+                   .HasMaxLength(20);
+
+            builder.Property(m => m.AddressLine)
+                   .IsRequired()
+                   .HasMaxLength(200);
+
+            builder.Property(m => m.City)
+                   .IsRequired()
+                   .HasMaxLength(50);
+
+            builder.Property(m => m.District)
+                   .IsRequired()
+                   .HasMaxLength(50);
+
+            builder.Property(m => m.PostalCode)
+                   .HasMaxLength(10);
+
+            builder.Property(m => m.ContractAccepted)
+                   .IsRequired()
+                   .HasDefaultValue(false);
+
+            builder.Property(m => m.ContractAcceptedAt);
+
+            builder.Property(m => m.ContractVersion)
                    .HasMaxLength(20);
 
             builder.Property(m => m.MembershipStartDate)
                    .IsRequired();
 
-            // 🔹 ENUM mapping
             builder.Property(m => m.Status)
-                   .HasConversion<byte>()                  // DB’de tinyint
-                   .HasDefaultValue(MemberStatus.Active)   // varsayılan
+                   .HasConversion<byte>()
+                   .HasDefaultValue(MemberStatus.Active)
                    .IsRequired();
 
             builder.HasOne(m => m.MembershipPlan)

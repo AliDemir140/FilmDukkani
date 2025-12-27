@@ -786,3 +786,22 @@ body {
     white-space: pre-wrap;
     word-break: break-word;
 }
+.fd-modal {
+    background: rgba(10, 14, 24, .96);
+    border: 1px solid rgba(255,255,255,.10);
+    color: rgba(255,255,255,.92);
+}
+
+    .fd-modal .modal-header,
+    .fd-modal .modal-footer {
+        border-color: rgba(255,255,255,.10);
+    }
+
+    .fd-modal h6 {
+        color: rgba(255,255,255,.92);
+        font-weight: 750;
+    }
+
+    .fd-modal .text-muted {
+        color: rgba(154,167,189,.9) !important;
+    }

@@ -14,6 +14,15 @@ namespace Domain.Entities
 
         public string? Phone { get; set; }
 
+        public string AddressLine { get; set; } = string.Empty;
+        public string City { get; set; } = string.Empty;
+        public string District { get; set; } = string.Empty;
+        public string? PostalCode { get; set; }
+
+        public bool ContractAccepted { get; set; }
+        public DateTime? ContractAcceptedAt { get; set; }
+        public string? ContractVersion { get; set; }
+
         public int MembershipPlanId { get; set; }
         public MembershipPlan MembershipPlan { get; set; } = default!;
 
