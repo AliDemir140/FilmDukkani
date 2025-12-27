@@ -29,5 +29,7 @@ namespace Domain.Entities
         public ICollection<MovieAward> MovieAwards { get; set; } = new List<MovieAward>();
         public ICollection<DeliveryRequestItem> DeliveryRequestItems { get; set; } = new List<DeliveryRequestItem>();
         public ICollection<MovieCopy> MovieCopies { get; set; } = new List<MovieCopy>();
+
+        public ICollection<Review> Reviews { get; set; } = new List<Review>();
     }
 }

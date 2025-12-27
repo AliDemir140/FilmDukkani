@@ -8,11 +8,16 @@ namespace Application.ServiceManager
     {
         private readonly IMovieRepository _movieRepository;
         private readonly ICategoryRepository _categoryRepository;
+        private readonly IReviewRepository _reviewRepository;
 
-        public MovieServiceManager(IMovieRepository movieRepository, ICategoryRepository categoryRepository)
+        public MovieServiceManager(
+            IMovieRepository movieRepository,
+            ICategoryRepository categoryRepository,
+            IReviewRepository reviewRepository)
         {
             _movieRepository = movieRepository;
             _categoryRepository = categoryRepository;
+            _reviewRepository = reviewRepository;
         }
 
         public async Task<List<MovieDto>> GetMoviesAsync()
@@ -39,11 +44,12 @@ namespace Application.ServiceManager
             return MapToMovieDtoList(movies);
         }
 
-        public async Task<List<MovieDto>> GetTopRentedAsync(int take)
+        public async Task<List<MovieDto>> GetTopRentedAsync(int take = 10)
         {
             var movies = await _movieRepository.GetTopRentedMoviesAsync(take);
             return MapToMovieDtoList(movies);
         }
+
 
         public async Task<bool> AddMovie(CreateMovieDto dto)
         {
@@ -134,6 +140,8 @@ namespace Application.ServiceManager
                 .Distinct()
                 .ToList() ?? new List<string>();
 
+            var (avg, count) = await _reviewRepository.GetMovieRatingSummaryAsync(movie.ID);
+
             return new MovieDetailDto
             {
                 Id = movie.ID,
@@ -152,6 +160,8 @@ namespace Application.ServiceManager
                 SubtitleLanguages = movie.SubtitleLanguages ?? string.Empty,
                 TrailerUrl = movie.TrailerUrl ?? string.Empty,
                 CoverImageUrl = movie.CoverImageUrl ?? string.Empty,
+                AverageRating = avg,
+                ReviewCount = count,
                 Actors = new List<string>(),
                 Directors = new List<string>(),
                 Awards = new List<MovieAwardInfoDto>()

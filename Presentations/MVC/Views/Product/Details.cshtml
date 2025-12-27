@@ -1,4 +1,5 @@
 ﻿@using Application.DTOs.MovieDTOs
+@using Application.DTOs.ReviewDTOs
 @using Microsoft.AspNetCore.Mvc.Rendering
 @using MVC.Constants
 @model MovieDetailDto
@@ -16,6 +17,8 @@
 
     var memberLists = ViewBag.MemberLists as List<SelectListItem> ?? new List<SelectListItem>();
     var hasLists = memberLists.Any();
+
+    var reviews = ViewBag.Reviews as List<ReviewDto> ?? new List<ReviewDto>();
 
     var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
 }
@@ -42,6 +45,10 @@
                 {
                     <span class="badge bg-dark border">@Model.CategoryNames.First()</span>
                 }
+
+                <span class="badge bg-dark border">
+                    Puan: @(Model.ReviewCount == 0 ? "0" : Model.AverageRating.ToString("0.0")) (@Model.ReviewCount)
+                </span>
             </div>
 
             @if (!string.IsNullOrWhiteSpace(Model.Description))
@@ -133,6 +140,78 @@
                     </form>
                 }
 
+            </div>
+
+            <div class="mt-4">
+                <h5 class="mb-2">Yorumlar</h5>
+
+                @if (!loggedIn)
+                {
+                    <div class="fd-login-hint">Yorum yapmak için giriş yap.</div>
+                }
+                else
+                {
+                    <form asp-controller="Product" asp-action="AddReview" method="post" class="mt-2">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="movieId" value="@Model.Id" />
+
+                        <div class="row g-2">
+                            <div class="col-12 col-md-3">
+                                <select name="rating" class="form-select" required>
+                                    <option value="5">5</option>
+                                    <option value="4">4</option>
+                                    <option value="3">3</option>
+                                    <option value="2">2</option>
+                                    <option value="1">1</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-9">
+                                <input name="comment" class="form-control" maxlength="500" placeholder="Yorum" />
+                            </div>
+                        </div>
+
+                        <div class="mt-2">
+                            <button type="submit" class="btn btn-danger">Kaydet</button>
+                        </div>
+                    </form>
+                }
+
+                <div class="mt-3">
+                    @if (reviews.Count == 0)
+                    {
+                        <div class="fd-login-hint">Henüz yorum yok.</div>
+                    }
+                    else
+                    {
+                        foreach (var r in reviews)
+                        {
+                            <div class="border rounded p-3 mb-2">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <div><strong>@r.MemberFullName</strong></div>
+                                        <div>Puan: @r.Rating</div>
+                                        <div class="text-muted">@r.CreatedAt.ToString("dd.MM.yyyy HH:mm")</div>
+                                    </div>
+
+                                    @if (loggedIn && r.IsOwner)
+                                    {
+                                        <form asp-controller="Product" asp-action="DeleteReview" method="post">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="movieId" value="@Model.Id" />
+                                            <input type="hidden" name="reviewId" value="@r.Id" />
+                                            <button type="submit" class="btn btn-outline-danger btn-sm">Sil</button>
+                                        </form>
+                                    }
+                                </div>
+
+                                @if (!string.IsNullOrWhiteSpace(r.Comment))
+                                {
+                                    <div class="mt-2">@r.Comment</div>
+                                }
+                            </div>
+                        }
+                    }
+                </div>
             </div>
 
             @if (Model.CategoryNames != null && Model.CategoryNames.Count > 0)

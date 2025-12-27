@@ -8,7 +8,6 @@ namespace Domain.Entities
         public string LastName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
 
-        //Identity bağlantısı
         public string IdentityUserId { get; set; } = string.Empty;
 
         public string Password { get; set; } = string.Empty;
@@ -22,5 +21,6 @@ namespace Domain.Entities
         public MemberStatus Status { get; set; } = MemberStatus.Active;
 
         public ICollection<DeliveryRequest> DeliveryRequests { get; set; } = new List<DeliveryRequest>();
+        public ICollection<Review> Reviews { get; set; } = new List<Review>();
     }
 }

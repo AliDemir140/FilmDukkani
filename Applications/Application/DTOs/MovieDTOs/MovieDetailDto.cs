@@ -24,6 +24,9 @@
         public string? TrailerUrl { get; set; }
         public string? CoverImageUrl { get; set; }
 
+        public double AverageRating { get; set; }
+        public int ReviewCount { get; set; }
+
         public List<string> Actors { get; set; } = new();
         public List<string> Directors { get; set; } = new();
         public List<MovieAwardInfoDto> Awards { get; set; } = new();
