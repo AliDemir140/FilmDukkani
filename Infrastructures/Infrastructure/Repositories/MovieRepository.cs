@@ -92,6 +92,32 @@ namespace Infrastructure.Repositories
                 .ToListAsync();
         }
 
+        public async Task<List<Movie>> SearchMoviesAsync(int? categoryId, string? q)
+        {
+            var query = _context.Movies
+                .AsNoTracking()
+                .Include(m => m.MovieCategories)
+                .ThenInclude(mc => mc.Category)
+                .AsQueryable();
+
+            if (categoryId.HasValue && categoryId.Value > 0)
+            {
+                query = query.Where(m => m.MovieCategories.Any(mc => mc.CategoryId == categoryId.Value));
+            }
+
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                var keyword = q.Trim();
+
+                query = query.Where(m =>
+                    (m.Title != null && EF.Functions.Like(m.Title, "%" + keyword + "%")) ||
+                    (m.OriginalTitle != null && EF.Functions.Like(m.OriginalTitle, "%" + keyword + "%"))
+                );
+            }
+
+            return await query.ToListAsync();
+        }
+
         public async Task<List<Movie>> GetTopRentedMoviesAsync(int take)
         {
             if (take <= 0) take = 10;
