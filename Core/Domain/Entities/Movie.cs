@@ -21,7 +21,7 @@ namespace Domain.Entities
 
         public bool IsEditorsChoice { get; set; }
         public bool IsNewRelease { get; set; }
-
+        public bool IsAwardWinner { get; set; }
         public ICollection<MovieCategory> MovieCategories { get; set; } = new List<MovieCategory>();
 
         public ICollection<MovieActor> MovieActors { get; set; } = new List<MovieActor>();

@@ -24,7 +24,8 @@ namespace MVC.Controllers
             {
                 EditorsChoice = await _movieApiService.GetEditorsChoiceAsync(),
                 NewReleases = await _movieApiService.GetNewReleasesAsync(),
-                TopRented = await _movieApiService.GetTopRentedAsync(10)
+                TopRented = await _movieApiService.GetTopRentedAsync(10),
+                AwardWinners = await _movieApiService.GetAwardWinnersAsync(10)
             };
 
             return View(model);

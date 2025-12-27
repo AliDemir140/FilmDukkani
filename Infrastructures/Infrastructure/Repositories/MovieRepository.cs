@@ -153,5 +153,21 @@ namespace Infrastructure.Repositories
                 .OrderBy(m => order.TryGetValue(m.ID, out var idx) ? idx : int.MaxValue)
                 .ToList();
         }
+
+        public async Task<List<Movie>> GetAwardWinnersAsync(int take)
+        {
+            if (take <= 0) take = 10;
+
+            return await _context.Movies
+                .AsNoTracking()
+                .Include(m => m.MovieCategories)
+                    .ThenInclude(mc => mc.Category)
+                .Where(m => m.IsAwardWinner)
+                .OrderByDescending(m => m.ID)
+                .Take(take)
+                .ToListAsync();
+        }
+
+
     }
 }

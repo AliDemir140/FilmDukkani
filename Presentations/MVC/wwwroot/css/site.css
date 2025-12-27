@@ -805,3 +805,44 @@ body {
     .fd-modal .text-muted {
         color: rgba(154,167,189,.9) !important;
     }
+
+.fd-chip--new {
+    background: linear-gradient(135deg, rgba(124,92,255,.35), rgba(255,255,255,.08));
+    border-color: rgba(124,92,255,.35);
+}
+
+.fd-chip--top {
+    background: linear-gradient(135deg, rgba(255,45,45,.30), rgba(255,193,7,.18));
+    border-color: rgba(255,193,7,.25);
+}
+
+
+.fd-chip--editors {
+    background: linear-gradient(135deg, rgba(255,215,0,.22), rgba(255,45,45,.10));
+    border-color: rgba(255,215,0,.35);
+}
+
+.fd-chip--award {
+    background: linear-gradient(135deg, #FFD700, #FF9F00);
+    color: #1a1200;
+    border-color: rgba(255,215,0,.6);
+    box-shadow: 0 0 0 4px rgba(255,215,0,.15);
+}
+
+.fd-award {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    background: rgba(0,0,0,.25);
+    border: 1px solid rgba(255,255,255,.14);
+    color: rgba(255,255,255,.92);
+}
+
+.fd-catalog-wrap .btn.btn-sm {
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-weight: 650;
+}

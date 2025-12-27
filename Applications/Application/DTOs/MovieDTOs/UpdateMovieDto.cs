@@ -10,7 +10,7 @@ namespace Application.DTOs.MovieDTOs
 
         [Required(ErrorMessage = "Film adı zorunludur.")]
         [MaxLength(200, ErrorMessage = "Film adı en fazla 200 karakter olabilir.")]
-        public string Title { get; set; }
+        public string Title { get; set; } = string.Empty;
 
         [MaxLength(200, ErrorMessage = "Orijinal ad en fazla 200 karakter olabilir.")]
         public string? OriginalTitle { get; set; }
@@ -44,6 +44,9 @@ namespace Application.DTOs.MovieDTOs
 
         public bool IsEditorsChoice { get; set; }
         public bool IsNewRelease { get; set; }
+
+        // Ödüllü film işaretlemesi
+        public bool IsAwardWinner { get; set; }
 
         [Required(ErrorMessage = "En az 1 kategori seçmelisiniz.")]
         public List<int> CategoryIds { get; set; } = new();

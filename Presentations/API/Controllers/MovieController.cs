@@ -43,6 +43,14 @@ namespace API.Controllers
             return Ok(movies);
         }
 
+        [HttpGet("showcase/award-winners")]
+        public async Task<IActionResult> GetAwardWinners([FromQuery] int take = 10)
+        {
+            var movies = await _movieServiceManager.GetAwardWinnersAsync(take);
+            return Ok(movies);
+        }
+
+
         [HttpPost("add-movie")]
         public async Task<IActionResult> AddMovie([FromBody] CreateMovieDto movieDto)
         {
