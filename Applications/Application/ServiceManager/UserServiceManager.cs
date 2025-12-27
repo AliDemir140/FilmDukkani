@@ -34,9 +34,11 @@ namespace Application.ServiceManager
             _memberRepository = memberRepository;
         }
 
-        // REGISTER
         public async Task<(bool Success, string Message)> RegisterAsync(RegisterUserDTO dto)
         {
+            if (!dto.ContractAccepted)
+                return (false, "Sözleşme onayı zorunludur.");
+
             if (await _userManager.FindByEmailAsync(dto.Email) != null)
                 return (false, "Bu email adresi zaten kullanılıyor.");
 
@@ -46,29 +48,38 @@ namespace Application.ServiceManager
             var user = new IdentityUser
             {
                 UserName = dto.UserName,
-                Email = dto.Email
+                Email = dto.Email,
+                PhoneNumber = dto.Phone
             };
 
             var result = await _userManager.CreateAsync(user, dto.Password);
             if (!result.Succeeded)
                 return (false, string.Join(", ", result.Errors.Select(e => e.Description)));
 
-            // DEFAULT ROLE
             if (!await _roleManager.RoleExistsAsync("User"))
                 await _roleManager.CreateAsync(new IdentityRole("User"));
 
             await _userManager.AddToRoleAsync(user, "User");
 
-            // MEMBER OLUŞTUR
             var member = new Member
             {
-                FirstName = dto.UserName,
-                LastName = dto.UserName,
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
                 Email = dto.Email,
+                Phone = dto.Phone,
                 IdentityUserId = user.Id,
-                MembershipPlanId = 1, // default plan
+                MembershipPlanId = 1,
                 MembershipStartDate = DateTime.Today,
-                Status = MemberStatus.Active
+                Status = MemberStatus.Active,
+
+                AddressLine = dto.AddressLine,
+                City = dto.City,
+                District = dto.District,
+                PostalCode = dto.PostalCode,
+
+                ContractAccepted = true,
+                ContractAcceptedAt = DateTime.UtcNow,
+                ContractVersion = string.IsNullOrWhiteSpace(dto.ContractVersion) ? "v1" : dto.ContractVersion.Trim()
             };
 
             await _memberRepository.AddAsync(member);
@@ -76,7 +87,6 @@ namespace Application.ServiceManager
             return (true, "Kullanıcı başarıyla oluşturuldu.");
         }
 
-        // LOGIN
         public async Task<(bool Success, string Message, LoginResponseDTO Data)> LoginAsync(LoginRequestDTO dto)
         {
             IdentityUser? user =
@@ -104,14 +114,13 @@ namespace Application.ServiceManager
             {
                 Token = token,
                 UserId = user.Id,
-                UserName = user.UserName,
+                UserName = user.UserName ?? string.Empty,
                 Role = role
             };
 
             return (true, "Giriş başarılı.", response);
         }
 
-        // JWT
         private string GenerateToken(IdentityUser user, string role)
         {
             var jwtSection = _configuration.GetSection("Jwt");

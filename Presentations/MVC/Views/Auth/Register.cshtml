@@ -1,32 +1,181 @@
-﻿@model Application.DTOs.UserDTOs.RegisterUserDTO
+﻿@using Application.DTOs.UserDTOs
+@model RegisterUserDTO
 
 @{
     ViewData["Title"] = "Kayıt Ol";
 }
 
-<h3 class="mb-3">Kayıt Ol</h3>
+<div class="container py-4" style="max-width: 720px;">
+    <h3 class="mb-3">Kayıt Ol</h3>
 
-<form asp-action="Register" method="post">
-    <div class="mb-3">
-        <label class="form-label">Kullanıcı Adı</label>
-        <input asp-for="UserName" class="form-control" />
-        <span asp-validation-for="UserName" class="text-danger"></span>
-    </div>
+    <form asp-action="Register" method="post">
+        @Html.AntiForgeryToken()
 
-    <div class="mb-3">
-        <label class="form-label">E-posta</label>
-        <input asp-for="Email" class="form-control" />
-        <span asp-validation-for="Email" class="text-danger"></span>
-    </div>
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
 
-    <div class="mb-3">
-        <label class="form-label">Şifre</label>
-        <input asp-for="Password" type="password" class="form-control" />
-        <span asp-validation-for="Password" class="text-danger"></span>
-    </div>
+        <div class="row g-3">
+            <div class="col-12 col-md-6">
+                <label class="form-label">Ad</label>
+                <input class="form-control" asp-for="FirstName" />
+                <span class="text-danger" asp-validation-for="FirstName"></span>
+            </div>
 
-    <button type="submit" class="btn btn-danger">Kayıt Ol</button>
-</form>
+            <div class="col-12 col-md-6">
+                <label class="form-label">Soyad</label>
+                <input class="form-control" asp-for="LastName" />
+                <span class="text-danger" asp-validation-for="LastName"></span>
+            </div>
+
+            <div class="col-12 col-md-6">
+                <label class="form-label">Kullanıcı Adı</label>
+                <input class="form-control" asp-for="UserName" />
+                <span class="text-danger" asp-validation-for="UserName"></span>
+            </div>
+
+            <div class="col-12 col-md-6">
+                <label class="form-label">Email</label>
+                <input class="form-control" asp-for="Email" />
+                <span class="text-danger" asp-validation-for="Email"></span>
+            </div>
+
+            <div class="col-12 col-md-6">
+                <label class="form-label">Telefon</label>
+                <input class="form-control" asp-for="Phone" />
+                <span class="text-danger" asp-validation-for="Phone"></span>
+            </div>
+
+            <div class="col-12 col-md-6">
+                <label class="form-label">Şifre</label>
+                <input class="form-control" asp-for="Password" type="password" />
+                <span class="text-danger" asp-validation-for="Password"></span>
+            </div>
+
+            <div class="col-12">
+                <label class="form-label">Adres</label>
+                <input class="form-control" asp-for="AddressLine" />
+                <span class="text-danger" asp-validation-for="AddressLine"></span>
+            </div>
+
+            <div class="col-12 col-md-4">
+                <label class="form-label">İl</label>
+                <input class="form-control" asp-for="City" />
+                <span class="text-danger" asp-validation-for="City"></span>
+            </div>
+
+            <div class="col-12 col-md-4">
+                <label class="form-label">İlçe</label>
+                <input class="form-control" asp-for="District" />
+                <span class="text-danger" asp-validation-for="District"></span>
+            </div>
+
+            <div class="col-12 col-md-4">
+                <label class="form-label">Posta Kodu</label>
+                <input class="form-control" asp-for="PostalCode" />
+                <span class="text-danger" asp-validation-for="PostalCode"></span>
+            </div>
+
+            <div class="col-12">
+                <input type="hidden" asp-for="ContractVersion" />
+
+                <div class="d-flex align-items-start gap-2 flex-wrap">
+                    <div class="form-check m-0">
+                        <input class="form-check-input" asp-for="ContractAccepted" />
+                        <label class="form-check-label" for="ContractAccepted">
+                            Üyelik sözleşmesini okudum ve kabul ediyorum.
+                        </label>
+                    </div>
+
+                    <button type="button"
+                            class="btn btn-outline-light btn-sm"
+                            data-bs-toggle="modal"
+                            data-bs-target="#contractModal">
+                        Sözleşmeyi görüntüle
+                    </button>
+                </div>
+
+                <span class="text-danger" asp-validation-for="ContractAccepted"></span>
+            </div>
+
+            <div class="modal fade" id="contractModal" tabindex="-1" aria-labelledby="contractModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                    <div class="modal-content fd-modal">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="contractModalLabel">Üyelik Sözleşmesi</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            <p class="text-muted mb-3">Versiyon: v1</p>
+
+                            <h6 class="mb-2">1. Taraflar</h6>
+                            <p>
+                                Bu sözleşme FilmDukkani (“Hizmet Sağlayıcı”) ile kullanıcı (“Üye”) arasında,
+                                üyelik ve kiralama hizmetlerinin kullanım koşullarını belirlemek amacıyla düzenlenmiştir.
+                            </p>
+
+                            <h6 class="mb-2">2. Hizmetin Kapsamı</h6>
+                            <p>
+                                Üye, FilmDukkani üzerinden film kataloglarını görüntüleyebilir, liste oluşturabilir, teslimat talebi oluşturabilir
+                                ve üyelik planına göre kiralama hizmetinden yararlanabilir.
+                            </p>
+
+                            <h6 class="mb-2">3. Üyelik Koşulları</h6>
+                            <ul>
+                                <li>Üye, kayıt sırasında verdiği bilgilerin doğru olduğunu kabul eder.</li>
+                                <li>Üye hesabı kişiseldir, devredilemez.</li>
+                                <li>Üye, hesabının güvenliğinden sorumludur.</li>
+                            </ul>
+
+                            <h6 class="mb-2">4. Teslimat ve Kullanım</h6>
+                            <ul>
+                                <li>Teslimat tarihleri sistem kuralları kapsamında seçilir.</li>
+                                <li>Üye, teslim aldığı ürünleri iade süreçlerine uygun şekilde geri göndermekle yükümlüdür.</li>
+                            </ul>
+
+                            <h6 class="mb-2">5. Yorum ve Puanlama</h6>
+                            <ul>
+                                <li>Üye, yorumlarında hakaret, nefret söylemi, spam içerik paylaşamaz.</li>
+                                <li>Hizmet Sağlayıcı, kurallara aykırı içerikleri silebilir.</li>
+                            </ul>
+
+                            <h6 class="mb-2">6. Kişisel Veriler</h6>
+                            <p>
+                                Üye’nin iletişim ve adres bilgileri, teslimat ve üyelik işlemleri için işlenir.
+                                Üye, gerekli durumlarda bilgilendirme yapılabileceğini kabul eder.
+                            </p>
+
+                            <h6 class="mb-2">7. Fesih</h6>
+                            <p>
+                                Üye dilediği zaman üyeliğini sonlandırabilir. Hizmet Sağlayıcı, kötüye kullanım durumlarında üyeliği askıya alabilir.
+                            </p>
+
+                            <h6 class="mb-2">8. Yürürlük</h6>
+                            <p class="mb-0">
+                                Üye, “okudum ve kabul ediyorum” seçeneğini işaretlediğinde sözleşme yürürlüğe girer.
+                            </p>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-light" data-bs-dismiss="modal">Kapat</button>
+                            <button type="button"
+                                    class="btn btn-danger"
+                                    data-bs-dismiss="modal"
+                                    onclick="document.getElementById('ContractAccepted').checked = true;">
+                                Okudum, kabul ediyorum
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="col-12 d-flex gap-2">
+                <button class="btn btn-danger" type="submit">Kayıt Ol</button>
+                <a class="btn btn-outline-light" asp-action="Login">Giriş Yap</a>
+            </div>
+        </div>
+    </form>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

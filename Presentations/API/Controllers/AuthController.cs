@@ -17,7 +17,6 @@ namespace API.Controllers
             _userServiceManager = userServiceManager;
         }
 
-        // REGISTER
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterUserDTO dto)
         {
@@ -32,7 +31,6 @@ namespace API.Controllers
             return Ok(new { message = result.Message });
         }
 
-        // LOGIN
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDTO dto)
         {
@@ -47,7 +45,6 @@ namespace API.Controllers
             return Ok(result.Data);
         }
 
-        // TOKEN TEST (Authorize)
         [HttpGet("me")]
         [Authorize]
         public IActionResult Me()

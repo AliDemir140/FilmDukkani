@@ -40,12 +40,10 @@ namespace MVC.Controllers
             {
                 var client = _httpClientFactory.CreateClient();
 
-                // 1) LOGIN
                 using var response = await client.PostAsJsonAsync($"{apiBaseUrl}/api/auth/login", model);
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    // API bazen { message: "..." } döner, onu yakalamaya çalışalım (yakalanamazsa generic)
                     var apiMsg = await TryReadMessageAsync(response);
                     ModelState.AddModelError("", apiMsg ?? "Kullanıcı adı veya şifre hatalı.");
                     return View(model);
@@ -59,20 +57,17 @@ namespace MVC.Controllers
                     return View(model);
                 }
 
-                // Session kayıtları
                 HttpContext.Session.SetString(SessionKeys.JwtToken, loginResponse.Token);
                 HttpContext.Session.SetString(SessionKeys.UserId, loginResponse.UserId ?? string.Empty);
                 HttpContext.Session.SetString(SessionKeys.UserName, loginResponse.UserName ?? string.Empty);
                 HttpContext.Session.SetString(SessionKeys.Role, loginResponse.Role ?? "User");
 
-                // 2) MEMBER ID çek (404 gelirse site çökmesin)
                 using var memberRes = await client.GetAsync($"{apiBaseUrl}/api/members/by-user/{loginResponse.UserId}");
 
                 if (!memberRes.IsSuccessStatusCode)
                 {
                     HttpContext.Session.Clear();
 
-                    // 404 ise özel mesaj
                     if ((int)memberRes.StatusCode == 404)
                     {
                         ModelState.AddModelError("",
@@ -131,7 +126,7 @@ namespace MVC.Controllers
         [HttpGet]
         public IActionResult Register()
         {
-            return View();
+            return View(new RegisterUserDTO { ContractVersion = "v1" });
         }
 
         [HttpPost]
@@ -185,7 +180,6 @@ namespace MVC.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-        // API response içinde { message: "..."} varsa okumayı dener
         private static async Task<string?> TryReadMessageAsync(HttpResponseMessage response)
         {
             try
@@ -193,7 +187,6 @@ namespace MVC.Controllers
                 var obj = await response.Content.ReadFromJsonAsync<Dictionary<string, object>>();
                 if (obj == null) return null;
 
-                // message / Message anahtarlarını destekle
                 if (obj.TryGetValue("message", out var m1) && m1 != null)
                     return m1.ToString();
 
