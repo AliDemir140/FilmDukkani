@@ -1,4 +1,5 @@
 ﻿using Application.DTOs.MemberMovieListDTOs;
+using Application.DTOs.MovieDTOs;
 using Application.DTOs.ReviewDTOs;
 using Application.ServiceManager;
 using Microsoft.AspNetCore.Mvc;
@@ -28,15 +29,45 @@ namespace MVC.Controllers
             _configuration = configuration;
         }
 
-        public async Task<IActionResult> Index(int? categoryId, string? q)
+        public async Task<IActionResult> Index(int? categoryId, string? q, string? showcase)
         {
             var categories = await _categoryService.GetCategoriesAsync();
             ViewBag.Categories = new SelectList(categories, "Id", "CategoryName", categoryId);
 
-            var movies = await _movieService.SearchMoviesAsync(categoryId, q);
+            showcase = NormalizeShowcase(showcase);
+
+            List<MovieDto> movies;
+
+            switch (showcase)
+            {
+                case "award":
+                    movies = await _movieService.GetAwardWinnersAsync(200);
+                    movies = ApplyCategoryAndQueryFilter(movies, categoryId, q);
+                    break;
+
+                case "top":
+                    movies = await _movieService.GetTopRentedAsync(200);
+                    movies = ApplyCategoryAndQueryFilter(movies, categoryId, q);
+                    break;
+
+                case "editors":
+                    movies = await _movieService.GetEditorsChoiceAsync();
+                    movies = ApplyCategoryAndQueryFilter(movies, categoryId, q);
+                    break;
+
+                case "new":
+                    movies = await _movieService.GetNewReleasesAsync();
+                    movies = ApplyCategoryAndQueryFilter(movies, categoryId, q);
+                    break;
+
+                default:
+                    movies = await _movieService.SearchMoviesAsync(categoryId, q);
+                    break;
+            }
 
             ViewBag.Query = q ?? "";
             ViewBag.SelectedCategoryId = categoryId;
+            ViewBag.Showcase = showcase;
 
             await LoadMemberListsForViewAsync();
             return View(movies);
@@ -282,6 +313,50 @@ namespace MVC.Controllers
             {
                 ViewBag.Reviews = new List<ReviewDto>();
             }
+        }
+
+        private static string NormalizeShowcase(string? showcase)
+        {
+            showcase = (showcase ?? "").Trim().ToLowerInvariant();
+
+            return showcase switch
+            {
+                "award" => "award",
+                "top" => "top",
+                "editors" => "editors",
+                "new" => "new",
+                _ => ""
+            };
+        }
+
+        private static List<MovieDto> ApplyCategoryAndQueryFilter(List<MovieDto> source, int? categoryId, string? q)
+        {
+            var query = (q ?? "").Trim();
+
+            var list = source ?? new List<MovieDto>();
+
+            if (categoryId.HasValue && categoryId.Value > 0)
+            {
+                var cid = categoryId.Value;
+
+                list = list.Where(m =>
+                        (m.CategoryIds != null && m.CategoryIds.Contains(cid))
+                        || m.CategoryId == cid
+                    )
+                    .ToList();
+            }
+
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                list = list.Where(m =>
+                        (!string.IsNullOrWhiteSpace(m.Title) && m.Title.Contains(query, StringComparison.OrdinalIgnoreCase))
+                        || (!string.IsNullOrWhiteSpace(m.OriginalTitle) && m.OriginalTitle.Contains(query, StringComparison.OrdinalIgnoreCase))
+                        || (!string.IsNullOrWhiteSpace(m.Description) && m.Description.Contains(query, StringComparison.OrdinalIgnoreCase))
+                    )
+                    .ToList();
+            }
+
+            return list;
         }
     }
 }

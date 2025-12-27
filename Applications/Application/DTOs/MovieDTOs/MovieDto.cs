@@ -20,6 +20,8 @@
         public bool IsEditorsChoice { get; set; }
         public bool IsNewRelease { get; set; }
 
+        public bool IsAwardWinner { get; set; }
+
         public int CategoryId { get; set; }
         public string? CategoryName { get; set; }
 

@@ -12,5 +12,7 @@ namespace Application.Repositories
 
         Task<List<Movie>> SearchMoviesAsync(int? categoryId, string? q);
         Task<List<Movie>> GetTopRentedMoviesAsync(int take);
+
+        Task<List<Movie>> GetAwardWinnersAsync(int take);
     }
 }

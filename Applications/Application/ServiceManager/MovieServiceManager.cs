@@ -50,6 +50,11 @@ namespace Application.ServiceManager
             return MapToMovieDtoList(movies);
         }
 
+        public async Task<List<MovieDto>> GetAwardWinnersAsync(int take = 10)
+        {
+            var movies = await _movieRepository.GetAwardWinnersAsync(take);
+            return MapToMovieDtoList(movies);
+        }
 
         public async Task<bool> AddMovie(CreateMovieDto dto)
         {
@@ -82,6 +87,9 @@ namespace Application.ServiceManager
                 Supplier = dto.Supplier,
                 IsEditorsChoice = dto.IsEditorsChoice,
                 IsNewRelease = dto.IsNewRelease,
+
+                IsAwardWinner = dto.IsAwardWinner,
+
                 MovieCategories = distinctIds.Select(cid => new MovieCategory
                 {
                     CategoryId = cid
@@ -119,6 +127,7 @@ namespace Application.ServiceManager
                 Supplier = movie.Supplier,
                 IsEditorsChoice = movie.IsEditorsChoice,
                 IsNewRelease = movie.IsNewRelease,
+                IsAwardWinner = movie.IsAwardWinner,
                 CategoryIds = categoryIds
             };
         }
@@ -150,6 +159,7 @@ namespace Application.ServiceManager
                 ReleaseYear = movie.ReleaseYear,
                 IsEditorsChoice = movie.IsEditorsChoice,
                 IsNewRelease = movie.IsNewRelease,
+                IsAwardWinner = movie.IsAwardWinner,
                 CategoryIds = categoryIds,
                 CategoryNames = categoryNames,
                 CategoryId = categoryIds.FirstOrDefault(),
@@ -174,9 +184,12 @@ namespace Application.ServiceManager
             if (movie == null)
                 return false;
 
-            await _movieRepository.DeleteAsync(movie);
+            movie.Status = Domain.Enums.MovieStatus.Inactive;
+
+            await _movieRepository.UpdateAsync(movie);
             return true;
         }
+
 
         public async Task<bool> UpdateMovie(UpdateMovieDto dto)
         {
@@ -211,6 +224,7 @@ namespace Application.ServiceManager
             movie.Supplier = dto.Supplier;
             movie.IsEditorsChoice = dto.IsEditorsChoice;
             movie.IsNewRelease = dto.IsNewRelease;
+            movie.IsAwardWinner = dto.IsAwardWinner;
 
             movie.MovieCategories ??= new List<MovieCategory>();
 
@@ -267,6 +281,7 @@ namespace Application.ServiceManager
                         Supplier = m.Supplier,
                         IsEditorsChoice = m.IsEditorsChoice,
                         IsNewRelease = m.IsNewRelease,
+                        IsAwardWinner = m.IsAwardWinner,
                         CategoryIds = categoryIds,
                         CategoryNames = categoryNames,
                         CategoryId = categoryIds.FirstOrDefault(),

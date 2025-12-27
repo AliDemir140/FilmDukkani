@@ -1,5 +1,4 @@
 ﻿using Application.DTOs.MovieDTOs;
-using System.Collections.Generic;
 
 namespace MVC.Models
 {
@@ -8,5 +7,7 @@ namespace MVC.Models
         public List<MovieDto> EditorsChoice { get; set; } = new();
         public List<MovieDto> NewReleases { get; set; } = new();
         public List<MovieDto> TopRented { get; set; } = new();
+
+        public List<MovieDto> AwardWinners { get; set; } = new();
     }
 }

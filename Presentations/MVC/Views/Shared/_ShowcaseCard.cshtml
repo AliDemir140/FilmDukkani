@@ -2,10 +2,22 @@
 @model MovieDto
 
 @{
-    var chip = ViewData["Chip"] as string ?? "Detay";
+    var chip = (ViewData["Chip"]?.ToString() ?? "Detay").Trim();
+
     var cover = !string.IsNullOrWhiteSpace(Model.CoverImageUrl)
         ? Model.CoverImageUrl
         : $"https://picsum.photos/400/600?random={Model.Id}";
+
+    var hasAward = Model.IsAwardWinner;
+
+    var chipClass = chip switch
+    {
+        "Editör" => "fd-chip fd-chip--editors",
+        "Yeni" => "fd-chip fd-chip--new",
+        "Top" => "fd-chip fd-chip--top",
+        "Ödüllü" => "fd-chip fd-chip--award",
+        _ => "fd-chip"
+    };
 }
 
 <a class="fd-cardlink"
@@ -16,7 +28,38 @@
 
     <div class="fd-card">
         <div class="fd-poster">
-            <div class="fd-chip">@chip</div>
+
+            <div class="@chipClass">
+                @if (chip == "Editör")
+                {
+                    <i class="fa-solid fa-star me-1"></i>
+                }
+                else if (chip == "Yeni")
+                {
+                    <i class="fa-solid fa-bolt me-1"></i>
+                }
+                else if (chip == "Top")
+                {
+                    <i class="fa-solid fa-fire me-1"></i>
+                }
+                else if (chip == "Ödüllü")
+                {
+                    <i class="fa-solid fa-award me-1"></i>
+                }
+
+                @chip
+
+                @if (hasAward)
+                {
+                    <span class="ms-2 fd-award"
+                          data-bs-toggle="tooltip"
+                          data-bs-placement="bottom"
+                          title="Kazanan Film">
+                        <i class="fa-solid fa-trophy"></i>
+                    </span>
+                }
+            </div>
+
             <div class="fd-play">▶</div>
 
             <img src="@cover" alt="@Model.Title" loading="lazy" />
