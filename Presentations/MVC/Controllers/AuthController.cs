@@ -71,7 +71,7 @@ namespace MVC.Controllers
                     if ((int)memberRes.StatusCode == 404)
                     {
                         ModelState.AddModelError("",
-                            "Üye kaydı bulunamadı (Member). Kayıt işlemi eksik kalmış olabilir.");
+                            "Üye kaydı bulunamadı. Kayıt işlemi eksik kalmış olabilir.");
                         return View(model);
                     }
 

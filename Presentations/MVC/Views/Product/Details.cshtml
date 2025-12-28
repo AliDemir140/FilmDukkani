@@ -143,6 +143,39 @@
                             </div>
                         </form>
                     </div>
+
+                    <div class="fd-panel mt-3">
+                        <div class="fd-panel-title">Film İste</div>
+
+                        <form asp-controller="PurchaseRequest" asp-action="Create" method="post" class="mt-2">
+                            @Html.AntiForgeryToken()
+
+                            <input type="hidden" name="movieId" value="@Model.Id" />
+                            <input type="hidden" name="returnUrl" value="@returnUrl" />
+
+                            <div class="fd-actions">
+                                <input class="form-control"
+                                       name="quantity"
+                                       type="number"
+                                       min="1"
+                                       value="1"
+                                       style="max-width:140px;" />
+
+                                <input class="form-control"
+                                       name="note"
+                                       maxlength="500"
+                                       placeholder="Not (opsiyonel)" />
+
+                                <button type="submit" class="btn btn-warning">
+                                    Film İste
+                                </button>
+                            </div>
+                        </form>
+
+                        <div class="fd-subtle mt-2">
+                            Bu talep admin onayına düşer. Onaylanırsa depoya alım planlanır.
+                        </div>
+                    </div>
                 }
             </div>
 

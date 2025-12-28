@@ -1,0 +1,85 @@
+﻿@using Domain.Enums
+@using Application.DTOs.PurchaseRequestDTOs
+@model List<PurchaseRequestDto>
+
+@{
+    ViewData["Title"] = "İsteklerim";
+}
+
+<div class="container py-4">
+
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h3 class="mb-0">Film İsteklerim</h3>
+        <a class="btn btn-outline-light"
+           asp-controller="Product"
+           asp-action="Index">
+            Filmlere Dön
+        </a>
+    </div>
+
+    @if (Model == null || Model.Count == 0)
+    {
+        <div class="fd-empty2">Henüz bir film isteğin yok.</div>
+    }
+    else
+    {
+        <div class="card shadow-sm rounded-3">
+            <div class="card-body">
+
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Film</th>
+                                <th>Adet</th>
+                                <th>Durum</th>
+                                <th>Talep Tarihi</th>
+                                <th>Karar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var x in Model)
+                            {
+                                string badge = x.Status switch
+                                {
+                                    PurchaseRequestStatus.Pending => "bg-warning text-dark",
+                                    PurchaseRequestStatus.Approved => "bg-success",
+                                    PurchaseRequestStatus.Rejected => "bg-danger",
+                                    _ => "bg-secondary"
+                                };
+
+                                <tr>
+                                    <td>@x.Id</td>
+                                    <td class="fw-semibold">@x.MovieTitle</td>
+                                    <td>@x.Quantity</td>
+                                    <td>
+                                        <span class="badge @badge">@x.Status</span>
+                                    </td>
+                                    <td>@x.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                                    <td>
+                                        @if (x.DecisionAt.HasValue)
+                                        {
+                                            <div class="small">
+                                                <div>@x.DecisionAt.Value.ToString("dd.MM.yyyy HH:mm")</div>
+                                                @if (!string.IsNullOrWhiteSpace(x.DecisionNote))
+                                                {
+                                                    <div class="text-muted">@x.DecisionNote</div>
+                                                }
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Beklemede</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    }
+</div>

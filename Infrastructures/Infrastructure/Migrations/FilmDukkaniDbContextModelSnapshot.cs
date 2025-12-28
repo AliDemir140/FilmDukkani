@@ -738,6 +738,52 @@ namespace Infrastructure.Migrations
                     b.ToTable("MovieDirectors");
                 });
 
+            modelBuilder.Entity("Domain.Entities.PurchaseRequest", b =>
+                {
+                    b.Property<int>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"));
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DecisionAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DecisionNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("MemberId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ModifiedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("MovieId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<byte>("Status")
+                        .HasColumnType("tinyint");
+
+                    b.HasKey("ID");
+
+                    b.HasIndex("MemberId");
+
+                    b.HasIndex("MovieId");
+
+                    b.ToTable("PurchaseRequests");
+                });
+
             modelBuilder.Entity("Domain.Entities.Review", b =>
                 {
                     b.Property<int>("ID")
@@ -1200,6 +1246,25 @@ namespace Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Director");
+
+                    b.Navigation("Movie");
+                });
+
+            modelBuilder.Entity("Domain.Entities.PurchaseRequest", b =>
+                {
+                    b.HasOne("Domain.Entities.Member", "Member")
+                        .WithMany()
+                        .HasForeignKey("MemberId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Movie", "Movie")
+                        .WithMany()
+                        .HasForeignKey("MovieId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Member");
 
                     b.Navigation("Movie");
                 });
