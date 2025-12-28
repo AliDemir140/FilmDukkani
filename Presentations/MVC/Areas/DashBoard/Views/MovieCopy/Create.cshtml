@@ -35,16 +35,14 @@
     </div>
 
     <div class="mb-3">
-        <label asp-for="Barcode" class="form-label"></label>
-        <input asp-for="Barcode" class="form-control" />
+        <label asp-for="Barcode" class="form-label">Barkod</label>
+        <input asp-for="Barcode" class="form-control" placeholder="Boş bırakılırsa otomatik üretilir" />
         <span asp-validation-for="Barcode" class="text-danger"></span>
     </div>
 
-    <!-- Durum seçimi (tek seçim) -->
     <div class="mb-3">
         <label class="form-label">Durum</label>
 
-        <!-- Varsayılan: Uygun -->
         <input type="hidden" id="IsAvailable" name="IsAvailable" value="true" />
         <input type="hidden" id="IsDamaged" name="IsDamaged" value="false" />
 
@@ -67,7 +65,6 @@
     <partial name="_ValidationScriptsPartial" />
 
     <script>
-        // radio -> 2 bool'a map
         const availableRadio = document.getElementById('statusAvailable');
         const damagedRadio = document.getElementById('statusDamaged');
         const isAvailable = document.getElementById('IsAvailable');

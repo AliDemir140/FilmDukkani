@@ -63,10 +63,20 @@ namespace MVC.Areas.DashBoard.Controllers
             if (!ModelState.IsValid)
                 return View(dto);
 
-            var ok = await _movieCopyService.AddMovieCopyAsync(dto);
+            if (dto.IsAvailable && dto.IsDamaged)
+            {
+                ModelState.AddModelError("", "Film kopyası aynı anda hem Uygun hem Hasarlı olamaz.");
+                return View(dto);
+            }
+
+            if (dto.IsDamaged)
+                dto.IsAvailable = false;
+
+            var (ok, error) = await _movieCopyService.AddMovieCopyAsync(dto);
+
             if (!ok)
             {
-                ModelState.AddModelError("", "Film bulunamadı veya bilgiler geçersiz.");
+                ModelState.AddModelError("", error);
                 return View(dto);
             }
 
@@ -94,10 +104,20 @@ namespace MVC.Areas.DashBoard.Controllers
             if (!ModelState.IsValid)
                 return View(dto);
 
-            var ok = await _movieCopyService.UpdateMovieCopyAsync(dto);
+            if (dto.IsAvailable && dto.IsDamaged)
+            {
+                ModelState.AddModelError("", "Film kopyası aynı anda hem Uygun hem Hasarlı olamaz.");
+                return View(dto);
+            }
+
+            if (dto.IsDamaged)
+                dto.IsAvailable = false;
+
+            var (ok, error) = await _movieCopyService.UpdateMovieCopyAsync(dto);
+
             if (!ok)
             {
-                ModelState.AddModelError("", "Kopya veya film bulunamadı.");
+                ModelState.AddModelError("", error);
                 return View(dto);
             }
 
