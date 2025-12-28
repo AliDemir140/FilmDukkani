@@ -1,5 +1,6 @@
 ﻿using Application.DTOs.CourierDTOs;
 using Application.ServiceManager;
+using Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
@@ -53,14 +54,18 @@ namespace API.Controllers
             return Ok();
         }
 
-        [HttpGet("{courierId:int}/deliveries")]
-        public async Task<IActionResult> GetDeliveries(int courierId, [FromQuery] DateTime date)
+        [HttpGet("{courierId}/deliveries")]
+        public async Task<IActionResult> GetDeliveries(
+    int courierId,
+    [FromQuery] DateTime date,
+    [FromQuery] DeliveryStatus? status)
         {
             if (courierId <= 0) return BadRequest("courierId zorunludur.");
             if (date == default) date = DateTime.Today;
 
-            var list = await _deliveryService.GetCourierDeliveriesAsync(courierId, date);
+            var list = await _deliveryService.GetCourierDeliveriesAsync(courierId, date, status);
             return Ok(list);
         }
+
     }
 }

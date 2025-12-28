@@ -707,7 +707,7 @@ namespace Application.ServiceManager
             return 1;
         }
 
-        public async Task<List<DeliveryRequestDto>> GetCourierDeliveriesAsync(int courierId, DateTime date)
+        public async Task<List<DeliveryRequestDto>> GetCourierDeliveriesAsync(int courierId, DateTime date, DeliveryStatus? status)
         {
             var courier = await _courierRepository.GetByIdAsync(courierId);
             if (courier == null || !courier.IsActive)
@@ -718,10 +718,14 @@ namespace Application.ServiceManager
             var requests = await _deliveryRequestRepository.GetAllAsync(r =>
                 r.CourierId == courierId &&
                 r.DeliveryDate.Date == target &&
-                (r.Status == DeliveryStatus.Prepared ||
-                 r.Status == DeliveryStatus.Shipped ||
-                 r.Status == DeliveryStatus.Delivered ||
-                 r.Status == DeliveryStatus.Completed));
+                (
+                    status == null
+                        ? (r.Status == DeliveryStatus.Prepared ||
+                           r.Status == DeliveryStatus.Shipped ||
+                           r.Status == DeliveryStatus.Delivered ||
+                           r.Status == DeliveryStatus.Completed)
+                        : r.Status == status.Value
+                ));
 
             var result = new List<DeliveryRequestDto>();
 
@@ -733,5 +737,6 @@ namespace Application.ServiceManager
 
             return result;
         }
+
     }
 }
