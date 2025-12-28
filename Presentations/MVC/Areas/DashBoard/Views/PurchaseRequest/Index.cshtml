@@ -1,0 +1,103 @@
+﻿@using Application.DTOs.PurchaseRequestDTOs
+@using Domain.Enums
+@model List<PurchaseRequestDto>
+
+@{
+    ViewData["Title"] = "Satın Alma Talepleri";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3">
+    <h3 class="mb-0">Satın Alma Talepleri</h3>
+    <a class="btn btn-primary"
+       asp-area="DashBoard"
+       asp-controller="PurchaseRequest"
+       asp-action="Create">Yeni Talep</a>
+</div>
+
+@if (Model == null || Model.Count == 0)
+{
+    <div class="alert alert-info">Kayıt bulunamadı.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Film</th>
+                    <th>Adet</th>
+                    <th>Durum</th>
+                    <th>Oluşturma</th>
+                    <th>Karar</th>
+                    <th style="width:320px;">İşlem</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var x in Model)
+                {
+                    <tr>
+                        <td>@x.Id</td>
+                        <td>@x.MovieTitle</td>
+                        <td>@x.Quantity</td>
+                        <td>
+                            @if (x.Status == PurchaseRequestStatus.Pending)
+                            {
+                                <span class="badge bg-warning text-dark">Bekliyor</span>
+                            }
+                            else if (x.Status == PurchaseRequestStatus.Approved)
+                            {
+                                <span class="badge bg-success">Onaylandı</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger">Reddedildi</span>
+                            }
+                        </td>
+                        <td>@x.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                        <td>
+                            @if (x.DecisionAt.HasValue)
+                            {
+                                <div class="small">@x.DecisionAt.Value.ToString("dd.MM.yyyy HH:mm")</div>
+                                @if (!string.IsNullOrWhiteSpace(x.DecisionNote))
+                                {
+                                    <div class="text-muted small">@x.DecisionNote</div>
+                                }
+                            }
+                        </td>
+                        <td>
+                            @if (x.Status == PurchaseRequestStatus.Pending)
+                            {
+                                <form asp-area="DashBoard"
+                                      asp-controller="PurchaseRequest"
+                                      asp-action="Approve"
+                                      method="post"
+                                      class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@x.Id" />
+                                    <input type="hidden" name="decisionNote" value="Onay" />
+                                    <button class="btn btn-sm btn-success">Onayla</button>
+                                </form>
+
+                                <form asp-area="DashBoard"
+                                      asp-controller="PurchaseRequest"
+                                      asp-action="Reject"
+                                      method="post"
+                                      class="d-inline ms-1">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@x.Id" />
+                                    <input type="hidden" name="decisionNote" value="Red" />
+                                    <button class="btn btn-sm btn-danger">Reddet</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Karar verildi</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

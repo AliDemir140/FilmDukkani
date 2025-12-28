@@ -21,62 +21,65 @@ namespace Infrastructure.Persistence.SeedData
 
         public async Task SeedReferenceDataAsync()
         {
-            if (await _context.Categories.AnyAsync())
-                return;
-
-            var categories = new List<Category>
+            if (!await _context.Categories.AnyAsync())
             {
-                new Category { CategoryName = "Aksiyon" },
-                new Category { CategoryName = "Dram" },
-                new Category { CategoryName = "Komedi" },
-                new Category { CategoryName = "Bilim Kurgu" },
-                new Category { CategoryName = "Korku" },
-                new Category { CategoryName = "Animasyon" },
-                new Category { CategoryName = "Belgesel" },
-                new Category { CategoryName = "Gerilim" }
-            };
+                var categories = new List<Category>
+                {
+                    new Category { CategoryName = "Aksiyon" },
+                    new Category { CategoryName = "Dram" },
+                    new Category { CategoryName = "Komedi" },
+                    new Category { CategoryName = "Bilim Kurgu" },
+                    new Category { CategoryName = "Korku" },
+                    new Category { CategoryName = "Animasyon" },
+                    new Category { CategoryName = "Belgesel" },
+                    new Category { CategoryName = "Gerilim" }
+                };
 
-            await _context.Categories.AddRangeAsync(categories);
-            await _context.SaveChangesAsync();
+                await _context.Categories.AddRangeAsync(categories);
+                await _context.SaveChangesAsync();
+            }
 
-            var plans = new List<MembershipPlan>
+            if (!await _context.MembershipPlans.AnyAsync())
             {
-                new MembershipPlan
+                var plans = new List<MembershipPlan>
                 {
-                    PlanName = "Ekonomik Paket",
-                    Price = 19.90m,
-                    MaxMoviesPerMonth = 16,
-                    MaxChangePerMonth = 8,
-                    Description = "Bir değişimde 2 film"
-                },
-                new MembershipPlan
-                {
-                    PlanName = "3'lü Paket",
-                    Price = 29.90m,
-                    MaxMoviesPerMonth = 24,
-                    MaxChangePerMonth = 8,
-                    Description = "Bir değişimde 3 film"
-                },
-                new MembershipPlan
-                {
-                    PlanName = "4'lü Paket",
-                    Price = 39.90m,
-                    MaxMoviesPerMonth = 32,
-                    MaxChangePerMonth = 8,
-                    Description = "Bir değişimde 4 film"
-                },
-                new MembershipPlan
-                {
-                    PlanName = "Gold Paket",
-                    Price = 49.90m,
-                    MaxMoviesPerMonth = 40,
-                    MaxChangePerMonth = 10,
-                    Description = "Bir değişimde 5 film"
-                }
-            };
+                    new MembershipPlan
+                    {
+                        PlanName = "Ekonomik Paket",
+                        Price = 19.90m,
+                        MaxMoviesPerMonth = 16,
+                        MaxChangePerMonth = 8,
+                        Description = "Bir değişimde 2 film"
+                    },
+                    new MembershipPlan
+                    {
+                        PlanName = "3'lü Paket",
+                        Price = 29.90m,
+                        MaxMoviesPerMonth = 24,
+                        MaxChangePerMonth = 8,
+                        Description = "Bir değişimde 3 film"
+                    },
+                    new MembershipPlan
+                    {
+                        PlanName = "4'lü Paket",
+                        Price = 39.90m,
+                        MaxMoviesPerMonth = 32,
+                        MaxChangePerMonth = 8,
+                        Description = "Bir değişimde 4 film"
+                    },
+                    new MembershipPlan
+                    {
+                        PlanName = "Gold Paket",
+                        Price = 49.90m,
+                        MaxMoviesPerMonth = 40,
+                        MaxChangePerMonth = 10,
+                        Description = "Bir değişimde 5 film"
+                    }
+                };
 
-            await _context.MembershipPlans.AddRangeAsync(plans);
-            await _context.SaveChangesAsync();
+                await _context.MembershipPlans.AddRangeAsync(plans);
+                await _context.SaveChangesAsync();
+            }
         }
 
         public async Task SeedAdminAsync(IConfiguration configuration)
@@ -103,31 +106,53 @@ namespace Infrastructure.Persistence.SeedData
 
                 var createRes = await _userManager.CreateAsync(user, password);
                 if (!createRes.Succeeded)
-                    return;
+                    throw new InvalidOperationException(string.Join(", ", createRes.Errors.Select(x => x.Description)));
             }
 
+            // Role ekleme için RoleManager zaten seeded olmalı
             var roles = await _userManager.GetRolesAsync(user);
             if (!roles.Contains("Admin"))
                 await _userManager.AddToRoleAsync(user, "Admin");
 
-            var memberExists = await _context.Members.AnyAsync(m => m.IdentityUserId == user.Id);
-            if (!memberExists)
+            // Member var mı?
+            var member = await _context.Members.FirstOrDefaultAsync(m => m.IdentityUserId == user.Id);
+
+            if (member == null)
             {
                 int defaultPlanId = await _context.MembershipPlans.Select(x => x.ID).FirstOrDefaultAsync();
                 if (defaultPlanId == 0) defaultPlanId = 1;
 
-                var member = new Member
+                member = new Member
                 {
                     FirstName = firstName,
                     LastName = lastName,
                     Email = email,
                     IdentityUserId = user.Id,
+
+                    Phone = "-",
+                    AddressLine = "-",
+                    City = "-",
+                    District = "-",
+                    PostalCode = "-",
+
+                    ContractAccepted = true,
+                    ContractAcceptedAt = DateTime.UtcNow,
+                    ContractVersion = "v1",
+
                     MembershipPlanId = defaultPlanId,
                     MembershipStartDate = DateTime.Today,
                     Status = MemberStatus.Active
                 };
 
                 await _context.Members.AddAsync(member);
+                await _context.SaveChangesAsync();
+                return;
+            }
+
+            // Member varsa ama IdentityUserId boş kalmışsa düzelt
+            if (string.IsNullOrWhiteSpace(member.IdentityUserId))
+            {
+                member.IdentityUserId = user.Id;
                 await _context.SaveChangesAsync();
             }
         }
@@ -148,7 +173,10 @@ namespace Infrastructure.Persistence.SeedData
                 .RuleFor(m => m.Title, f => f.Lorem.Sentence(3))
                 .RuleFor(m => m.Description, f => f.Lorem.Sentences(2))
                 .RuleFor(m => m.ReleaseYear, f => f.Date.Past(20).Year)
-                .RuleFor(m => m.Status, MovieStatus.Available);
+                .RuleFor(m => m.Status, MovieStatus.Available)
+                .RuleFor(m => m.IsEditorsChoice, f => f.Random.Bool(0.20f))
+                .RuleFor(m => m.IsNewRelease, f => f.Random.Bool(0.20f))
+                .RuleFor(m => m.IsAwardWinner, f => f.Random.Bool(0.15f));
 
             var movies = movieFaker.Generate(50);
 
@@ -160,7 +188,12 @@ namespace Infrastructure.Persistence.SeedData
             foreach (var movie in movies)
             {
                 var pickCount = faker.Random.Int(1, Math.Min(3, categories.Count));
-                var selected = categories.OrderBy(x => Guid.NewGuid()).Take(pickCount).Select(x => x.ID).Distinct().ToList();
+                var selected = categories
+                    .OrderBy(_ => Guid.NewGuid())
+                    .Take(pickCount)
+                    .Select(x => x.ID)
+                    .Distinct()
+                    .ToList();
 
                 foreach (var cid in selected)
                 {

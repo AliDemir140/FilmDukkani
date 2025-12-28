@@ -26,7 +26,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])
+                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "")
             )
         };
     });
@@ -47,24 +47,26 @@ using (var scope = app.Services.CreateScope())
         var context = services.GetRequiredService<FilmDukkaniDbContext>();
         await context.Database.MigrateAsync();
 
-        // ✅ Role seed
+        // Role seed
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         await RoleSeed.SeedAsync(roleManager);
 
-        // ✅ Seed: reference + admin + (dev data)
+        // Seed: reference + admin her ortamda
         var seeder = services.GetRequiredService<DatabaseSeeder>();
         await seeder.SeedReferenceDataAsync();
+        await seeder.SeedAdminAsync(app.Configuration);
 
+        // Dev data sadece development
         if (app.Environment.IsDevelopment())
         {
-            await seeder.SeedAdminAsync(app.Configuration);
             await seeder.SeedDevDataAsync();
         }
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Seed sırasında hata: {ex.Message}");
+        Console.WriteLine(ex.ToString());
     }
+
 }
 
 // Swagger

@@ -153,6 +153,9 @@ namespace Infrastructure.Migrations
                     Barcode = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     Supplier = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     Status = table.Column<byte>(type: "tinyint", nullable: false, defaultValue: (byte)0),
+                    IsEditorsChoice = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    IsNewRelease = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    IsAwardWinner = table.Column<bool>(type: "bit", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
@@ -294,7 +297,14 @@ namespace Infrastructure.Migrations
                     Email = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     IdentityUserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Password = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Phone = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    Phone = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    AddressLine = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    City = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    District = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    PostalCode = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: true),
+                    ContractAccepted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false),
+                    ContractAcceptedAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ContractVersion = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
                     MembershipPlanId = table.Column<int>(type: "int", nullable: false),
                     MembershipStartDate = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Status = table.Column<byte>(type: "tinyint", nullable: false, defaultValue: (byte)0),
@@ -473,6 +483,69 @@ namespace Infrastructure.Migrations
                         name: "FK_MemberMovieLists_Members_MemberId",
                         column: x => x.MemberId,
                         principalTable: "Members",
+                        principalColumn: "ID",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PurchaseRequests",
+                columns: table => new
+                {
+                    ID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    MemberId = table.Column<int>(type: "int", nullable: false),
+                    MovieId = table.Column<int>(type: "int", nullable: false),
+                    Quantity = table.Column<int>(type: "int", nullable: false),
+                    Note = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    Status = table.Column<byte>(type: "tinyint", nullable: false),
+                    DecisionAt = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DecisionNote = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PurchaseRequests", x => x.ID);
+                    table.ForeignKey(
+                        name: "FK_PurchaseRequests_Members_MemberId",
+                        column: x => x.MemberId,
+                        principalTable: "Members",
+                        principalColumn: "ID",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_PurchaseRequests_Movies_MovieId",
+                        column: x => x.MovieId,
+                        principalTable: "Movies",
+                        principalColumn: "ID",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Reviews",
+                columns: table => new
+                {
+                    ID = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    MovieId = table.Column<int>(type: "int", nullable: false),
+                    MemberId = table.Column<int>(type: "int", nullable: false),
+                    Rating = table.Column<byte>(type: "tinyint", nullable: false),
+                    Comment = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ModifiedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Reviews", x => x.ID);
+                    table.ForeignKey(
+                        name: "FK_Reviews_Members_MemberId",
+                        column: x => x.MemberId,
+                        principalTable: "Members",
+                        principalColumn: "ID");
+                    table.ForeignKey(
+                        name: "FK_Reviews_Movies_MovieId",
+                        column: x => x.MovieId,
+                        principalTable: "Movies",
                         principalColumn: "ID",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -769,6 +842,37 @@ namespace Infrastructure.Migrations
                 table: "MovieDirectors",
                 columns: new[] { "MovieId", "DirectorId" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Movies_IsEditorsChoice",
+                table: "Movies",
+                column: "IsEditorsChoice");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Movies_IsNewRelease",
+                table: "Movies",
+                column: "IsNewRelease");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PurchaseRequests_MemberId",
+                table: "PurchaseRequests",
+                column: "MemberId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PurchaseRequests_MovieId",
+                table: "PurchaseRequests",
+                column: "MovieId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Reviews_MemberId",
+                table: "Reviews",
+                column: "MemberId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Reviews_MovieId_MemberId",
+                table: "Reviews",
+                columns: new[] { "MovieId", "MemberId" },
+                unique: true);
         }
 
         /// <inheritdoc />
@@ -806,6 +910,12 @@ namespace Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "MovieDirectors");
+
+            migrationBuilder.DropTable(
+                name: "PurchaseRequests");
+
+            migrationBuilder.DropTable(
+                name: "Reviews");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
