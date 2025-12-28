@@ -21,7 +21,7 @@ namespace MVC.Areas.DashBoard.Controllers
 
         private string? ApiBaseUrl => _configuration["ApiSettings:BaseUrl"];
 
-        public async Task<IActionResult> Distribution(int? courierId, DateTime? date)
+        public async Task<IActionResult> Distribution(int? courierId, DateTime? date, string? status)
         {
             if (string.IsNullOrWhiteSpace(ApiBaseUrl))
                 return BadRequest("ApiSettings:BaseUrl bulunamadı.");
@@ -34,16 +34,22 @@ namespace MVC.Areas.DashBoard.Controllers
             ViewBag.Couriers = couriers;
             ViewBag.SelectedCourierId = courierId;
             ViewBag.SelectedDate = (date ?? DateTime.Today).Date;
+            ViewBag.SelectedStatus = status ?? "";
 
             if (courierId == null || courierId <= 0)
                 return View(new List<DeliveryRequestDto>());
 
             var d = (date ?? DateTime.Today).Date.ToString("yyyy-MM-dd");
-            var deliveries = await client.GetFromJsonAsync<List<DeliveryRequestDto>>(
-                $"{ApiBaseUrl}/api/couriers/{courierId}/deliveries?date={d}"
-            ) ?? new List<DeliveryRequestDto>();
+
+            var url = $"{ApiBaseUrl}/api/couriers/{courierId}/deliveries?date={d}";
+            if (!string.IsNullOrWhiteSpace(status))
+                url += $"&status={status}";
+
+            var deliveries = await client.GetFromJsonAsync<List<DeliveryRequestDto>>(url)
+                           ?? new List<DeliveryRequestDto>();
 
             return View(deliveries);
         }
+
     }
 }
