@@ -51,6 +51,8 @@ namespace Infrastructure.DependencyResolvers
             services.AddScoped<IPurchaseRequestRepository, PurchaseRequestRepository>();
             services.AddScoped<IReviewRepository, ReviewRepository>();
             services.AddScoped<ICourierRepository, CourierRepository>();
+            services.AddScoped<IBillingAttemptRepository, BillingAttemptRepository>();
+
 
             services.AddScoped<CategoryServiceManager>();
             services.AddScoped<MovieServiceManager>();
@@ -71,9 +73,11 @@ namespace Infrastructure.DependencyResolvers
             services.AddScoped<ReviewServiceManager>();
             services.AddScoped<UserServiceManager>();
             services.AddScoped<CourierServiceManager>();
+            services.AddScoped<BillingServiceManager>();
 
             services.AddScoped<IEmailService, FakeEmailService>();
             services.AddScoped<ISmsService, FakeSmsService>();
+            services.AddScoped<IBillingGateway, FakeBillingGateway>(); 
         }
     }
 }

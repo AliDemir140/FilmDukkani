@@ -31,5 +31,7 @@ namespace Domain.Entities
 
         public ICollection<DeliveryRequest> DeliveryRequests { get; set; } = new List<DeliveryRequest>();
         public ICollection<Review> Reviews { get; set; } = new List<Review>();
+
+        public ICollection<BillingAttempt> BillingAttempts { get; set; } = new List<BillingAttempt>();
     }
 }
