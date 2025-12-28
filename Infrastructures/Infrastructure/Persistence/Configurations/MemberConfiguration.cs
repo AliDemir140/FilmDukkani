@@ -28,7 +28,6 @@ namespace Infrastructure.Persistence.Configurations
                    .HasMaxLength(200);
 
             builder.Property(m => m.Phone)
-                   .IsRequired()
                    .HasMaxLength(20);
 
             builder.Property(m => m.AddressLine)

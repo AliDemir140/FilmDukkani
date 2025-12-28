@@ -1,16 +1,22 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Application.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Services
 {
     public class FakeSmsService : ISmsService
     {
+        private readonly ILogger<FakeSmsService> _logger;
+
+        public FakeSmsService(ILogger<FakeSmsService> logger)
+        {
+            _logger = logger;
+        }
+
         public Task SendAsync(string phone, string message)
         {
-            Console.WriteLine("SMS To: " + phone);
-            Console.WriteLine("Message: " + message);
-            Console.WriteLine("----");
+            _logger.LogInformation("SMS To: {Phone}", phone);
+            _logger.LogInformation("Message: {Message}", message);
             return Task.CompletedTask;
         }
     }

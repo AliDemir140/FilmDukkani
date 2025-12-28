@@ -85,15 +85,6 @@
     </div>
 </div>
 
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success mb-3">@TempData["Success"]</div>
-}
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger mb-3">@TempData["Error"]</div>
-}
-
 @if (!ordered.Any())
 {
     <div class="alert alert-info">
