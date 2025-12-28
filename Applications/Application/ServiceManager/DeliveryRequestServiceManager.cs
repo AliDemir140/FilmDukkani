@@ -1,6 +1,6 @@
 ﻿using Application.DTOs.DeliveryRequestDTOs;
-using Application.Repositories;
 using Application.Interfaces;
+using Application.Repositories;
 using Domain.Entities;
 using Domain.Enums;
 
@@ -19,6 +19,7 @@ namespace Application.ServiceManager
         private readonly IDamagedMovieRepository _damagedMovieRepository;
         private readonly IEmailService _emailService;
         private readonly ISmsService _smsService;
+        private readonly ICourierRepository _courierRepository;
 
         public DeliveryRequestServiceManager(
             IDeliveryRequestRepository deliveryRequestRepository,
@@ -31,7 +32,8 @@ namespace Application.ServiceManager
             IMovieCopyRepository movieCopyRepository,
             IDamagedMovieRepository damagedMovieRepository,
             IEmailService emailService,
-            ISmsService smsService)
+            ISmsService smsService,
+            ICourierRepository courierRepository)
         {
             _deliveryRequestRepository = deliveryRequestRepository;
             _deliveryRequestItemRepository = deliveryRequestItemRepository;
@@ -44,6 +46,7 @@ namespace Application.ServiceManager
             _damagedMovieRepository = damagedMovieRepository;
             _emailService = emailService;
             _smsService = smsService;
+            _courierRepository = courierRepository;
         }
 
         public async Task<int> UserCancelRequestAsync(int memberId, int requestId, string reason)
@@ -482,6 +485,14 @@ namespace Application.ServiceManager
                 }
             }
 
+            string? courierFullName = null;
+            if (request.CourierId.HasValue)
+            {
+                var courier = await _courierRepository.GetByIdAsync(request.CourierId.Value);
+                if (courier != null)
+                    courierFullName = (courier.FirstName + " " + courier.LastName).Trim();
+            }
+
             return new DeliveryRequestDto
             {
                 Id = request.ID,
@@ -492,6 +503,9 @@ namespace Application.ServiceManager
                 RequestedDate = request.RequestedDate,
                 DeliveryDate = request.DeliveryDate,
                 Status = request.Status,
+
+                CourierId = request.CourierId,
+                CourierFullName = courierFullName,
 
                 CancelReason = request.CancelReason,
                 CancelRequestedAt = request.CancelRequestedAt,
@@ -674,6 +688,50 @@ namespace Application.ServiceManager
         public async Task<List<DeliveryRequestListDto>> GetRequestsByMemberAsync(int memberId)
         {
             return await _deliveryRequestRepository.GetByMemberAsync(memberId);
+        }
+
+        public async Task<int> AssignCourierAsync(int requestId, int courierId)
+        {
+            var request = await _deliveryRequestRepository.GetByIdAsync(requestId);
+            if (request == null) return 0;
+
+            var courier = await _courierRepository.GetByIdAsync(courierId);
+            if (courier == null || !courier.IsActive) return -1;
+
+            if (request.Status != DeliveryStatus.Prepared && request.Status != DeliveryStatus.Shipped)
+                return -2;
+
+            request.CourierId = courierId;
+            await _deliveryRequestRepository.UpdateAsync(request);
+
+            return 1;
+        }
+
+        public async Task<List<DeliveryRequestDto>> GetCourierDeliveriesAsync(int courierId, DateTime date)
+        {
+            var courier = await _courierRepository.GetByIdAsync(courierId);
+            if (courier == null || !courier.IsActive)
+                return new List<DeliveryRequestDto>();
+
+            var target = date.Date;
+
+            var requests = await _deliveryRequestRepository.GetAllAsync(r =>
+                r.CourierId == courierId &&
+                r.DeliveryDate.Date == target &&
+                (r.Status == DeliveryStatus.Prepared ||
+                 r.Status == DeliveryStatus.Shipped ||
+                 r.Status == DeliveryStatus.Delivered ||
+                 r.Status == DeliveryStatus.Completed));
+
+            var result = new List<DeliveryRequestDto>();
+
+            foreach (var r in requests.OrderByDescending(x => x.ID))
+            {
+                var dto = await GetRequestDetailAsync(r.ID);
+                if (dto != null) result.Add(dto);
+            }
+
+            return result;
         }
     }
 }

@@ -15,7 +15,6 @@ namespace Infrastructure.Persistence
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(FilmDukkaniDbContext).Assembly);
         }
 
@@ -38,7 +37,8 @@ namespace Infrastructure.Persistence
         public DbSet<DamagedMovie> DamagedMovies { get; set; }
         public DbSet<MovieCategory> MovieCategories { get; set; }
         public DbSet<PurchaseRequest> PurchaseRequests { get; set; }
-
         public DbSet<Review> Reviews { get; set; }
+
+        public DbSet<Courier> Couriers { get; set; }
     }
 }

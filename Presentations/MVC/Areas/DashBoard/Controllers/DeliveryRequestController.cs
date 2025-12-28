@@ -1,7 +1,10 @@
-﻿using Application.DTOs.DeliveryRequestDTOs;
+﻿using System.Net.Http.Json;
+using Application.DTOs.CourierDTOs;
+using Application.DTOs.DeliveryRequestDTOs;
 using Application.ServiceManager;
 using Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using MVC.Filters;
 
 namespace MVC.Areas.DashBoard.Controllers
@@ -11,11 +14,20 @@ namespace MVC.Areas.DashBoard.Controllers
     public class DeliveryRequestController : Controller
     {
         private readonly DeliveryRequestServiceManager _deliveryService;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IConfiguration _configuration;
 
-        public DeliveryRequestController(DeliveryRequestServiceManager deliveryService)
+        public DeliveryRequestController(
+            DeliveryRequestServiceManager deliveryService,
+            IHttpClientFactory httpClientFactory,
+            IConfiguration configuration)
         {
             _deliveryService = deliveryService;
+            _httpClientFactory = httpClientFactory;
+            _configuration = configuration;
         }
+
+        private string? ApiBaseUrl => _configuration["ApiSettings:BaseUrl"];
 
         public async Task<IActionResult> Index(string? status)
         {
@@ -38,6 +50,18 @@ namespace MVC.Areas.DashBoard.Controllers
             if (dto == null)
                 return NotFound();
 
+            // Kurye listesini Application'dan değil API'den al
+            var couriers = await GetActiveCouriersSelectListFromApiAsync();
+
+            if (dto.CourierId.HasValue)
+            {
+                foreach (var c in couriers)
+                {
+                    c.Selected = c.Value == dto.CourierId.Value.ToString();
+                }
+            }
+
+            ViewBag.Couriers = couriers;
             return View(dto);
         }
 
@@ -49,7 +73,6 @@ namespace MVC.Areas.DashBoard.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // ❌ Eski direkt iptal kalsın istersen:
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Cancel(int id)
@@ -58,7 +81,6 @@ namespace MVC.Areas.DashBoard.Controllers
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        // ✅ Yeni: iptal talebini ONAYLA
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ApproveCancel(int id)
@@ -67,7 +89,6 @@ namespace MVC.Areas.DashBoard.Controllers
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        // ✅ Yeni: iptal talebini REDDET
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RejectCancel(int id)
@@ -106,6 +127,45 @@ namespace MVC.Areas.DashBoard.Controllers
         {
             await _deliveryService.ReturnDeliveryItemAsync(dto);
             return RedirectToAction(nameof(Details), new { id = requestId });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AssignCourier(int id, int courierId)
+        {
+            var result = await _deliveryService.AssignCourierAsync(id, courierId);
+
+            if (result == 0)
+                TempData["Error"] = "Sipariş bulunamadı.";
+            else if (result == -1)
+                TempData["Error"] = "Kurye bulunamadı veya pasif.";
+            else if (result == -2)
+                TempData["Error"] = "Kurye ataması sadece Hazırlandı veya Kuryede durumunda yapılabilir.";
+            else
+                TempData["Success"] = "Kurye atandı.";
+
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        private async Task<List<SelectListItem>> GetActiveCouriersSelectListFromApiAsync()
+        {
+            if (string.IsNullOrWhiteSpace(ApiBaseUrl))
+                return new List<SelectListItem>();
+
+            var client = _httpClientFactory.CreateClient();
+
+            var couriers = await client.GetFromJsonAsync<List<CourierDto>>(
+                $"{ApiBaseUrl}/api/couriers?onlyActive=true"
+            ) ?? new List<CourierDto>();
+
+            return couriers
+                .OrderBy(x => x.FullName)
+                .Select(x => new SelectListItem
+                {
+                    Value = x.Id.ToString(),
+                    Text = x.FullName
+                })
+                .ToList();
         }
     }
 }
