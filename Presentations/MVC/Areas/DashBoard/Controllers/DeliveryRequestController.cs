@@ -50,7 +50,6 @@ namespace MVC.Areas.DashBoard.Controllers
             if (dto == null)
                 return NotFound();
 
-            // Kurye listesini Application'dan değil API'den al
             var couriers = await GetActiveCouriersSelectListFromApiAsync();
 
             if (dto.CourierId.HasValue)
@@ -62,6 +61,15 @@ namespace MVC.Areas.DashBoard.Controllers
             }
 
             ViewBag.Couriers = couriers;
+            return View(dto);
+        }
+
+        public async Task<IActionResult> Label(int id)
+        {
+            var dto = await _deliveryService.GetRequestDetailAsync(id);
+            if (dto == null)
+                return NotFound();
+
             return View(dto);
         }
 

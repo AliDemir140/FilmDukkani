@@ -11,6 +11,12 @@ namespace Application.DTOs.DeliveryRequestDTOs
         public int MemberId { get; set; }
         public string MemberFullName { get; set; } = string.Empty;
 
+        public string? MemberPhone { get; set; }
+        public string? MemberAddressLine { get; set; }
+        public string? MemberCity { get; set; }
+        public string? MemberDistrict { get; set; }
+        public string? MemberPostalCode { get; set; }
+
         public int MemberMovieListId { get; set; }
         public string ListName { get; set; } = string.Empty;
 

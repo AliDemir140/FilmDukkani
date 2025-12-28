@@ -84,6 +84,14 @@
 }
 
 <div class="mb-3 d-flex gap-2 flex-wrap">
+    <a class="btn btn-outline-primary"
+       target="_blank"
+       asp-action="Label"
+       asp-route-id="@Model.Id">
+        Teslimat Etiketi
+    </a>
+
+
     @if (Model.Status == DeliveryStatus.CancelRequested)
     {
         <form asp-action="ApproveCancel" method="post"

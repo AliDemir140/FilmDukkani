@@ -502,6 +502,13 @@ namespace Application.ServiceManager
                 Id = request.ID,
                 MemberId = request.MemberId,
                 MemberFullName = member != null ? $"{member.FirstName} {member.LastName}" : string.Empty,
+
+                MemberPhone = (member?.Phone ?? "").Trim(),
+                MemberAddressLine = member?.AddressLine,
+                MemberCity = member?.City,
+                MemberDistrict = member?.District,
+                MemberPostalCode = member?.PostalCode,
+
                 MemberMovieListId = request.MemberMovieListId,
                 ListName = list?.Name ?? string.Empty,
                 RequestedDate = request.RequestedDate,
