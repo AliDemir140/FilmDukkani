@@ -287,7 +287,11 @@ namespace Application.ServiceManager
             if (string.IsNullOrWhiteSpace(phone))
                 return;
 
-            var message = "Filmleriniz kargoya verildi. Teslimat tarihi: " + request.DeliveryDate.ToString("dd.MM.yyyy");
+            var message =
+                "Kurye yola cikti. Teslimat tarihi: " +
+                request.DeliveryDate.ToString("dd.MM.yyyy") +
+                ". FilmDukkani";
+
             await _smsService.SendAsync(phone, message);
         }
 
@@ -737,6 +741,5 @@ namespace Application.ServiceManager
 
             return result;
         }
-
     }
 }
