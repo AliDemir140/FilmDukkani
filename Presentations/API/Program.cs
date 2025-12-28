@@ -6,11 +6,20 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Application.Interfaces;
+using Application.Repositories;
+using Application.ServiceManager;
+using Infrastructure.Repositories;
+using Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Onion Infrastructure servislerini kaydet
 DependencyResolver.RegisterServices(builder.Services, builder.Configuration);
+
+// Hosted Service (Billing)
+builder.Services.AddHostedService<MonthlyBillingHostedService>();
+
 
 // JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -47,16 +56,13 @@ using (var scope = app.Services.CreateScope())
         var context = services.GetRequiredService<FilmDukkaniDbContext>();
         await context.Database.MigrateAsync();
 
-        // Role seed
         var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
         await RoleSeed.SeedAsync(roleManager);
 
-        // Seed: reference + admin her ortamda
         var seeder = services.GetRequiredService<DatabaseSeeder>();
         await seeder.SeedReferenceDataAsync();
         await seeder.SeedAdminAsync(app.Configuration);
 
-        // Dev data sadece development
         if (app.Environment.IsDevelopment())
         {
             await seeder.SeedDevDataAsync();
@@ -66,7 +72,6 @@ using (var scope = app.Services.CreateScope())
     {
         Console.WriteLine(ex.ToString());
     }
-
 }
 
 // Swagger

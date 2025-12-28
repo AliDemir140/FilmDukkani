@@ -68,9 +68,10 @@ namespace Application.ServiceManager
                 Email = dto.Email,
                 Phone = dto.Phone,
                 IdentityUserId = user.Id,
+
                 MembershipPlanId = 1,
                 MembershipStartDate = DateTime.Today,
-                Status = MemberStatus.Active,
+                Status = MemberStatus.PaymentDue,
 
                 AddressLine = dto.AddressLine,
                 City = dto.City,

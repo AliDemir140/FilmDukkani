@@ -38,7 +38,8 @@ namespace Infrastructure.Persistence
         public DbSet<MovieCategory> MovieCategories { get; set; }
         public DbSet<PurchaseRequest> PurchaseRequests { get; set; }
         public DbSet<Review> Reviews { get; set; }
-
         public DbSet<Courier> Couriers { get; set; }
+
+        public DbSet<BillingAttempt> BillingAttempts { get; set; }
     }
 }

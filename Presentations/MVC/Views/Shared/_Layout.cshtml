@@ -49,7 +49,6 @@
         <nav class="navbar navbar-expand-lg navbar-dark fd-navbar">
             <div class="container-fluid">
 
-                <!-- SOL: LOGO -->
                 <a class="navbar-brand fd-logo"
                    asp-area=""
                    asp-controller="Home"
@@ -69,7 +68,6 @@
 
                 <div class="collapse navbar-collapse" id="mainNav">
 
-                    <!-- ORTA: MENÜLER -->
                     <ul class="navbar-nav mx-auto fd-nav-center">
 
                         <li class="nav-item">
@@ -106,7 +104,6 @@
                             </a>
                         </li>
 
-                        @* Login olan kullanıcıya özel *@
                         @if (isLoggedIn)
                         {
                             <li class="nav-item">
@@ -117,17 +114,7 @@
                                    aria-current="@(Active("MyLists") == "active" ? "page" : null)">
                                     <i class="fa-solid fa-list me-1"></i> Listelerim
                                 </a>
-                            </li>
-
-                            <li class="nav-item">
-                                <a class="nav-link @Active("MyDeliveryRequests")"
-                                   asp-area=""
-                                   asp-controller="MyDeliveryRequests"
-                                   asp-action="Index"
-                                   aria-current="@(Active("MyDeliveryRequests") == "active" ? "page" : null)">
-                                    <i class="fa-solid fa-box me-1"></i> Siparişlerim
-                                </a>
-                            </li>
+                            </li>                
 
                             <li class="nav-item">
                                 <a class="nav-link @Active("PurchaseRequest")"
@@ -137,10 +124,8 @@
                                     <i class="fa-solid fa-hand-point-up me-1"></i> İsteklerim
                                 </a>
                             </li>
-
                         }
 
-                        @* Admin ise dashboard *@
                         @if (isLoggedIn && role == "Admin")
                         {
                             <li class="nav-item">
@@ -155,7 +140,6 @@
                         }
                     </ul>
 
-                    <!-- SAĞ: AUTH -->
                     <div class="d-flex align-items-center gap-2 ms-lg-2">
                         @if (!isLoggedIn)
                         {
@@ -175,16 +159,63 @@
                         }
                         else
                         {
-                            <span class="text-light small me-2">
-                                <i class="fa-solid fa-user"></i> @userName
-                            </span>
+                            <div class="dropdown fd-user-dropdown">
+                                <button class="btn btn-outline-light btn-sm dropdown-toggle"
+                                        type="button"
+                                        data-bs-toggle="dropdown"
+                                        aria-expanded="false">
+                                    <i class="fa-solid fa-user me-1"></i> @userName
+                                </button>
 
-                            <a asp-area=""
-                               asp-controller="Auth"
-                               asp-action="Logout"
-                               class="btn btn-outline-warning btn-sm">
-                                Çıkış
-                            </a>
+                                <ul class="dropdown-menu dropdown-menu-end fd-user-menu">
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="Account"
+                                           asp-action="Membership">
+                                            <i class="fa-solid fa-id-card me-2"></i> Üyeliğim
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="MyDeliveryRequests"
+                                           asp-action="Index">
+                                            <i class="fa-solid fa-box me-2"></i> Siparişlerim
+                                        </a>
+                                    </li>
+
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="MyLists"
+                                           asp-action="Index">
+                                            <i class="fa-solid fa-list me-2"></i> Listelerim
+                                        </a>
+                                    </li>
+
+                                    @if (role == "Admin")
+                                    {
+                                        <li><hr class="dropdown-divider" /></li>
+                                        <li>
+                                            <a class="dropdown-item"
+                                               asp-area="DashBoard"
+                                               asp-controller="Home"
+                                               asp-action="Index">
+                                                <i class="fa-solid fa-gauge-high me-2"></i> Dashboard
+                                            </a>
+                                        </li>
+                                    }
+
+                                    <li><hr class="dropdown-divider" /></li>
+
+                                    <li>
+                                        <a class="dropdown-item text-warning"
+                                           asp-controller="Auth"
+                                           asp-action="Logout">
+                                            <i class="fa-solid fa-right-from-bracket me-2"></i> Çıkış
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
                         }
                     </div>
 
@@ -195,7 +226,6 @@
 
     <main class="container-fluid py-4">
 
-        @* GLOBAL TEMP DATA ALERTS (hangi sayfaya redirect olursa olsun mesaj burada görünür) *@
         <div class="container">
             @if (TempData["Success"] != null)
             {

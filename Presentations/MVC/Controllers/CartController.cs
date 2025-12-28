@@ -1,5 +1,7 @@
-﻿using Application.DTOs.MemberMovieListDTOs;
+﻿using Application.DTOs.MemberDTOs;
+using Application.DTOs.MemberMovieListDTOs;
 using Application.ServiceManager;
+using Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using MVC.Constants;
@@ -230,6 +232,13 @@ namespace MVC.Controllers
             if (memberId == null)
                 return RedirectToAction("Login", "Auth");
 
+            var allowed = await IsMemberAllowedForCheckoutAsync(memberId.Value);
+            if (!allowed)
+            {
+                TempData["Error"] = "Üyelik durumun teslimat oluşturmaya uygun değil. Lütfen üyelik sayfasından kontrol et.";
+                return RedirectToAction("Membership", "Account");
+            }
+
             var memberLists = await GetMemberListsSelectAsync(memberId.Value);
 
             if (!memberLists.Any())
@@ -269,6 +278,13 @@ namespace MVC.Controllers
             var memberId = HttpContext.Session.GetInt32(SessionKeys.MemberId);
             if (memberId == null)
                 return RedirectToAction("Login", "Auth");
+
+            var allowed = await IsMemberAllowedForCheckoutAsync(memberId.Value);
+            if (!allowed)
+            {
+                TempData["Error"] = "Üyelik durumun teslimat oluşturmaya uygun değil. Lütfen üyelik sayfasından kontrol et.";
+                return RedirectToAction("Membership", "Account");
+            }
 
             if (!ModelState.IsValid)
             {
@@ -379,6 +395,30 @@ namespace MVC.Controllers
             };
 
             return View(model);
+        }
+
+        private async Task<bool> IsMemberAllowedForCheckoutAsync(int memberId)
+        {
+            if (string.IsNullOrWhiteSpace(ApiBaseUrl))
+                return true;
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient();
+
+                var profile = await client.GetFromJsonAsync<MemberProfileDto>(
+                    $"{ApiBaseUrl}/api/MemberProfile/profile?memberId={memberId}"
+                );
+
+                if (profile == null) return true;
+
+                return profile.Status != MemberStatus.PaymentDue &&
+                       profile.Status != MemberStatus.Suspended;
+            }
+            catch
+            {
+                return true;
+            }
         }
     }
 }

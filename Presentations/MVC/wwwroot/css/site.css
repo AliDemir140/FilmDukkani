@@ -568,7 +568,7 @@ body {
     box-shadow: 0 18px 60px rgba(0,0,0,.45);
 }
 
-/* Cinema variant: fixed ratio + blur bg + top/bottom gradient */
+/* Cinema variant */
 .fd-detail-poster--cinema {
     position: relative;
     width: 100%;
@@ -594,7 +594,6 @@ body {
         display: block;
     }
 
-    /* üst-alt sinematik gradient */
     .fd-detail-poster--cinema::after {
         content: "";
         position: absolute;
@@ -651,6 +650,7 @@ body {
     font-weight: 650;
     font-size: 13px;
 }
+
 .fd-panel {
     border: 1px solid rgba(255,255,255,.08);
     background: rgba(0,0,0,.28);
@@ -786,6 +786,7 @@ body {
     white-space: pre-wrap;
     word-break: break-word;
 }
+
 .fd-modal {
     background: rgba(10, 14, 24, .96);
     border: 1px solid rgba(255,255,255,.10);
@@ -816,7 +817,6 @@ body {
     border-color: rgba(255,193,7,.25);
 }
 
-
 .fd-chip--editors {
     background: linear-gradient(135deg, rgba(255,215,0,.22), rgba(255,45,45,.10));
     border-color: rgba(255,215,0,.35);
@@ -846,3 +846,69 @@ body {
     padding: 8px 12px;
     font-weight: 650;
 }
+
+.fd-user-menu {
+    background: rgba(10, 10, 12, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    padding: 8px;
+    min-width: 220px;
+}
+
+    .fd-user-menu .dropdown-item {
+        color: rgba(255, 255, 255, 0.9);
+        border-radius: 10px;
+        padding: 8px 10px;
+    }
+
+        .fd-user-menu .dropdown-item:hover,
+        .fd-user-menu .dropdown-item:focus {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+    .fd-user-menu .dropdown-divider {
+        border-top-color: rgba(255, 255, 255, 0.12);
+    }
+
+/* Membership Page (FIX) */
+.membership-page {
+    color: rgba(255, 255, 255, 0.92);
+}
+
+    .membership-page h3,
+    .membership-page h5,
+    .membership-page strong,
+    .membership-page label,
+    .membership-page .form-label {
+        color: rgba(255, 255, 255, 0.92) !important;
+    }
+
+    .membership-page .membership-card,
+    .membership-page .membership-card .card-body {
+        background: rgba(16, 16, 18, 0.70) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        color: rgba(255, 255, 255, 0.92) !important;
+        border-radius: 16px;
+    }
+
+    .membership-page .text-muted {
+        color: rgba(154, 167, 189, 0.90) !important;
+    }
+
+    .membership-page .form-control,
+    .membership-page .form-select {
+        background: rgba(0, 0, 0, 0.25) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        color: rgba(255, 255, 255, 0.92) !important;
+        border-radius: 12px;
+    }
+
+        .membership-page .form-select option {
+            background-color: #0b0f14 !important;
+            color: rgba(255, 255, 255, 0.92) !important;
+        }
+
+    .membership-page .alert {
+        border-radius: 14px;
+    }
