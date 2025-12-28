@@ -86,21 +86,17 @@ namespace MVC.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // Sepeti tek tuşla boşalt
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Clear()
         {
             HttpContext.Session.Remove(SessionKeys.Cart);
-
-            // ekstra garanti: key dursun ama boş liste olsun istersen
             HttpContext.Session.SetObject(SessionKeys.Cart, new List<CartItem>());
 
             TempData["Success"] = "Sepet temizlendi.";
             return RedirectToAction(nameof(Index));
         }
 
-        // Üyenin listelerini API'den çekip SelectListItem'a çevirir
         private async Task<List<SelectListItem>> GetMemberListsSelectAsync(int memberId)
         {
             if (string.IsNullOrWhiteSpace(ApiBaseUrl))
@@ -128,7 +124,6 @@ namespace MVC.Controllers
             }
         }
 
-        // Min 5 film kuralı kontrol (API: check-minimum)
         private async Task<(bool ok, int currentCount, int minimumRequired)> CheckMinimumAsync(int listId)
         {
             if (string.IsNullOrWhiteSpace(ApiBaseUrl))
@@ -153,7 +148,6 @@ namespace MVC.Controllers
             }
         }
 
-        // JS burayı çağıracak: /Cart/CheckMinimum?listId=...
         [HttpGet]
         public async Task<IActionResult> CheckMinimum(int listId)
         {
@@ -187,7 +181,6 @@ namespace MVC.Controllers
             }
         }
 
-        // Sepetteki filmleri seçilen listeye otomatik ekle
         private async Task AddCartMoviesToListAsync(int listId, List<CartItem> cart)
         {
             if (string.IsNullOrWhiteSpace(ApiBaseUrl))
@@ -221,11 +214,9 @@ namespace MVC.Controllers
             }
             catch
             {
-                // sessiz geç
             }
         }
 
-        // GET: /Cart/Checkout
         [HttpGet]
         public async Task<IActionResult> Checkout()
         {
@@ -265,7 +256,6 @@ namespace MVC.Controllers
             return View(model);
         }
 
-        // POST: /Cart/Checkout
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Checkout(CheckoutViewModel model)
@@ -346,7 +336,26 @@ namespace MVC.Controllers
                 return View(model);
             }
 
-            // Başarılı: sepeti GARANTİ temizle
+            if (requestId == -2)
+            {
+                model.CartItems = cart;
+                model.MemberLists = await GetMemberListsSelectAsync(memberId.Value);
+
+                ModelState.AddModelError("",
+                    "Yeni teslimat talebi oluşturamazsın. Üst üste 2 teslimatta iade yapılmadığı için hesabın kısıtlandı. Lütfen önce iade işlemlerini tamamla veya admin ile iletişime geç.");
+
+                return View(model);
+            }
+
+            if (requestId < 0)
+            {
+                model.CartItems = cart;
+                model.MemberLists = await GetMemberListsSelectAsync(memberId.Value);
+
+                ModelState.AddModelError("", "Teslimat isteği oluşturulamadı. Lütfen daha sonra tekrar dene.");
+                return View(model);
+            }
+
             HttpContext.Session.Remove(SessionKeys.Cart);
             HttpContext.Session.SetObject(SessionKeys.Cart, new List<CartItem>());
 
@@ -355,6 +364,9 @@ namespace MVC.Controllers
 
         public async Task<IActionResult> Success(int id)
         {
+            if (id <= 0)
+                return BadRequest();
+
             var request = await _deliveryRequestService.GetRequestDetailAsync(id);
             if (request == null)
                 return NotFound();

@@ -85,10 +85,22 @@ namespace Application.ServiceManager
             return await _deliveryRequestRepository.HasActiveRequestForListAsync(list.MemberId, listId);
         }
 
+        private async Task<int> GetOpenDeliveredCountByMemberAsync(int memberId)
+        {
+            var openDelivered = await _deliveryRequestRepository
+                .GetAllAsync(r => r.MemberId == memberId && r.Status == DeliveryStatus.Delivered);
+
+            return openDelivered?.Count() ?? 0;
+        }
+
         public async Task<int> CreateDeliveryRequestAsync(int memberId, int listId, DateTime deliveryDate)
         {
             if (!IsValidDeliveryDate(deliveryDate))
                 return 0;
+
+            var openDeliveredCount = await GetOpenDeliveredCountByMemberAsync(memberId);
+            if (openDeliveredCount >= 2)
+                return -2;
 
             if (await HasActiveRequestForListAsync(listId))
                 return -1;
@@ -305,6 +317,10 @@ namespace Application.ServiceManager
             if (requests == null || !requests.Any())
                 return;
 
+            requests = requests
+                .OrderBy(r => r.ID)
+                .ToList();
+
             var requestMap = requests.ToDictionary(r => r.ID, r => r);
 
             var quotaByRequestId = new Dictionary<int, int>();
@@ -314,6 +330,10 @@ namespace Application.ServiceManager
 
             foreach (var request in requests)
             {
+                var openDeliveredCount = await GetOpenDeliveredCountByMemberAsync(request.MemberId);
+                if (openDeliveredCount >= 2)
+                    continue;
+
                 var member = await _memberRepository.GetByIdAsync(request.MemberId);
                 if (member == null) continue;
 
