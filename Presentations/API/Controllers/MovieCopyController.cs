@@ -1,7 +1,6 @@
 ﻿using Application.DTOs.MovieCopyDTOs;
 using Application.ServiceManager;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
 
 namespace API.Controllers
 {
@@ -39,15 +38,16 @@ namespace API.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // İkisi aynı anda true gelirse: veri hatası
             if (dto.IsAvailable && dto.IsDamaged)
                 return BadRequest("Film kopyası aynı anda hem Uygun hem Hasarlı olamaz.");
 
-            // 🔒 KURAL: Hasarlıysa uygun olamaz (garanti)
             if (dto.IsDamaged)
                 dto.IsAvailable = false;
 
-            await _movieCopyService.AddMovieCopyAsync(dto);
+            var (ok, error) = await _movieCopyService.AddMovieCopyAsync(dto);
+
+            if (!ok)
+                return BadRequest(error);
 
             return Ok("Film kopyası eklendi.");
         }
@@ -64,9 +64,10 @@ namespace API.Controllers
             if (dto.IsDamaged)
                 dto.IsAvailable = false;
 
-            var result = await _movieCopyService.UpdateMovieCopyAsync(dto);
-            if (!result)
-                return NotFound("Film kopyası bulunamadı.");
+            var (ok, error) = await _movieCopyService.UpdateMovieCopyAsync(dto);
+
+            if (!ok)
+                return BadRequest(error);
 
             return Ok("Film kopyası güncellendi.");
         }
@@ -74,11 +75,10 @@ namespace API.Controllers
         [HttpDelete("delete-movie-copy")]
         public async Task<IActionResult> DeleteMovieCopy(int id)
         {
-            var result = await _movieCopyService.DeleteMovieCopyAsync(id);
-            if (!result)
+            var ok = await _movieCopyService.DeleteMovieCopyAsync(id);
+            if (!ok)
                 return NotFound("Film kopyası bulunamadı.");
 
-            // API sadece mesaj döner. Kırmızı/yeşil MVC'de yapılır.
             return Ok("Film kopyası silindi.");
         }
     }

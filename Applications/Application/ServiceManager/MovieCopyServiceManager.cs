@@ -20,6 +20,16 @@ namespace Application.ServiceManager
             _shelfRepository = shelfRepository;
         }
 
+        private static string BuildStandardBarcode(int movieCopyId)
+        {
+            return "FDK-MC-" + movieCopyId.ToString("D8");
+        }
+
+        private static string BuildTempBarcode()
+        {
+            return "TMP-" + Guid.NewGuid().ToString("N");
+        }
+
         public async Task<List<MovieCopyDto>> GetMovieCopiesAsync()
         {
             var copies = await _movieCopyRepository.GetAllAsync();
@@ -72,46 +82,84 @@ namespace Application.ServiceManager
             };
         }
 
-        public async Task<bool> AddMovieCopyAsync(CreateMovieCopyDto dto)
+        public async Task<(bool Ok, string Error)> AddMovieCopyAsync(CreateMovieCopyDto dto)
         {
-            // Film var mı?
             var movie = await _movieRepository.GetByIdAsync(dto.MovieId);
-            if (movie == null) return false;
+            if (movie == null) return (false, "Film bulunamadı.");
 
-            // Barkod zorunlu (dto Required var ama ekstra güvenlik)
-            if (string.IsNullOrWhiteSpace(dto.Barcode)) return false;
+            var manualBarcode = (dto.Barcode ?? "").Trim();
+
+            if (!string.IsNullOrWhiteSpace(manualBarcode))
+            {
+                if (await _movieCopyRepository.BarcodeExistsAsync(manualBarcode))
+                    return (false, "Bu barkod zaten kullanılıyor.");
+
+                var copyManual = new MovieCopy
+                {
+                    MovieId = dto.MovieId,
+                    Barcode = manualBarcode,
+                    ShelfId = dto.ShelfId,
+                    IsAvailable = dto.IsAvailable,
+                    IsDamaged = dto.IsDamaged
+                };
+
+                await _movieCopyRepository.AddAsync(copyManual);
+                return (true, "");
+            }
+
+            var temp = BuildTempBarcode();
+            while (await _movieCopyRepository.BarcodeExistsAsync(temp))
+            {
+                temp = BuildTempBarcode();
+            }
 
             var copy = new MovieCopy
             {
                 MovieId = dto.MovieId,
-                Barcode = dto.Barcode.Trim(),
+                Barcode = temp,
                 ShelfId = dto.ShelfId,
                 IsAvailable = dto.IsAvailable,
                 IsDamaged = dto.IsDamaged
             };
 
             await _movieCopyRepository.AddAsync(copy);
-            return true;
+
+            var standard = BuildStandardBarcode(copy.ID);
+
+            if (await _movieCopyRepository.BarcodeExistsAsync(standard, excludeId: copy.ID))
+            {
+                return (false, "Otomatik barkod üretilemedi. Barkod çakışması var.");
+            }
+
+            copy.Barcode = standard;
+            await _movieCopyRepository.UpdateAsync(copy);
+
+            return (true, "");
         }
 
-        public async Task<bool> UpdateMovieCopyAsync(UpdateMovieCopyDto dto)
+        public async Task<(bool Ok, string Error)> UpdateMovieCopyAsync(UpdateMovieCopyDto dto)
         {
             var copy = await _movieCopyRepository.GetByIdAsync(dto.Id);
-            if (copy == null) return false;
+            if (copy == null) return (false, "Kopya bulunamadı.");
 
             var movie = await _movieRepository.GetByIdAsync(dto.MovieId);
-            if (movie == null) return false;
+            if (movie == null) return (false, "Film bulunamadı.");
 
-            if (string.IsNullOrWhiteSpace(dto.Barcode)) return false;
+            var barcode = (dto.Barcode ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(barcode))
+                return (false, "Barkod boş olamaz.");
+
+            if (await _movieCopyRepository.BarcodeExistsAsync(barcode, excludeId: dto.Id))
+                return (false, "Bu barkod zaten kullanılıyor.");
 
             copy.MovieId = dto.MovieId;
-            copy.Barcode = dto.Barcode.Trim();
+            copy.Barcode = barcode;
             copy.ShelfId = dto.ShelfId;
             copy.IsAvailable = dto.IsAvailable;
             copy.IsDamaged = dto.IsDamaged;
 
             await _movieCopyRepository.UpdateAsync(copy);
-            return true;
+            return (true, "");
         }
 
         public async Task<bool> DeleteMovieCopyAsync(int id)

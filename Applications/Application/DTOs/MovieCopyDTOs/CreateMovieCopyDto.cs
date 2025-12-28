@@ -7,9 +7,8 @@ namespace Application.DTOs.MovieCopyDTOs
         [Required]
         public int MovieId { get; set; }
 
-        [Required]
         [MaxLength(50)]
-        public string Barcode { get; set; }
+        public string? Barcode { get; set; }
 
         public int? ShelfId { get; set; }
 
