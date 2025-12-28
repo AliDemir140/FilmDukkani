@@ -1,0 +1,70 @@
+﻿@using Application.DTOs.DeliveryRequestDTOs
+@model DeliveryRequestDto
+
+@{
+    Layout = null;
+    ViewData["Title"] = "Teslimat Etiketi";
+}
+
+<!doctype html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Teslimat Etiketi</title>
+
+    <link rel="stylesheet" href="~/css/label.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="page">
+        <div class="toolbar">
+            <button type="button" onclick="window.print()">Yazdır</button>
+            <button type="button" onclick="window.close()">Kapat</button>
+        </div>
+
+        <div class="label">
+            <div class="brand">FilmDukkani</div>
+
+            <div class="row">Teslimat No: <b>@Model.Id</b></div>
+            <div class="row">Teslimat Tarihi: <b>@Model.DeliveryDate.ToString("dd.MM.yyyy")</b></div>
+
+            <div class="name">@Model.MemberFullName</div>
+
+            @{
+                var phone = (Model.MemberPhone ?? "").Trim();
+                var city = (Model.MemberCity ?? "").Trim();
+                var district = (Model.MemberDistrict ?? "").Trim();
+                var address = (Model.MemberAddressLine ?? "").Trim();
+                var postal = (Model.MemberPostalCode ?? "").Trim();
+            }
+
+            @if (!string.IsNullOrWhiteSpace(phone))
+            {
+                <div class="row">Tel: <b>@phone</b></div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(address))
+            {
+                <div class="row">@address</div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(district))
+            {
+                <div class="row">@district</div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(city))
+            {
+                <div class="row">@city</div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(postal))
+            {
+                <div class="row">@postal</div>
+            }
+
+            <div class="warning">Uyarı: Kırılabilir. Yalnızca üyeye teslim ediniz.</div>
+        </div>
+    </div>
+</body>
+</html>
