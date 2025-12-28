@@ -49,8 +49,6 @@ namespace API.Controllers
             return Ok(request);
         }
 
-        // ✅ USER: iptal talebi oluştur
-        // POST: api/DeliveryRequest/{id}/cancel-request?memberId=1&reason=...
         [HttpPost("{id}/cancel-request")]
         public async Task<IActionResult> CancelRequestByUser(int id, int memberId, [FromQuery] string? reason)
         {
@@ -68,8 +66,6 @@ namespace API.Controllers
             return Ok("İptal talebi oluşturuldu. Admin onayı bekleniyor.");
         }
 
-        // ✅ ADMIN: iptal talebine karar ver
-        // POST: api/DeliveryRequest/{id}/cancel-decision?approve=true
         [HttpPost("{id}/cancel-decision")]
         public async Task<IActionResult> CancelDecision(int id, bool approve)
         {
@@ -84,7 +80,6 @@ namespace API.Controllers
             return Ok(approve ? "İptal onaylandı." : "İptal reddedildi.");
         }
 
-        // (Eski direkt cancel endpoint’i istersen kaldırırız; admin onaya bağladık.)
         [HttpPut("{id}/cancel")]
         public async Task<IActionResult> Cancel(int id)
         {
@@ -127,6 +122,21 @@ namespace API.Controllers
                 return Ok(new List<object>());
 
             return Ok(requests);
+        }
+
+        [HttpPut("{id}/assign-courier")]
+        public async Task<IActionResult> AssignCourier(int id, [FromQuery] int courierId)
+        {
+            if (id <= 0 || courierId <= 0)
+                return BadRequest("id ve courierId zorunludur.");
+
+            var result = await _deliveryService.AssignCourierAsync(id, courierId);
+
+            if (result == 0) return NotFound("Teslimat isteği bulunamadı.");
+            if (result == -1) return BadRequest("Kurye bulunamadı veya pasif.");
+            if (result == -2) return BadRequest("Kurye ataması sadece Hazırlandı veya Kuryede durumunda yapılabilir.");
+
+            return Ok("Kurye atandı.");
         }
     }
 }

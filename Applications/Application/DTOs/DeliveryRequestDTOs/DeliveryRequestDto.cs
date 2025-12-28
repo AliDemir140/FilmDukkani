@@ -20,12 +20,14 @@ namespace Application.DTOs.DeliveryRequestDTOs
         public DeliveryStatus Status { get; set; }
         public string StatusText => Status.ToString();
 
-        // İptal talebi alanları
+        public int? CourierId { get; set; }
+        public string? CourierFullName { get; set; }
+
         public string? CancelReason { get; set; }
         public DateTime? CancelRequestedAt { get; set; }
         public DeliveryStatus? CancelPreviousStatus { get; set; }
         public DateTime? CancelDecisionAt { get; set; }
-        public bool? CancelApproved { get; set; } // true=onay, false=red, null=bekliyor
+        public bool? CancelApproved { get; set; }
 
         public List<DeliveryRequestItemDto> Items { get; set; } = new();
     }

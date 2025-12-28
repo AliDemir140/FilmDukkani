@@ -9,26 +9,23 @@ namespace Domain.Entities
         public int MemberId { get; set; }
         public Member Member { get; set; }
 
-        // Hangi listenin üzerinden gönderim yapılmış
         public int MemberMovieListId { get; set; }
         public MemberMovieList MemberMovieList { get; set; }
 
-        // İsteğin sisteme düştüğü tarih
         public DateTime RequestedDate { get; set; }
-
-        // Teslimatın planlandığı gün
         public DateTime DeliveryDate { get; set; }
 
-        // Enum status
         public DeliveryStatus Status { get; set; } = DeliveryStatus.Pending;
 
         public ICollection<DeliveryRequestItem> Items { get; set; } = new List<DeliveryRequestItem>();
 
-        // İptal talebi alanları
+        public int? CourierId { get; set; }
+        public Courier? Courier { get; set; }
+
         public string? CancelReason { get; set; }
         public DateTime? CancelRequestedAt { get; set; }
-        public DeliveryStatus? CancelPreviousStatus { get; set; } // iptal reddedilirse geri dönmek için
+        public DeliveryStatus? CancelPreviousStatus { get; set; }
         public DateTime? CancelDecisionAt { get; set; }
-        public bool? CancelApproved { get; set; } // true=onay, false=red, null=bekliyor
+        public bool? CancelApproved { get; set; }
     }
 }
