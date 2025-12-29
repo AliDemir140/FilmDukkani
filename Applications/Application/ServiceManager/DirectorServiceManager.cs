@@ -1,4 +1,5 @@
 ﻿using Application.DTOs.DirectorDTOs;
+using Application.DTOs.PersonDTOs;
 using Application.Repositories;
 using Domain.Entities;
 
@@ -79,6 +80,20 @@ namespace Application.ServiceManager
 
             await _directorRepository.DeleteAsync(director);
             return true;
+        }
+
+        public async Task<List<PersonLookupDto>> GetDirectorsForSelectAsync()
+        {
+            var list = await _directorRepository.GetAllAsNoTrackingAsync();
+
+            return list
+                .Select(d => new PersonLookupDto
+                {
+                    Id = d.ID,
+                    FullName = $"{d.FirstName} {d.LastName}".Trim()
+                })
+                .OrderBy(x => x.FullName)
+                .ToList();
         }
     }
 }

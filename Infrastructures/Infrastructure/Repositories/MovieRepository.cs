@@ -70,7 +70,11 @@ namespace Infrastructure.Repositories
         {
             return await _context.Movies
                 .Include(m => m.MovieCategories)
-                .ThenInclude(mc => mc.Category)
+                    .ThenInclude(mc => mc.Category)
+                .Include(m => m.MovieActors)
+                    .ThenInclude(ma => ma.Actor)
+                .Include(m => m.MovieDirectors)
+                    .ThenInclude(md => md.Director)
                 .FirstOrDefaultAsync(m => m.ID == id);
         }
 
@@ -94,28 +98,56 @@ namespace Infrastructure.Repositories
 
         public async Task<List<Movie>> SearchMoviesAsync(int? categoryId, string? q)
         {
-            var query = _context.Movies
+            var baseQuery = _context.Movies
                 .AsNoTracking()
-                .Include(m => m.MovieCategories)
-                .ThenInclude(mc => mc.Category)
                 .AsQueryable();
 
             if (categoryId.HasValue && categoryId.Value > 0)
             {
-                query = query.Where(m => m.MovieCategories.Any(mc => mc.CategoryId == categoryId.Value));
+                var cid = categoryId.Value;
+                baseQuery = baseQuery.Where(m => m.MovieCategories.Any(mc => mc.CategoryId == cid));
             }
 
             if (!string.IsNullOrWhiteSpace(q))
             {
                 var keyword = q.Trim();
 
-                query = query.Where(m =>
+                baseQuery = baseQuery.Where(m =>
                     (m.Title != null && EF.Functions.Like(m.Title, "%" + keyword + "%")) ||
-                    (m.OriginalTitle != null && EF.Functions.Like(m.OriginalTitle, "%" + keyword + "%"))
+                    (m.OriginalTitle != null && EF.Functions.Like(m.OriginalTitle, "%" + keyword + "%")) ||
+
+                    m.MovieActors.Any(ma =>
+                        (ma.Actor.FirstName != null && EF.Functions.Like(ma.Actor.FirstName, "%" + keyword + "%")) ||
+                        (ma.Actor.LastName != null && EF.Functions.Like(ma.Actor.LastName, "%" + keyword + "%")) ||
+                        EF.Functions.Like((ma.Actor.FirstName + " " + ma.Actor.LastName), "%" + keyword + "%")
+                    ) ||
+
+                    m.MovieDirectors.Any(md =>
+                        (md.Director.FirstName != null && EF.Functions.Like(md.Director.FirstName, "%" + keyword + "%")) ||
+                        (md.Director.LastName != null && EF.Functions.Like(md.Director.LastName, "%" + keyword + "%")) ||
+                        EF.Functions.Like((md.Director.FirstName + " " + md.Director.LastName), "%" + keyword + "%")
+                    )
                 );
             }
 
-            return await query.ToListAsync();
+            var ids = await baseQuery
+                .Select(m => m.ID)
+                .Distinct()
+                .ToListAsync();
+
+            if (ids.Count == 0)
+                return new List<Movie>();
+
+            return await _context.Movies
+                .AsNoTracking()
+                .Where(m => ids.Contains(m.ID))
+                .Include(m => m.MovieCategories)
+                    .ThenInclude(mc => mc.Category)
+                .Include(m => m.MovieActors)
+                    .ThenInclude(ma => ma.Actor)
+                .Include(m => m.MovieDirectors)
+                    .ThenInclude(md => md.Director)
+                .ToListAsync();
         }
 
         public async Task<List<Movie>> GetTopRentedMoviesAsync(int take)
@@ -167,7 +199,5 @@ namespace Infrastructure.Repositories
                 .Take(take)
                 .ToListAsync();
         }
-
-
     }
 }

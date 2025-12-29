@@ -9,15 +9,21 @@ namespace Application.ServiceManager
         private readonly IMovieRepository _movieRepository;
         private readonly ICategoryRepository _categoryRepository;
         private readonly IReviewRepository _reviewRepository;
+        private readonly IActorRepository _actorRepository;
+        private readonly IDirectorRepository _directorRepository;
 
         public MovieServiceManager(
             IMovieRepository movieRepository,
             ICategoryRepository categoryRepository,
-            IReviewRepository reviewRepository)
+            IReviewRepository reviewRepository,
+            IActorRepository actorRepository,
+            IDirectorRepository directorRepository)
         {
             _movieRepository = movieRepository;
             _categoryRepository = categoryRepository;
             _reviewRepository = reviewRepository;
+            _actorRepository = actorRepository;
+            _directorRepository = directorRepository;
         }
 
         public async Task<List<MovieDto>> GetMoviesAsync()
@@ -61,16 +67,25 @@ namespace Application.ServiceManager
             if (dto.CategoryIds == null || dto.CategoryIds.Count == 0)
                 return false;
 
-            var distinctIds = dto.CategoryIds.Where(x => x > 0).Distinct().ToList();
-            if (distinctIds.Count == 0)
+            var distinctCategoryIds = dto.CategoryIds.Where(x => x > 0).Distinct().ToList();
+            if (distinctCategoryIds.Count == 0)
                 return false;
 
-            foreach (var cid in distinctIds)
+            foreach (var cid in distinctCategoryIds)
             {
                 var category = await _categoryRepository.GetByIdAsync(cid);
                 if (category == null)
                     return false;
             }
+
+            var actorIds = (dto.ActorIds ?? new List<int>()).Where(x => x > 0).Distinct().ToList();
+            var directorIds = (dto.DirectorIds ?? new List<int>()).Where(x => x > 0).Distinct().ToList();
+
+            var createdActorIds = await EnsureActorsAsync(dto.NewActors);
+            var createdDirectorIds = await EnsureDirectorsAsync(dto.NewDirectors);
+
+            actorIds = actorIds.Concat(createdActorIds).Distinct().ToList();
+            directorIds = directorIds.Concat(createdDirectorIds).Distinct().ToList();
 
             var movie = new Movie
             {
@@ -87,12 +102,21 @@ namespace Application.ServiceManager
                 Supplier = dto.Supplier,
                 IsEditorsChoice = dto.IsEditorsChoice,
                 IsNewRelease = dto.IsNewRelease,
-
                 IsAwardWinner = dto.IsAwardWinner,
 
-                MovieCategories = distinctIds.Select(cid => new MovieCategory
+                MovieCategories = distinctCategoryIds.Select(cid => new MovieCategory
                 {
                     CategoryId = cid
+                }).ToList(),
+
+                MovieActors = actorIds.Select(aid => new MovieActor
+                {
+                    ActorId = aid
+                }).ToList(),
+
+                MovieDirectors = directorIds.Select(did => new MovieDirector
+                {
+                    DirectorId = did
                 }).ToList()
             };
 
@@ -108,6 +132,16 @@ namespace Application.ServiceManager
 
             var categoryIds = movie.MovieCategories?
                 .Select(x => x.CategoryId)
+                .Distinct()
+                .ToList() ?? new List<int>();
+
+            var actorIds = movie.MovieActors?
+                .Select(x => x.ActorId)
+                .Distinct()
+                .ToList() ?? new List<int>();
+
+            var directorIds = movie.MovieDirectors?
+                .Select(x => x.DirectorId)
                 .Distinct()
                 .ToList() ?? new List<int>();
 
@@ -128,7 +162,9 @@ namespace Application.ServiceManager
                 IsEditorsChoice = movie.IsEditorsChoice,
                 IsNewRelease = movie.IsNewRelease,
                 IsAwardWinner = movie.IsAwardWinner,
-                CategoryIds = categoryIds
+                CategoryIds = categoryIds,
+                ActorIds = actorIds,
+                DirectorIds = directorIds
             };
         }
 
@@ -147,6 +183,22 @@ namespace Application.ServiceManager
                 .Where(x => x.Category != null && !string.IsNullOrWhiteSpace(x.Category.CategoryName))
                 .Select(x => x.Category.CategoryName)
                 .Distinct()
+                .ToList() ?? new List<string>();
+
+            var actorNames = movie.MovieActors?
+                .Where(x => x.Actor != null)
+                .Select(x => $"{x.Actor.FirstName} {x.Actor.LastName}".Trim())
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct()
+                .OrderBy(x => x)
+                .ToList() ?? new List<string>();
+
+            var directorNames = movie.MovieDirectors?
+                .Where(x => x.Director != null)
+                .Select(x => $"{x.Director.FirstName} {x.Director.LastName}".Trim())
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct()
+                .OrderBy(x => x)
                 .ToList() ?? new List<string>();
 
             var (avg, count) = await _reviewRepository.GetMovieRatingSummaryAsync(movie.ID);
@@ -172,8 +224,8 @@ namespace Application.ServiceManager
                 CoverImageUrl = movie.CoverImageUrl ?? string.Empty,
                 AverageRating = avg,
                 ReviewCount = count,
-                Actors = new List<string>(),
-                Directors = new List<string>(),
+                Actors = actorNames,
+                Directors = directorNames,
                 Awards = new List<MovieAwardInfoDto>()
             };
         }
@@ -190,7 +242,6 @@ namespace Application.ServiceManager
             return true;
         }
 
-
         public async Task<bool> UpdateMovie(UpdateMovieDto dto)
         {
             var movie = await _movieRepository.GetMovieWithCategoryAsync(dto.Id);
@@ -200,16 +251,25 @@ namespace Application.ServiceManager
             if (dto.CategoryIds == null || dto.CategoryIds.Count == 0)
                 return false;
 
-            var distinctIds = dto.CategoryIds.Where(x => x > 0).Distinct().ToList();
-            if (distinctIds.Count == 0)
+            var distinctCategoryIds = dto.CategoryIds.Where(x => x > 0).Distinct().ToList();
+            if (distinctCategoryIds.Count == 0)
                 return false;
 
-            foreach (var cid in distinctIds)
+            foreach (var cid in distinctCategoryIds)
             {
                 var category = await _categoryRepository.GetByIdAsync(cid);
                 if (category == null)
                     return false;
             }
+
+            var actorIds = (dto.ActorIds ?? new List<int>()).Where(x => x > 0).Distinct().ToList();
+            var directorIds = (dto.DirectorIds ?? new List<int>()).Where(x => x > 0).Distinct().ToList();
+
+            var createdActorIds = await EnsureActorsAsync(dto.NewActors);
+            var createdDirectorIds = await EnsureDirectorsAsync(dto.NewDirectors);
+
+            actorIds = actorIds.Concat(createdActorIds).Distinct().ToList();
+            directorIds = directorIds.Concat(createdDirectorIds).Distinct().ToList();
 
             movie.Title = dto.Title;
             movie.OriginalTitle = dto.OriginalTitle;
@@ -227,15 +287,14 @@ namespace Application.ServiceManager
             movie.IsAwardWinner = dto.IsAwardWinner;
 
             movie.MovieCategories ??= new List<MovieCategory>();
+            var existingCategoryIds = movie.MovieCategories.Select(x => x.CategoryId).Distinct().ToList();
 
-            var existingIds = movie.MovieCategories.Select(x => x.CategoryId).Distinct().ToList();
-
-            var toRemove = movie.MovieCategories.Where(x => !distinctIds.Contains(x.CategoryId)).ToList();
-            foreach (var rm in toRemove)
+            var removeCategories = movie.MovieCategories.Where(x => !distinctCategoryIds.Contains(x.CategoryId)).ToList();
+            foreach (var rm in removeCategories)
                 movie.MovieCategories.Remove(rm);
 
-            var toAdd = distinctIds.Where(x => !existingIds.Contains(x)).ToList();
-            foreach (var cid in toAdd)
+            var addCategories = distinctCategoryIds.Where(x => !existingCategoryIds.Contains(x)).ToList();
+            foreach (var cid in addCategories)
             {
                 movie.MovieCategories.Add(new MovieCategory
                 {
@@ -244,8 +303,135 @@ namespace Application.ServiceManager
                 });
             }
 
+            movie.MovieActors ??= new List<MovieActor>();
+            var existingActorIds = movie.MovieActors.Select(x => x.ActorId).Distinct().ToList();
+
+            var removeActors = movie.MovieActors.Where(x => !actorIds.Contains(x.ActorId)).ToList();
+            foreach (var rm in removeActors)
+                movie.MovieActors.Remove(rm);
+
+            var addActors = actorIds.Where(x => !existingActorIds.Contains(x)).ToList();
+            foreach (var aid in addActors)
+            {
+                movie.MovieActors.Add(new MovieActor
+                {
+                    MovieId = movie.ID,
+                    ActorId = aid
+                });
+            }
+
+            movie.MovieDirectors ??= new List<MovieDirector>();
+            var existingDirectorIds = movie.MovieDirectors.Select(x => x.DirectorId).Distinct().ToList();
+
+            var removeDirectors = movie.MovieDirectors.Where(x => !directorIds.Contains(x.DirectorId)).ToList();
+            foreach (var rm in removeDirectors)
+                movie.MovieDirectors.Remove(rm);
+
+            var addDirectors = directorIds.Where(x => !existingDirectorIds.Contains(x)).ToList();
+            foreach (var did in addDirectors)
+            {
+                movie.MovieDirectors.Add(new MovieDirector
+                {
+                    MovieId = movie.ID,
+                    DirectorId = did
+                });
+            }
+
             await _movieRepository.UpdateAsync(movie);
             return true;
+        }
+
+        private async Task<List<int>> EnsureActorsAsync(string? newActors)
+        {
+            var ids = new List<int>();
+            var names = SplitNames(newActors);
+
+            foreach (var fullName in names)
+            {
+                var (first, last) = SplitFirstLast(fullName);
+
+                var existing = await _actorRepository.FindByNameAsync(first, last);
+                if (existing != null)
+                {
+                    ids.Add(existing.ID);
+                    continue;
+                }
+
+                var actor = new Actor
+                {
+                    FirstName = first,
+                    LastName = last,
+                    Biography = null
+                };
+
+                var added = await _actorRepository.AddAsync(actor);
+                ids.Add(added.ID);
+            }
+
+            return ids;
+        }
+
+        private async Task<List<int>> EnsureDirectorsAsync(string? newDirectors)
+        {
+            var ids = new List<int>();
+            var names = SplitNames(newDirectors);
+
+            foreach (var fullName in names)
+            {
+                var (first, last) = SplitFirstLast(fullName);
+
+                var existing = await _directorRepository.FindByNameAsync(first, last);
+                if (existing != null)
+                {
+                    ids.Add(existing.ID);
+                    continue;
+                }
+
+                var director = new Director
+                {
+                    FirstName = first,
+                    LastName = last,
+                    Biography = null
+                };
+
+                var added = await _directorRepository.AddAsync(director);
+                ids.Add(added.ID);
+            }
+
+            return ids;
+        }
+
+        private static List<string> SplitNames(string? raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+                return new List<string>();
+
+            return raw
+                .Split(new[] { ',', '\n', '\r', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => x.Trim())
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        private static (string First, string Last) SplitFirstLast(string fullName)
+        {
+            var n = (fullName ?? "").Trim();
+
+            if (string.IsNullOrWhiteSpace(n))
+                return ("-", "-");
+
+            var parts = n.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 1)
+                return (parts[0], "-");
+
+            var last = parts[^1];
+            var first = string.Join(' ', parts.Take(parts.Length - 1));
+
+            if (string.IsNullOrWhiteSpace(first)) first = "-";
+            if (string.IsNullOrWhiteSpace(last)) last = "-";
+
+            return (first, last);
         }
 
         private static List<MovieDto> MapToMovieDtoList(List<Movie> movies)

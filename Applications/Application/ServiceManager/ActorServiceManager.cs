@@ -1,4 +1,5 @@
 ﻿using Application.DTOs.ActorDTOs;
+using Application.DTOs.PersonDTOs;
 using Application.Repositories;
 using Domain.Entities;
 
@@ -84,6 +85,20 @@ namespace Application.ServiceManager
 
             await _actorRepository.DeleteAsync(actor);
             return true;
+        }
+
+        public async Task<List<PersonLookupDto>> GetActorsForSelectAsync()
+        {
+            var list = await _actorRepository.GetAllAsNoTrackingAsync();
+
+            return list
+                .Select(a => new PersonLookupDto
+                {
+                    Id = a.ID,
+                    FullName = $"{a.FirstName} {a.LastName}".Trim()
+                })
+                .OrderBy(x => x.FullName)
+                .ToList();
         }
     }
 }
