@@ -23,6 +23,14 @@
     var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
 
     var ratingText = Model.ReviewCount == 0 ? "0" : Model.AverageRating.ToString("0.0");
+
+    var actorText = (Model.Actors != null && Model.Actors.Count > 0)
+        ? string.Join(", ", Model.Actors)
+        : "-";
+
+    var directorText = (Model.Directors != null && Model.Directors.Count > 0)
+        ? string.Join(", ", Model.Directors)
+        : "-";
 }
 
 <div class="container py-4">
@@ -62,13 +70,13 @@
 
             <div class="fd-detail-specs mt-3">
                 <div class="fd-spec">
-                    <div class="fd-spec-label">Altyazı</div>
-                    <div class="fd-spec-val">@(!string.IsNullOrWhiteSpace(Model.SubtitleLanguages) ? Model.SubtitleLanguages : "-")</div>
+                    <div class="fd-spec-label">Yönetmen</div>
+                    <div class="fd-spec-val">@directorText</div>
                 </div>
 
                 <div class="fd-spec">
-                    <div class="fd-spec-label">Ses</div>
-                    <div class="fd-spec-val">@(!string.IsNullOrWhiteSpace(Model.AudioFeatures) ? Model.AudioFeatures : "-")</div>
+                    <div class="fd-spec-label">Oyuncular</div>
+                    <div class="fd-spec-val">@actorText</div>
                 </div>
 
                 <div class="fd-spec">

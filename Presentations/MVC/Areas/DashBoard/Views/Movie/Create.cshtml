@@ -25,9 +25,32 @@
 
         <div class="col-12 col-md-6">
             <label class="form-label">Kategoriler</label>
-            <select asp-for="CategoryIds" class="form-select" asp-items="ViewBag.Categories" multiple>
-            </select>
+            <select asp-for="CategoryIds" class="form-select" asp-items="ViewBag.Categories" multiple></select>
             <span asp-validation-for="CategoryIds" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="row g-3 mt-1">
+        <div class="col-12 col-md-6">
+            <label class="form-label">Oyuncular</label>
+            <select asp-for="ActorIds" class="form-select" asp-items="ViewBag.Actors" multiple></select>
+
+            <div class="mt-2">
+                <label class="form-label">Yeni Oyuncular</label>
+                <input asp-for="NewActors" class="form-control" placeholder="Virgülle ayır: Brad Pitt, Tom Hanks" />
+                <span asp-validation-for="NewActors" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-6">
+            <label class="form-label">Yönetmenler</label>
+            <select asp-for="DirectorIds" class="form-select" asp-items="ViewBag.Directors" multiple></select>
+
+            <div class="mt-2">
+                <label class="form-label">Yeni Yönetmenler</label>
+                <input asp-for="NewDirectors" class="form-control" placeholder="Virgülle ayır: Christopher Nolan, David Fincher" />
+                <span asp-validation-for="NewDirectors" class="text-danger"></span>
+            </div>
         </div>
     </div>
 

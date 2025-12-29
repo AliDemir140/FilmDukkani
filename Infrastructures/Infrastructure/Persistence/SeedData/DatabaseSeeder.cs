@@ -109,12 +109,10 @@ namespace Infrastructure.Persistence.SeedData
                     throw new InvalidOperationException(string.Join(", ", createRes.Errors.Select(x => x.Description)));
             }
 
-            // Role ekleme için RoleManager zaten seeded olmalı
             var roles = await _userManager.GetRolesAsync(user);
             if (!roles.Contains("Admin"))
                 await _userManager.AddToRoleAsync(user, "Admin");
 
-            // Member var mı?
             var member = await _context.Members.FirstOrDefaultAsync(m => m.IdentityUserId == user.Id);
 
             if (member == null)
@@ -149,7 +147,6 @@ namespace Infrastructure.Persistence.SeedData
                 return;
             }
 
-            // Member varsa ama IdentityUserId boş kalmışsa düzelt
             if (string.IsNullOrWhiteSpace(member.IdentityUserId))
             {
                 member.IdentityUserId = user.Id;
@@ -159,20 +156,33 @@ namespace Infrastructure.Persistence.SeedData
 
         public async Task SeedDevDataAsync()
         {
-            if (await _context.Movies.AnyAsync())
-                return;
-
             Randomizer.Seed = new Random(12345);
             var faker = new Faker("tr");
 
-            var categories = await _context.Categories.AsNoTracking().ToListAsync();
-            if (categories.Count == 0)
+            await SeedDevMoviesAsync(faker);
+            await SeedDevActorsDirectorsAsync(faker);
+            await SeedDevMovieCategoriesAsync(faker);
+            await SeedDevMovieActorsAsync(faker);
+            await SeedDevMovieDirectorsAsync(faker);
+        }
+
+        private async Task SeedDevMoviesAsync(Faker faker)
+        {
+            if (await _context.Movies.AnyAsync())
                 return;
 
             var movieFaker = new Faker<Movie>("tr")
-                .RuleFor(m => m.Title, f => f.Lorem.Sentence(3))
+                .RuleFor(m => m.Title, f => f.Lorem.Sentence(3).Replace(".", "").Trim())
+                .RuleFor(m => m.OriginalTitle, f => f.Lorem.Sentence(3).Replace(".", "").Trim())
                 .RuleFor(m => m.Description, f => f.Lorem.Sentences(2))
-                .RuleFor(m => m.ReleaseYear, f => f.Date.Past(20).Year)
+                .RuleFor(m => m.ReleaseYear, f => f.Date.Past(25).Year)
+                .RuleFor(m => m.TechnicalDetails, f => "DVD")
+                .RuleFor(m => m.AudioFeatures, f => "TR/EN")
+                .RuleFor(m => m.SubtitleLanguages, f => "TR/EN")
+                .RuleFor(m => m.TrailerUrl, f => null)
+                .RuleFor(m => m.CoverImageUrl, f => null)
+                .RuleFor(m => m.Barcode, f => f.Random.ReplaceNumbers("FDK##########"))
+                .RuleFor(m => m.Supplier, f => f.PickRandom(new[] { "Tiglon", "Palermo", "AFM", "Diğer" }))
                 .RuleFor(m => m.Status, MovieStatus.Available)
                 .RuleFor(m => m.IsEditorsChoice, f => f.Random.Bool(0.20f))
                 .RuleFor(m => m.IsNewRelease, f => f.Random.Bool(0.20f))
@@ -182,30 +192,135 @@ namespace Infrastructure.Persistence.SeedData
 
             await _context.Movies.AddRangeAsync(movies);
             await _context.SaveChangesAsync();
+        }
 
-            var movieCategories = new List<MovieCategory>();
-
-            foreach (var movie in movies)
+        private async Task SeedDevActorsDirectorsAsync(Faker faker)
+        {
+            if (!await _context.Actors.AnyAsync())
             {
+                var actorFaker = new Faker<Actor>("tr")
+                    .RuleFor(a => a.FirstName, f => f.Name.FirstName())
+                    .RuleFor(a => a.LastName, f => f.Name.LastName())
+                    .RuleFor(a => a.Biography, f => null);
+
+                var actors = actorFaker.Generate(60);
+                await _context.Actors.AddRangeAsync(actors);
+                await _context.SaveChangesAsync();
+            }
+
+            if (!await _context.Directors.AnyAsync())
+            {
+                var directorFaker = new Faker<Director>("tr")
+                    .RuleFor(d => d.FirstName, f => f.Name.FirstName())
+                    .RuleFor(d => d.LastName, f => f.Name.LastName())
+                    .RuleFor(d => d.Biography, f => null);
+
+                var directors = directorFaker.Generate(25);
+                await _context.Directors.AddRangeAsync(directors);
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        private async Task SeedDevMovieCategoriesAsync(Faker faker)
+        {
+            var movies = await _context.Movies.AsNoTracking().Select(m => m.ID).ToListAsync();
+            if (movies.Count == 0)
+                return;
+
+            var categories = await _context.Categories.AsNoTracking().Select(c => c.ID).ToListAsync();
+            if (categories.Count == 0)
+                return;
+
+            foreach (var movieId in movies)
+            {
+                var exists = await _context.MovieCategories.AnyAsync(x => x.MovieId == movieId);
+                if (exists)
+                    continue;
+
                 var pickCount = faker.Random.Int(1, Math.Min(3, categories.Count));
                 var selected = categories
                     .OrderBy(_ => Guid.NewGuid())
                     .Take(pickCount)
-                    .Select(x => x.ID)
                     .Distinct()
                     .ToList();
 
-                foreach (var cid in selected)
+                var links = selected.Select(cid => new MovieCategory
                 {
-                    movieCategories.Add(new MovieCategory
-                    {
-                        MovieId = movie.ID,
-                        CategoryId = cid
-                    });
-                }
+                    MovieId = movieId,
+                    CategoryId = cid
+                });
+
+                await _context.MovieCategories.AddRangeAsync(links);
             }
 
-            _context.Set<MovieCategory>().AddRange(movieCategories);
+            await _context.SaveChangesAsync();
+        }
+
+        private async Task SeedDevMovieActorsAsync(Faker faker)
+        {
+            var movieIds = await _context.Movies.AsNoTracking().Select(m => m.ID).ToListAsync();
+            if (movieIds.Count == 0)
+                return;
+
+            var actorIds = await _context.Actors.AsNoTracking().Select(a => a.ID).ToListAsync();
+            if (actorIds.Count == 0)
+                return;
+
+            foreach (var movieId in movieIds)
+            {
+                var exists = await _context.MovieActors.AnyAsync(x => x.MovieId == movieId);
+                if (exists)
+                    continue;
+
+                var pickCount = faker.Random.Int(2, 5);
+                var selectedActors = actorIds
+                    .OrderBy(_ => Guid.NewGuid())
+                    .Take(Math.Min(pickCount, actorIds.Count))
+                    .ToList();
+
+                var links = selectedActors.Select(aid => new MovieActor
+                {
+                    MovieId = movieId,
+                    ActorId = aid
+                });
+
+                await _context.MovieActors.AddRangeAsync(links);
+            }
+
+            await _context.SaveChangesAsync();
+        }
+
+        private async Task SeedDevMovieDirectorsAsync(Faker faker)
+        {
+            var movieIds = await _context.Movies.AsNoTracking().Select(m => m.ID).ToListAsync();
+            if (movieIds.Count == 0)
+                return;
+
+            var directorIds = await _context.Directors.AsNoTracking().Select(d => d.ID).ToListAsync();
+            if (directorIds.Count == 0)
+                return;
+
+            foreach (var movieId in movieIds)
+            {
+                var exists = await _context.MovieDirectors.AnyAsync(x => x.MovieId == movieId);
+                if (exists)
+                    continue;
+
+                var pickCount = 1;
+                var selectedDirectors = directorIds
+                    .OrderBy(_ => Guid.NewGuid())
+                    .Take(Math.Min(pickCount, directorIds.Count))
+                    .ToList();
+
+                var links = selectedDirectors.Select(did => new MovieDirector
+                {
+                    MovieId = movieId,
+                    DirectorId = did
+                });
+
+                await _context.MovieDirectors.AddRangeAsync(links);
+            }
+
             await _context.SaveChangesAsync();
         }
     }

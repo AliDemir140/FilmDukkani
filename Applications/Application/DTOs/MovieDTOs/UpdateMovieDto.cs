@@ -44,11 +44,18 @@ namespace Application.DTOs.MovieDTOs
 
         public bool IsEditorsChoice { get; set; }
         public bool IsNewRelease { get; set; }
-
-        // Ödüllü film işaretlemesi
         public bool IsAwardWinner { get; set; }
 
         [Required(ErrorMessage = "En az 1 kategori seçmelisiniz.")]
         public List<int> CategoryIds { get; set; } = new();
+
+        public List<int> ActorIds { get; set; } = new();
+        public List<int> DirectorIds { get; set; } = new();
+
+        [MaxLength(1000, ErrorMessage = "Yeni oyuncular alanı en fazla 1000 karakter olabilir.")]
+        public string? NewActors { get; set; }
+
+        [MaxLength(1000, ErrorMessage = "Yeni yönetmenler alanı en fazla 1000 karakter olabilir.")]
+        public string? NewDirectors { get; set; }
     }
 }
