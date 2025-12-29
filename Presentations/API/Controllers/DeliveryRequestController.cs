@@ -146,5 +146,16 @@ namespace API.Controllers
 
             return Ok("Kurye atandı.");
         }
+
+        [HttpPut("{id}/mark-shipped")]
+        public async Task<IActionResult> MarkShipped(int id)
+        {
+            var result = await _deliveryService.MarkShippedAsync(id);
+            if (!result)
+                return BadRequest("Teslimat isteği kuryeye çıktı olarak işaretlenemedi.");
+
+            return Ok("Teslimat kuryeye çıktı olarak işaretlendi.");
+        }
+
     }
 }

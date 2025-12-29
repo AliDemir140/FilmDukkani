@@ -94,6 +94,26 @@ namespace Application.ServiceManager
             return openDelivered?.Count() ?? 0;
         }
 
+
+        private async Task<List<string>> GetRequestMovieTitlesAsync(int requestId)
+        {
+            var items = await _deliveryRequestItemRepository.GetAllAsync(i => i.DeliveryRequestId == requestId);
+            if (items == null || !items.Any())
+                return new List<string>();
+
+            var titles = new List<string>();
+
+            foreach (var item in items)
+            {
+                var movie = await _movieRepository.GetByIdAsync(item.MovieId);
+                var title = movie?.Title?.Trim();
+
+                if (!string.IsNullOrWhiteSpace(title))
+                    titles.Add(title);
+            }
+
+            return titles;
+        }
         public async Task<int> CreateDeliveryRequestAsync(int memberId, int listId, DateTime deliveryDate)
         {
             if (!IsValidDeliveryDate(deliveryDate))
@@ -307,13 +327,35 @@ namespace Application.ServiceManager
             if (string.IsNullOrWhiteSpace(phone))
                 return;
 
+            var titles = await GetRequestMovieTitlesAsync(request.ID);
+
+            const int maxTitles = 5;
+            string filmsPart;
+
+            if (titles.Count == 0)
+            {
+                filmsPart = "Filmler: (liste bulunamadi)";
+            }
+            else if (titles.Count <= maxTitles)
+            {
+                filmsPart = "Filmler: " + string.Join(", ", titles);
+            }
+            else
+            {
+                var first = titles.Take(maxTitles).ToList();
+                filmsPart = "Filmler: " + string.Join(", ", first) + " ve digerleri";
+            }
+
             var message =
                 "Kurye yola cikti. Teslimat tarihi: " +
                 request.DeliveryDate.ToString("dd.MM.yyyy") +
+                ". " +
+                filmsPart +
                 ". FilmDukkani";
 
             await _smsService.SendAsync(phone, message);
         }
+
 
         public async Task PrepareTomorrowDeliveriesAsync()
         {
@@ -799,5 +841,7 @@ namespace Application.ServiceManager
 
             return result;
         }
+
+
     }
 }
