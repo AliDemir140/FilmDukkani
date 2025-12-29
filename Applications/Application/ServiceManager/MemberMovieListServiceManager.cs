@@ -127,11 +127,18 @@ namespace Application.ServiceManager
             if (await IsMovieAlreadyInList(dto.MemberMovieListId, dto.MovieId))
                 return 0;
 
+            var existing = await _memberMovieListItemRepository
+                .GetAllAsync(i => i.MemberMovieListId == dto.MemberMovieListId);
+
+            int nextPriority = 1;
+            if (existing != null && existing.Any())
+                nextPriority = existing.Max(x => x.Priority) + 1;
+
             var item = new MemberMovieListItem
             {
                 MemberMovieListId = dto.MemberMovieListId,
                 MovieId = dto.MovieId,
-                Priority = dto.Priority <= 0 ? 1 : dto.Priority,
+                Priority = dto.Priority > 0 ? dto.Priority : nextPriority,
                 AddedDate = DateTime.Now
             };
 
@@ -244,6 +251,29 @@ namespace Application.ServiceManager
             return 1;
         }
 
+        private async Task NormalizePrioritiesAsync(int listId)
+        {
+            var items = await _memberMovieListItemRepository.GetAllAsync(i => i.MemberMovieListId == listId);
+            if (items == null || !items.Any())
+                return;
+
+            var ordered = items
+                .OrderBy(x => x.Priority)
+                .ThenBy(x => x.AddedDate)
+                .ThenBy(x => x.ID)
+                .ToList();
+
+            for (int i = 0; i < ordered.Count; i++)
+            {
+                var newPriority = i + 1;
+                if (ordered[i].Priority != newPriority)
+                {
+                    ordered[i].Priority = newPriority;
+                    await _memberMovieListItemRepository.UpdateAsync(ordered[i]);
+                }
+            }
+        }
+
         public async Task<int> MoveItemAsync(int listId, int itemId, string direction)
         {
             if (listId <= 0 || itemId <= 0) return 0;
@@ -254,11 +284,14 @@ namespace Application.ServiceManager
             if (await IsListLockedAsync(listId))
                 return -1;
 
+            await NormalizePrioritiesAsync(listId);
+
             var items = await _memberMovieListItemRepository.GetAllAsync(i => i.MemberMovieListId == listId);
 
             var ordered = items
                 .OrderBy(x => x.Priority)
                 .ThenBy(x => x.AddedDate)
+                .ThenBy(x => x.ID)
                 .ToList();
 
             if (!ordered.Any())

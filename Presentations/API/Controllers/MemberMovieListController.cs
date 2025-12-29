@@ -71,9 +71,6 @@ namespace API.Controllers
             if (dto.MovieId <= 0)
                 return BadRequest("MovieId zorunludur.");
 
-            if (dto.Priority <= 0)
-                dto.Priority = 1;
-
             var result = await _service.AddItemToListAsync(dto);
 
             if (result == -1)
@@ -85,11 +82,6 @@ namespace API.Controllers
             return Ok("Film listeye eklendi.");
         }
 
-        // ✅ ServiceManager int result uyumlu
-        // Return:
-        //  1  -> silindi
-        //  0  -> item yok
-        // -1  -> kilitli
         [HttpDelete("delete-item")]
         public async Task<IActionResult> DeleteItem(int id)
         {
@@ -128,11 +120,6 @@ namespace API.Controllers
             });
         }
 
-        // ✅ ServiceManager int result uyumlu
-        // Return:
-        //  1  -> ok
-        //  0  -> hata
-        // -1  -> kilitli
         [HttpPost("move-item")]
         public async Task<IActionResult> MoveItem(int listId, int itemId, string direction)
         {
@@ -154,12 +141,6 @@ namespace API.Controllers
             return Ok("Öncelik güncellendi.");
         }
 
-        // ✅ ServiceManager int result uyumlu
-        // Return:
-        //  1  -> ok
-        //  0  -> hata
-        // -1  -> kilitli
-        // -2  -> aynı isim
         [HttpPut("update-name")]
         public async Task<IActionResult> UpdateName([FromBody] UpdateMemberMovieListNameDto dto)
         {
@@ -187,7 +168,6 @@ namespace API.Controllers
             return Ok("Liste adı güncellendi.");
         }
 
-        // GET: api/MemberMovieList/is-locked?listId=5
         [HttpGet("is-locked")]
         public async Task<IActionResult> IsLocked(int listId)
         {
