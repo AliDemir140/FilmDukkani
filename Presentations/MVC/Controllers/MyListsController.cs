@@ -132,7 +132,6 @@ namespace MVC.Controllers
                     $"{ApiBaseUrl}/api/MemberMovieList/list-items?listId={id}"
                 ) ?? new List<MemberMovieListItemDto>();
 
-                // ✅ kilit bilgisini al
                 bool locked = false;
                 try
                 {
