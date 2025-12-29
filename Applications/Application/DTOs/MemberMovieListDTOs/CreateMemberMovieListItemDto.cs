@@ -11,6 +11,6 @@ namespace Application.DTOs.MemberMovieListDTOs
         public int MovieId { get; set; }
 
         [Range(1, int.MaxValue, ErrorMessage = "Öncelik en az 1 olmalıdır.")]
-        public int Priority { get; set; }
+        public int? Priority { get; set; }
     }
 }

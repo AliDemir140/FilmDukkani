@@ -108,6 +108,35 @@ namespace Application.ServiceManager
                 .ToList();
         }
 
+        public async Task<List<MemberMovieListItemDto>> GetListItemsAllAsync(int listId)
+        {
+            var items = await _memberMovieListItemRepository.GetAllAsync(i =>
+                i.MemberMovieListId == listId);
+
+            var movieIds = items.Select(x => x.MovieId).Distinct().ToList();
+
+            var movies = movieIds.Any()
+                ? await _moviesRepository.GetAllAsync(m => movieIds.Contains(m.ID))
+                : new List<Movie>();
+
+            var movieMap = movies.ToDictionary(m => m.ID, m => m.Title);
+
+            return items
+                .OrderBy(i => i.Priority)
+                .ThenBy(i => i.AddedDate)
+                .ThenBy(i => i.ID)
+                .Select(i => new MemberMovieListItemDto
+                {
+                    Id = i.ID,
+                    MemberMovieListId = i.MemberMovieListId,
+                    MovieId = i.MovieId,
+                    MovieTitle = movieMap.ContainsKey(i.MovieId) ? movieMap[i.MovieId] : null,
+                    Priority = i.Priority,
+                    AddedDate = i.AddedDate
+                })
+                .ToList();
+        }
+
         private async Task<bool> IsMovieAlreadyInList(int listId, int movieId)
         {
             var items = await _memberMovieListItemRepository
@@ -127,24 +156,29 @@ namespace Application.ServiceManager
             if (await IsMovieAlreadyInList(dto.MemberMovieListId, dto.MovieId))
                 return 0;
 
-            var existing = await _memberMovieListItemRepository
+            var allItems = await _memberMovieListItemRepository
                 .GetAllAsync(i => i.MemberMovieListId == dto.MemberMovieListId);
 
-            int nextPriority = 1;
-            if (existing != null && existing.Any())
-                nextPriority = existing.Max(x => x.Priority) + 1;
+            int nextPriority = allItems.Any()
+                ? allItems.Max(x => x.Priority) + 1
+                : 1;
+
+            int pr = (dto.Priority.HasValue && dto.Priority.Value > 0)
+                ? dto.Priority.Value
+                : nextPriority;
 
             var item = new MemberMovieListItem
             {
                 MemberMovieListId = dto.MemberMovieListId,
                 MovieId = dto.MovieId,
-                Priority = dto.Priority > 0 ? dto.Priority : nextPriority,
+                Priority = pr,
                 AddedDate = DateTime.Now
             };
 
             await _memberMovieListItemRepository.AddAsync(item);
             return 1;
         }
+
 
         public async Task<bool> HasMinimumItemsAsync(int listId, int minimumCount = 5)
         {

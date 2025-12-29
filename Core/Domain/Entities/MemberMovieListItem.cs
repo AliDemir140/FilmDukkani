@@ -1,5 +1,4 @@
-﻿// DOSYA: Domain/Entities/MemberMovieListItem.cs
-namespace Domain.Entities
+﻿namespace Domain.Entities
 {
     public class MemberMovieListItem : BaseEntity
     {

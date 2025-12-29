@@ -59,6 +59,16 @@ namespace API.Controllers
             return Ok(items);
         }
 
+        [HttpGet("list-items-all")]
+        public async Task<IActionResult> GetListItemsAll(int listId)
+        {
+            if (listId <= 0)
+                return BadRequest("listId zorunludur.");
+
+            var items = await _service.GetListItemsAllAsync(listId);
+            return Ok(items);
+        }
+
         [HttpPost("add-item")]
         public async Task<IActionResult> AddItem([FromBody] CreateMemberMovieListItemDto dto)
         {
