@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Application.ServiceManager;
 using Microsoft.AspNetCore.Mvc;
@@ -41,7 +42,9 @@ namespace MVC.Controllers
         public async Task<IActionResult> RequestCancel(int requestId, string reason)
         {
             var memberId = HttpContext.Session.GetInt32(SessionKeys.MemberId);
-            if (memberId == null)
+            var token = HttpContext.Session.GetString(SessionKeys.JwtToken);
+
+            if (memberId == null || string.IsNullOrWhiteSpace(token))
                 return RedirectToAction("Login", "Auth");
 
             if (requestId <= 0)
@@ -66,23 +69,36 @@ namespace MVC.Controllers
             try
             {
                 var client = _httpClientFactory.CreateClient();
+                client.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", token);
 
-                var body = new { Reason = reason };
+                var baseUrl = ApiBaseUrl.TrimEnd('/');
+                var encodedReason = Uri.EscapeDataString(reason);
 
-                var res = await client.PutAsJsonAsync(
-                    $"{ApiBaseUrl}/api/DeliveryRequest/{requestId}/request-cancel?memberId={memberId.Value}",
-                    body
-                );
+                var url = $"{baseUrl}/api/DeliveryRequest/{requestId}/cancel-request" +
+                          $"?memberId={memberId.Value}&reason={encodedReason}";
+
+                var res = await client.PostAsync(url, content: null);
 
                 if (res.StatusCode == HttpStatusCode.Conflict)
                 {
-                    TempData["Error"] = "Bu sipariş için zaten iptal talebi mevcut.";
+                    TempData["Error"] = "Bu sipariş için zaten bekleyen bir iptal talebi var.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                if (res.StatusCode == HttpStatusCode.Forbidden)
+                {
+                    TempData["Error"] = "Bu sipariş sana ait değil.";
                     return RedirectToAction(nameof(Index));
                 }
 
                 if (!res.IsSuccessStatusCode)
                 {
-                    TempData["Error"] = "İptal talebi oluşturulamadı. (Durum/tarih uygun değil)";
+                    var msg = await res.Content.ReadAsStringAsync();
+                    TempData["Error"] = string.IsNullOrWhiteSpace(msg)
+                        ? $"İptal talebi oluşturulamadı. (HTTP {(int)res.StatusCode} {res.StatusCode})"
+                        : msg;
+
                     return RedirectToAction(nameof(Index));
                 }
 
@@ -95,6 +111,7 @@ namespace MVC.Controllers
                 return RedirectToAction(nameof(Index));
             }
         }
+
 
         public async Task<IActionResult> Details(int id)
         {
@@ -110,6 +127,11 @@ namespace MVC.Controllers
                 return Forbid();
 
             return View(dto);
+        }
+
+        private sealed class RequestCancelBody
+        {
+            public string Reason { get; set; } = string.Empty;
         }
     }
 }

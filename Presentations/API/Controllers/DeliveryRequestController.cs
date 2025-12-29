@@ -1,5 +1,6 @@
 ﻿using Application.DTOs.DeliveryRequestDTOs;
 using Application.ServiceManager;
+using Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
@@ -13,6 +14,13 @@ namespace API.Controllers
         public DeliveryRequestController(DeliveryRequestServiceManager deliveryService)
         {
             _deliveryService = deliveryService;
+        }
+
+        [HttpGet("by-status")]
+        public async Task<IActionResult> GetByStatus([FromQuery] DeliveryStatus status)
+        {
+            var list = await _deliveryService.GetRequestsByStatusAsync(status);
+            return Ok(list ?? new List<DeliveryRequestDto>());
         }
 
         [HttpPost("create")]

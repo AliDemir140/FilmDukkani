@@ -1,6 +1,7 @@
 ﻿using Application.DTOs.PurchaseRequestDTOs;
 using Microsoft.AspNetCore.Mvc;
 using MVC.Constants;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
 namespace MVC.Controllers
@@ -35,15 +36,28 @@ namespace MVC.Controllers
             try
             {
                 var client = _httpClientFactory.CreateClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
                 var url = $"{apiBaseUrl.TrimEnd('/')}/api/PurchaseRequest/my?memberId={memberId.Value}";
-                var list = await client.GetFromJsonAsync<List<PurchaseRequestDto>>(url);
+                var res = await client.GetAsync(url);
 
+                var body = await res.Content.ReadAsStringAsync();
+
+                if (!res.IsSuccessStatusCode)
+                {
+                    TempData["Error"] = string.IsNullOrWhiteSpace(body)
+                        ? $"Film istekleri getirilemedi. (HTTP {(int)res.StatusCode})"
+                        : body;
+
+                    return View(new List<PurchaseRequestDto>());
+                }
+
+                var list = await res.Content.ReadFromJsonAsync<List<PurchaseRequestDto>>();
                 return View(list ?? new List<PurchaseRequestDto>());
             }
-            catch
+            catch (Exception ex)
             {
-                TempData["Error"] = "Film istekleri getirilemedi. API çalışıyor mu kontrol et.";
+                TempData["Error"] = "Film istekleri getirilemedi: " + ex.Message;
                 return View(new List<PurchaseRequestDto>());
             }
         }
@@ -74,29 +88,36 @@ namespace MVC.Controllers
             try
             {
                 var client = _httpClientFactory.CreateClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
                 var dto = new CreatePurchaseRequestDto
                 {
+                    MemberId = memberId.Value,
                     MovieId = movieId,
                     Quantity = quantity,
                     Note = note
                 };
 
-                var res = await client.PostAsJsonAsync($"{apiBaseUrl.TrimEnd('/')}/api/PurchaseRequest/create", dto);
+                var url = $"{apiBaseUrl.TrimEnd('/')}/api/PurchaseRequest/create";
+                var res = await client.PostAsJsonAsync(url, dto);
+
+                var body = await res.Content.ReadAsStringAsync();
 
                 if (!res.IsSuccessStatusCode)
                 {
-                    var msg = await res.Content.ReadAsStringAsync();
-                    TempData["Error"] = string.IsNullOrWhiteSpace(msg) ? "Talep oluşturulamadı." : msg;
+                    TempData["Error"] = string.IsNullOrWhiteSpace(body)
+                        ? $"Talep oluşturulamadı. (HTTP {(int)res.StatusCode})"
+                        : body;
+
                     return RedirectToLocal(returnUrl);
                 }
 
                 TempData["Success"] = "Film isteği oluşturuldu. Admin onayına düştü.";
                 return RedirectToAction(nameof(My));
             }
-            catch
+            catch (Exception ex)
             {
-                TempData["Error"] = "Talep oluşturulamadı. API çalışıyor mu kontrol et.";
+                TempData["Error"] = "Talep oluşturulamadı: " + ex.Message;
                 return RedirectToLocal(returnUrl);
             }
         }
