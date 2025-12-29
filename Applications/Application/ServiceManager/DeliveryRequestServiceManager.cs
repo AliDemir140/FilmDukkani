@@ -1,4 +1,5 @@
-﻿using Application.DTOs.DeliveryRequestDTOs;
+﻿// DOSYA: Application/ServiceManager/DeliveryRequestServiceManager.cs
+using Application.DTOs.DeliveryRequestDTOs;
 using Application.Interfaces;
 using Application.Repositories;
 using Domain.Entities;
@@ -173,6 +174,13 @@ namespace Application.ServiceManager
             {
                 foreach (var item in items)
                 {
+                    var listItem = await _memberMovieListItemRepository.GetByIdAsync(item.MemberMovieListItemId);
+                    if (listItem != null && listItem.IsReserved)
+                    {
+                        listItem.IsReserved = false;
+                        await _memberMovieListItemRepository.UpdateAsync(listItem);
+                    }
+
                     var copy = await _movieCopyRepository.GetByIdAsync(item.MovieCopyId);
                     if (copy != null && !copy.IsDamaged)
                     {
@@ -348,7 +356,7 @@ namespace Application.ServiceManager
                 anyItemAddedByRequestId[request.ID] = false;
 
                 var listItems = await _memberMovieListItemRepository
-                    .GetAllAsync(i => i.MemberMovieListId == request.MemberMovieListId);
+                    .GetAllAsync(i => i.MemberMovieListId == request.MemberMovieListId && !i.IsReserved);
 
                 if (listItems == null || !listItems.Any())
                     continue;
@@ -485,7 +493,7 @@ namespace Application.ServiceManager
                     maxMoviesToShow = 5;
 
                 var listItems = await _memberMovieListItemRepository
-                    .GetAllAsync(i => i.MemberMovieListId == request.MemberMovieListId);
+                    .GetAllAsync(i => i.MemberMovieListId == request.MemberMovieListId && !i.IsReserved);
 
                 var planned = listItems
                     .OrderBy(i => i.Priority)
@@ -592,6 +600,13 @@ namespace Application.ServiceManager
 
             foreach (var item in items)
             {
+                var listItem = await _memberMovieListItemRepository.GetByIdAsync(item.MemberMovieListItemId);
+                if (listItem != null && listItem.IsReserved)
+                {
+                    listItem.IsReserved = false;
+                    await _memberMovieListItemRepository.UpdateAsync(listItem);
+                }
+
                 var copy = await _movieCopyRepository.GetByIdAsync(item.MovieCopyId);
                 if (copy != null && !copy.IsDamaged)
                 {
@@ -616,6 +631,22 @@ namespace Application.ServiceManager
             if (request.Status != DeliveryStatus.Prepared)
                 return false;
 
+            var items = await _deliveryRequestItemRepository
+                .GetAllAsync(i => i.DeliveryRequestId == request.ID);
+
+            if (items != null && items.Any())
+            {
+                foreach (var item in items)
+                {
+                    var listItem = await _memberMovieListItemRepository.GetByIdAsync(item.MemberMovieListItemId);
+                    if (listItem != null && !listItem.IsReserved)
+                    {
+                        listItem.IsReserved = true;
+                        await _memberMovieListItemRepository.UpdateAsync(listItem);
+                    }
+                }
+            }
+
             request.Status = DeliveryStatus.Shipped;
             await _deliveryRequestRepository.UpdateAsync(request);
 
@@ -631,16 +662,6 @@ namespace Application.ServiceManager
 
             if (request.Status != DeliveryStatus.Shipped)
                 return false;
-
-            var items = await _deliveryRequestItemRepository
-                .GetAllAsync(i => i.DeliveryRequestId == request.ID);
-
-            foreach (var item in items)
-            {
-                var listItem = await _memberMovieListItemRepository.GetByIdAsync(item.MemberMovieListItemId);
-                if (listItem != null)
-                    await _memberMovieListItemRepository.DeleteAsync(listItem);
-            }
 
             request.Status = DeliveryStatus.Delivered;
             await _deliveryRequestRepository.UpdateAsync(request);

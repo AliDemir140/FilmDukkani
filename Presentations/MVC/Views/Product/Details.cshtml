@@ -184,6 +184,84 @@
                             Bu talep admin onayına düşer. Onaylanırsa depoya alım planlanır.
                         </div>
                     </div>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.TrailerUrl))
+                    {
+                        var trailer = Model.TrailerUrl.Trim();
+
+                        // ✅ YouTube watch link -> embed link (en sık sorun bu)
+                        if (trailer.Contains("youtube.com/watch", StringComparison.OrdinalIgnoreCase))
+                        {
+                            try
+                            {
+                                var uri = new Uri(trailer);
+                                var q = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+                                if (q.TryGetValue("v", out var v) && !string.IsNullOrWhiteSpace(v))
+                                {
+                                    trailer = $"https://www.youtube.com/embed/{v}";
+                                }
+                            }
+                            catch { }
+                        }
+                        else if (trailer.Contains("youtu.be/", StringComparison.OrdinalIgnoreCase))
+                        {
+                            try
+                            {
+                                var uri = new Uri(trailer);
+                                var id = uri.AbsolutePath.Trim('/'); // youtu.be/{id}
+                                if (!string.IsNullOrWhiteSpace(id))
+                                {
+                                    trailer = $"https://www.youtube.com/embed/{id}";
+                                }
+                            }
+                            catch { }
+                        }
+
+                        <button type="button"
+                                class="btn btn-outline-light mt-2"
+                                data-bs-toggle="modal"
+                                data-bs-target="#trailerModal">
+                            <i class="fa-solid fa-play me-2"></i> Fragmanı İzle
+                        </button>
+
+                        <div class="modal fade" id="trailerModal" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-xl modal-dialog-centered">
+                                <div class="modal-content fd-modal">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">@Model.Title - Fragman</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Kapat"></button>
+                                    </div>
+
+                                    <div class="modal-body">
+                                        <div class="ratio ratio-16x9">
+                                            <iframe id="trailerFrame"
+                                                    src="@trailer"
+                                                    title="Trailer"
+                                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                    allowfullscreen>
+                                            </iframe>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <script>
+                            (function () {
+                                const m = document.getElementById('trailerModal');
+                                const iframe = document.getElementById('trailerFrame');
+                                if (!m || !iframe) return;
+
+                                const src = iframe.getAttribute('src');
+
+                                m.addEventListener('hidden.bs.modal', function () {
+                                    iframe.setAttribute('src', src); // kapatınca dursun
+                                });
+                            })();
+                        </script>
+                    }
+
+
                 }
             </div>
 
