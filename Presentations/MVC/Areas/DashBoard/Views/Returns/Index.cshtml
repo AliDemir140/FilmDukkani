@@ -1,0 +1,71 @@
+﻿@using Domain.Enums
+@model List<Application.DTOs.DeliveryRequestDTOs.DeliveryRequestDto>
+
+@{
+    ViewData["Title"] = "İade İşlemleri";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">İade İşlemleri</h2>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+@if (Model == null || !Model.Any())
+{
+    <div class="card dark-card">
+        <div class="card-body">
+            Teslim edilmiş sipariş yok.
+        </div>
+    </div>
+}
+else
+{
+    <div class="card dark-card">
+        <div class="card-header">
+            <b>Teslim Edildi (Delivered) Siparişler</b>
+        </div>
+
+        <div class="card-body p-0">
+            <table class="table dark-table table-hover mb-0 align-middle">
+                <thead>
+                    <tr>
+                        <th style="width:90px;">#</th>
+                        <th>Üye</th>
+                        <th>Liste</th>
+                        <th style="width:160px;">Teslimat</th>
+                        <th style="width:160px;">Durum</th>
+                        <th class="text-center" style="width:140px;">İşlem</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in Model.OrderByDescending(x => x.Id))
+                    {
+                        <tr>
+                            <td>#@r.Id</td>
+                            <td>@r.MemberFullName</td>
+                            <td>@r.ListName</td>
+                            <td>@r.DeliveryDate.ToString("dd.MM.yyyy")</td>
+                            <td>
+                                <span class="badge bg-primary">Teslim Edildi</span>
+                            </td>
+                            <td class="text-center">
+                                <a asp-area="DashBoard" asp-controller="Returns" asp-action="Details" asp-route-id="@r.Id"
+                                   class="btn btn-sm btn-outline-light">
+                                    İadeleri Yönet
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

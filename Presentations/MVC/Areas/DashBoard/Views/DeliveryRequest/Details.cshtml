@@ -34,23 +34,31 @@
 
     @if (Model.Status == DeliveryStatus.CancelRequested)
     {
-        <div class="mt-2 p-2 border rounded bg-light">
-            <b>İptal Talebi:</b> Admin onayı bekliyor.
-            @if (!string.IsNullOrWhiteSpace(Model.CancelReason))
-            {
-                <div><b>Sebep:</b> @Model.CancelReason</div>
-            }
-            @if (Model.CancelRequestedAt.HasValue)
-            {
-                <div><b>Talep Tarihi:</b> @Model.CancelRequestedAt.Value.ToString("dd.MM.yyyy HH:mm")</div>
-            }
+        <div class="card dark-card mt-2">
+            <div class="card-body">
+                <div class="mb-1">
+                    <b>İptal Talebi:</b> Admin onayı bekliyor.
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(Model.CancelReason))
+                {
+                    <div class="mb-1"><b>Sebep:</b> @Model.CancelReason</div>
+                }
+
+                @if (Model.CancelRequestedAt.HasValue)
+                {
+                    <div class="text-muted">
+                        <b>Talep Tarihi:</b> @Model.CancelRequestedAt.Value.ToString("dd.MM.yyyy HH:mm")
+                    </div>
+                }
+            </div>
         </div>
     }
 </div>
 
 @if (Model.Status == DeliveryStatus.Prepared || Model.Status == DeliveryStatus.Shipped)
 {
-    <div class="card mb-3">
+    <div class="card mb-3 dark-card">
         <div class="card-body">
             <form asp-action="AssignCourier" method="post" class="row g-2 align-items-end">
                 @Html.AntiForgeryToken()
@@ -90,7 +98,6 @@
        asp-route-id="@Model.Id">
         Teslimat Etiketi
     </a>
-
 
     @if (Model.Status == DeliveryStatus.CancelRequested)
     {
@@ -151,7 +158,7 @@
 
 <h4>Kalemler</h4>
 
-<table class="table table-bordered">
+<table class="table table-bordered dark-table">
     <thead>
         <tr>
             <th>Film</th>

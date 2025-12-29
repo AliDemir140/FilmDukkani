@@ -461,6 +461,9 @@ namespace Application.ServiceManager
 
             var itemDtos = new List<DeliveryRequestItemDto>();
 
+            // Planned preview sadece Pending için
+            bool allowPlannedPreview = request.Status == DeliveryStatus.Pending;
+
             if (items != null && items.Any())
             {
                 foreach (var item in items)
@@ -478,7 +481,7 @@ namespace Application.ServiceManager
                     });
                 }
             }
-            else
+            else if (allowPlannedPreview)
             {
                 int maxMoviesToShow = 0;
 
@@ -507,6 +510,7 @@ namespace Application.ServiceManager
 
                     itemDtos.Add(new DeliveryRequestItemDto
                     {
+                        // Pending preview'da Id yok: ama bu ekranda iade yapılmayacağı için sorun değil
                         Id = 0,
                         MovieId = li.MovieId,
                         MovieTitle = movie?.Title,
@@ -515,6 +519,11 @@ namespace Application.ServiceManager
                         ReturnDate = null
                     });
                 }
+            }
+            else
+            {
+                // Prepared/Shipped/Delivered/Completed -> item yoksa planned göstermiyoruz
+                itemDtos = new List<DeliveryRequestItemDto>();
             }
 
             string? courierFullName = null;
@@ -555,6 +564,7 @@ namespace Application.ServiceManager
                 Items = itemDtos
             };
         }
+
 
         public async Task<List<DeliveryRequestDto>> GetAllRequestsAsync()
         {
