@@ -38,7 +38,6 @@ namespace Application.ServiceManager
             var list = await GetListAsync(listId);
             if (list == null) return false;
 
-            // Pending/Prepared/Shipped/Delivered/CancelRequested => TRUE (repo böyle kontrol ediyor)
             return await _deliveryRequestRepository.HasActiveRequestForListAsync(list.MemberId, listId);
         }
 
@@ -83,7 +82,8 @@ namespace Application.ServiceManager
 
         public async Task<List<MemberMovieListItemDto>> GetListItemsAsync(int listId)
         {
-            var items = await _memberMovieListItemRepository.GetAllAsync(i => i.MemberMovieListId == listId);
+            var items = await _memberMovieListItemRepository.GetAllAsync(i =>
+                i.MemberMovieListId == listId && i.IsReserved == false);
 
             var movieIds = items.Select(x => x.MovieId).Distinct().ToList();
 
@@ -116,10 +116,6 @@ namespace Application.ServiceManager
             return items.Any();
         }
 
-        // Return:
-        //  1  -> eklendi
-        //  0  -> zaten var
-        // -1  -> liste kilitli
         public async Task<int> AddItemToListAsync(CreateMemberMovieListItemDto dto)
         {
             if (dto == null) return 0;
@@ -157,11 +153,6 @@ namespace Application.ServiceManager
             return items.Count;
         }
 
-        // Return:
-        //  1  -> ok
-        //  0  -> bulunamadı / geçersiz
-        // -1  -> kilitli
-        // -2  -> aynı isim var
         public async Task<int> UpdateListNameAsync(UpdateMemberMovieListNameDto dto)
         {
             if (dto == null || dto.Id <= 0) return 0;
@@ -185,10 +176,6 @@ namespace Application.ServiceManager
             return 1;
         }
 
-        // Return:
-        //  1  -> silindi
-        //  0  -> item yok
-        // -1  -> kilitli
         public async Task<int> DeleteItemAsync(int itemId)
         {
             if (itemId <= 0) return 0;
@@ -203,10 +190,6 @@ namespace Application.ServiceManager
             return 1;
         }
 
-        // Return:
-        //  1  -> güncellendi
-        //  0  -> item yok / geçersiz
-        // -1  -> kilitli
         public async Task<int> UpdateItemPriorityAsync(UpdateMemberMovieListItemPriorityDto dto)
         {
             if (dto == null || dto.Id <= 0) return 0;
@@ -230,10 +213,6 @@ namespace Application.ServiceManager
             return list != null;
         }
 
-        // Return:
-        //  1  -> ok
-        //  0  -> liste yok / boş
-        // -1  -> kilitli
         public async Task<int> ReorderItemsAsync(int listId, List<int> orderedItemIds)
         {
             if (listId <= 0) return 0;
@@ -265,10 +244,6 @@ namespace Application.ServiceManager
             return 1;
         }
 
-        // Return:
-        //  1  -> ok
-        //  0  -> hata / bulunamadı
-        // -1  -> kilitli
         public async Task<int> MoveItemAsync(int listId, int itemId, string direction)
         {
             if (listId <= 0 || itemId <= 0) return 0;
@@ -330,8 +305,6 @@ namespace Application.ServiceManager
             return 0;
         }
 
-        // Tek listeyi boşalt (itemları sil, liste kalsın)
-        // return: 1 ok, -1 kilitli, 0 bulunamadı
         public async Task<int> ClearListItemsAsync(int listId)
         {
             var list = await _memberMovieListRepository.GetByIdAsync(listId);
@@ -349,8 +322,6 @@ namespace Application.ServiceManager
             return 1;
         }
 
-        // Listeyi sil (aktif sipariş yoksa)
-        // return: 0 yok, -1 kilitli, 1 başarılı
         public async Task<int> DeleteListAsync(int listId)
         {
             if (listId <= 0) return 0;
@@ -369,8 +340,6 @@ namespace Application.ServiceManager
             return 1;
         }
 
-
-        // Toplu temizlik: siparişe girmemiş listelerin itemlarını sil
         public async Task<int> ClearAllNonOrderedListsAsync(int memberId)
         {
             var lists = await _memberMovieListRepository.GetAllAsync(l => l.MemberId == memberId);
@@ -395,7 +364,6 @@ namespace Application.ServiceManager
             return cleared;
         }
 
-        // MVC'nin "kilitli mi" sorabilmesi için
         public async Task<bool> IsListLockedPublicAsync(int listId)
         {
             return await IsListLockedAsync(listId);

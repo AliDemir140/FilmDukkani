@@ -104,7 +104,6 @@ body {
         border-bottom: 1px solid #2a2f36;
     }
 
-/* Koyu tablo */
 .dark-table {
     background-color: transparent;
     color: #eaeaea;
@@ -124,7 +123,6 @@ body {
         background-color: rgba(255, 255, 255, 0.04);
     }
 
-/* Hero */
 .fd-hero {
     background: radial-gradient(1200px 500px at 15% -10%, rgba(124,92,255,.25), transparent 60%), radial-gradient(900px 500px at 90% 0%, rgba(255,45,45,.18), transparent 55%), linear-gradient(180deg, var(--fd-bg0), var(--fd-bg1));
     padding: 28px 0 10px 0;
@@ -218,6 +216,8 @@ body {
         display: block;
         filter: saturate(1.05) contrast(1.05);
         transition: transform .25s ease;
+        position: relative;
+        z-index: 1;
     }
 
 .fd-card:hover .fd-poster img {
@@ -230,6 +230,7 @@ body {
     inset: 0;
     background: linear-gradient(180deg, rgba(0,0,0,0) 55%, rgba(0,0,0,.78));
     pointer-events: none;
+    z-index: 2;
 }
 
 .fd-chip {
@@ -243,6 +244,7 @@ body {
     border: 1px solid rgba(255,255,255,.12);
     background: rgba(7,10,15,.55);
     backdrop-filter: blur(8px);
+    z-index: 3;
 }
 
 .fd-play {
@@ -261,6 +263,7 @@ body {
     opacity: 0;
     transform: translateY(-2px);
     transition: .18s ease;
+    z-index: 3;
 }
 
 .fd-card:hover .fd-play {
@@ -871,7 +874,6 @@ body {
         border-top-color: rgba(255, 255, 255, 0.12);
     }
 
-/* Membership Page (FIX) */
 .membership-page {
     color: rgba(255, 255, 255, 0.92);
 }
@@ -912,3 +914,17 @@ body {
     .membership-page .alert {
         border-radius: 14px;
     }
+
+.fd-modal .btn-close {
+    filter: invert(1); 
+    opacity: 0.9;
+}
+
+    .fd-modal .btn-close:hover {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+
+.fd-modal .modal-header {
+    border-bottom: 1px solid rgba(255,255,255,.12);
+}
