@@ -5,6 +5,8 @@ using Application.ServiceManager;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using MVC.Constants;
+using MVC.Extensions;
+using MVC.Models;
 using System.Net;
 using System.Net.Http.Json;
 
@@ -210,7 +212,7 @@ namespace MVC.Controllers
                 {
                     MemberMovieListId = listId,
                     MovieId = movieId,
-                    Priority = priority.HasValue && priority.Value > 0 ? priority.Value : 1
+                    Priority = (priority.HasValue && priority.Value > 0) ? priority.Value : null
                 };
 
                 var res = await client.PostAsJsonAsync($"{apiBaseUrl}/api/MemberMovieList/add-item", dto);
@@ -233,6 +235,8 @@ namespace MVC.Controllers
                     return RedirectToLocal(returnUrl);
                 }
 
+                await SyncSessionCartAfterAddAsync(movieId);
+
                 TempData["Success"] = "Film listeye eklendi.";
                 return RedirectToLocal(returnUrl);
             }
@@ -242,6 +246,31 @@ namespace MVC.Controllers
                 return RedirectToLocal(returnUrl);
             }
         }
+
+        private async Task SyncSessionCartAfterAddAsync(int movieId)
+        {
+            var cart = HttpContext.Session.GetObject<List<CartItem>>(SessionKeys.Cart);
+            if (cart == null)
+                return;
+
+            if (cart.Any(x => x.MovieId == movieId))
+                return;
+
+            var movie = await _movieService.GetMovieDetailAsync(movieId);
+            if (movie == null)
+                return;
+
+            cart.Add(new CartItem
+            {
+                MovieId = movieId,
+                MovieTitle = movie.Title ?? "Film",
+                CoverImageUrl = movie.CoverImageUrl ?? "",
+                ReleaseYear = movie.ReleaseYear
+            });
+
+            HttpContext.Session.SetObject(SessionKeys.Cart, cart);
+        }
+
 
         private IActionResult RedirectToLocal(string? returnUrl)
         {

@@ -257,13 +257,6 @@ namespace MVC.Controllers
             if (memberId == null)
                 return RedirectToAction("Login", "Auth");
 
-            var cart = HttpContext.Session.GetObject<List<CartItem>>(SessionKeys.Cart) ?? new List<CartItem>();
-            if (cart.Any())
-            {
-                TempData["Error"] = "Sepet zaten dolu. Önce sepeti boşalt veya checkout yap.";
-                return RedirectToAction("Index", "Cart");
-            }
-
             if (listId <= 0)
             {
                 TempData["Error"] = "Geçersiz liste.";
@@ -288,7 +281,7 @@ namespace MVC.Controllers
                     return Forbid();
 
                 var items = await client.GetFromJsonAsync<List<MemberMovieListItemDto>>(
-                    $"{ApiBaseUrl}/api/MemberMovieList/list-items?listId={listId}"
+                    $"{ApiBaseUrl}/api/MemberMovieList/list-items-all?listId={listId}"
                 ) ?? new List<MemberMovieListItemDto>();
 
                 if (!items.Any())
@@ -297,23 +290,21 @@ namespace MVC.Controllers
                     return RedirectToAction(nameof(Details), new { id = listId });
                 }
 
-                foreach (var it in items)
-                {
-                    if (cart.Any(x => x.MovieId == it.MovieId))
-                        continue;
-
-                    cart.Add(new CartItem
+                var newCart = items
+                    .GroupBy(x => x.MovieId)
+                    .Select(g => g.First())
+                    .Select(it => new CartItem
                     {
                         MovieId = it.MovieId,
                         MovieTitle = it.MovieTitle ?? "Film",
                         CoverImageUrl = "",
                         ReleaseYear = 0
-                    });
-                }
+                    })
+                    .ToList();
 
-                HttpContext.Session.SetObject(SessionKeys.Cart, cart);
+                HttpContext.Session.SetObject(SessionKeys.Cart, newCart);
 
-                TempData["Success"] = "Liste sepete eklendi.";
+                TempData["Success"] = "Sepet seçili listeye göre güncellendi.";
                 return RedirectToAction("Index", "Cart");
             }
             catch
@@ -322,6 +313,7 @@ namespace MVC.Controllers
                 return RedirectToAction(nameof(Details), new { id = listId });
             }
         }
+
 
         [HttpPost]
         [ValidateAntiForgeryToken]
