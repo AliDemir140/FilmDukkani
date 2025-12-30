@@ -12,6 +12,7 @@
 body {
     background: var(--fd-bg0);
     color: var(--fd-text);
+    padding-top: 64px;
 }
 
 /* Navbar */
@@ -19,13 +20,9 @@ body {
     background: rgba(0,0,0,.6);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid rgba(255,255,255,.08);
+    transition: box-shadow 0.25s ease, background-color 0.25s ease;
 }
 
-.fd-logo {
-    font-weight: 800;
-    letter-spacing: .5px;
-    color: var(--fd-accent) !important;
-}
 
 .fd-nav-center .nav-link {
     color: rgba(255,255,255,.85);
@@ -928,3 +925,37 @@ body {
 .fd-modal .modal-header {
     border-bottom: 1px solid rgba(255,255,255,.12);
 }
+
+
+.fd-logo {
+    display: flex;
+    align-items: center;
+}
+
+.fd-logo-img {
+    height: 36px; 
+    width: auto;
+    max-width: 180px;
+    object-fit: contain;
+    transition: transform .2s ease, filter .2s ease;
+}
+
+    .fd-logo-img:hover {
+        transform: scale(1.06);
+        filter: drop-shadow(0 0 8px rgba(255,45,45,.55));
+    }
+
+
+.fd-navbar {
+    min-height: 64px;
+    background: rgba(7, 10, 15, 0.75);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255,255,255,.08);
+    transition: box-shadow .25s ease, background-color .25s ease;
+    z-index: 1000;
+}
+
+    .fd-navbar.scrolled {
+        box-shadow: 0 6px 20px rgba(0,0,0,.45);
+        background: rgba(7, 10, 15, 0.90);
+    }

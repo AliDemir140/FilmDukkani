@@ -26,27 +26,38 @@ namespace Application.ServiceManager
             _directorRepository = directorRepository;
         }
 
+        private static List<Movie> OrderNewestFirst(List<Movie> movies)
+        {
+            return (movies ?? new List<Movie>())
+                .OrderByDescending(x => x.ID)
+                .ToList();
+        }
+
         public async Task<List<MovieDto>> GetMoviesAsync()
         {
             var movies = await _movieRepository.GetMoviesWithCategoryAsync();
+            movies = OrderNewestFirst(movies);
             return MapToMovieDtoList(movies);
         }
 
         public async Task<List<MovieDto>> SearchMoviesAsync(int? categoryId, string? q)
         {
             var movies = await _movieRepository.SearchMoviesAsync(categoryId, q);
+            movies = OrderNewestFirst(movies);
             return MapToMovieDtoList(movies);
         }
 
         public async Task<List<MovieDto>> GetEditorsChoiceAsync()
         {
             var movies = await _movieRepository.GetEditorsChoiceMoviesAsync();
+            movies = OrderNewestFirst(movies);
             return MapToMovieDtoList(movies);
         }
 
         public async Task<List<MovieDto>> GetNewReleasesAsync()
         {
             var movies = await _movieRepository.GetNewReleaseMoviesAsync();
+            movies = OrderNewestFirst(movies);
             return MapToMovieDtoList(movies);
         }
 
@@ -59,6 +70,7 @@ namespace Application.ServiceManager
         public async Task<List<MovieDto>> GetAwardWinnersAsync(int take = 10)
         {
             var movies = await _movieRepository.GetAwardWinnersAsync(take);
+            movies = OrderNewestFirst(movies);
             return MapToMovieDtoList(movies);
         }
 
@@ -436,7 +448,7 @@ namespace Application.ServiceManager
 
         private static List<MovieDto> MapToMovieDtoList(List<Movie> movies)
         {
-            return movies
+            return (movies ?? new List<Movie>())
                 .Select(m =>
                 {
                     var categoryIds = m.MovieCategories?

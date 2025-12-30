@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none">
+
+  <!-- Çanta -->
+  <path d="M14 20h36l-4 34H18L14 20z" fill="#1e1e1e" stroke="#444" stroke-width="2"></path>
+
+  <!-- Sap -->
+  <path d="M24 20c0-6 4-10 8-10s8 4 8 10" stroke="#ccc" stroke-width="3" fill="none"></path>
+
+  <!-- Film şeridi -->
+  <path d="M14 20h22c8 0 14 6 14 14v20H18" fill="#e50914"></path>
+
+  <!-- Delikler -->
+  <circle cx="22" cy="28" r="2.5" fill="white"></circle>
+  <circle cx="22" cy="36" r="2.5" fill="white"></circle>
+  <circle cx="22" cy="44" r="2.5" fill="white"></circle>
+
+</svg>

@@ -184,9 +184,10 @@ namespace Infrastructure.Persistence.SeedData
                 .RuleFor(m => m.Barcode, f => f.Random.ReplaceNumbers("FDK##########"))
                 .RuleFor(m => m.Supplier, f => f.PickRandom(new[] { "Tiglon", "Palermo", "AFM", "Diğer" }))
                 .RuleFor(m => m.Status, MovieStatus.Available)
-                .RuleFor(m => m.IsEditorsChoice, f => f.Random.Bool(0.20f))
-                .RuleFor(m => m.IsNewRelease, f => f.Random.Bool(0.20f))
-                .RuleFor(m => m.IsAwardWinner, f => f.Random.Bool(0.15f));
+                .RuleFor(m => m.IsEditorsChoice, _ => false)
+                .RuleFor(m => m.IsNewRelease, _ => false)
+                .RuleFor(m => m.IsAwardWinner, _ => false);
+
 
             var movies = movieFaker.Generate(50);
 

@@ -46,15 +46,16 @@
 <body>
 
     <header>
-        <nav class="navbar navbar-expand-lg navbar-dark fd-navbar">
+        <nav class="navbar navbar-expand-lg navbar-dark fd-navbar fixed-top">
             <div class="container-fluid">
 
-                <a class="navbar-brand fd-logo"
-                   asp-area=""
-                   asp-controller="Home"
-                   asp-action="Index">
-                    FilmDukkani
+                <a class="navbar-brand fd-logo" asp-controller="Home" asp-action="Index">
+                    <img src="~/images/Logo.svg"
+                         class="fd-logo-img"
+                         alt="FilmDukkani" />
                 </a>
+
+
 
                 <button class="navbar-toggler"
                         type="button"
@@ -274,6 +275,18 @@
     </footer>
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        window.addEventListener("scroll", function () {
+            const nav = document.querySelector(".fd-navbar");
+            if (!nav) return;
+
+            if (window.scrollY > 10) {
+                nav.classList.add("scrolled");
+            } else {
+                nav.classList.remove("scrolled");
+            }
+        });
+    </script>
     <script>
         (function () {
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
