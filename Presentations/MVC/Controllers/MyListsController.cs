@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
 using Application.DTOs.MemberMovieListDTOs;
+using Application.ServiceManager;
 using Microsoft.AspNetCore.Mvc;
 using MVC.Constants;
 using MVC.Filters;
@@ -14,11 +15,16 @@ namespace MVC.Controllers
     {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IConfiguration _configuration;
+        private readonly MovieServiceManager _movieService;
 
-        public MyListsController(IHttpClientFactory httpClientFactory, IConfiguration configuration)
+        public MyListsController(
+            IHttpClientFactory httpClientFactory,
+            IConfiguration configuration,
+            MovieServiceManager movieService)
         {
             _httpClientFactory = httpClientFactory;
             _configuration = configuration;
+            _movieService = movieService;
         }
 
         private string? ApiBaseUrl => _configuration["ApiSettings:BaseUrl"];
@@ -140,7 +146,9 @@ namespace MVC.Controllers
                     );
                     locked = lockRes != null && lockRes.ContainsKey("locked") && lockRes["locked"];
                 }
-                catch { /* sessiz geç */ }
+                catch
+                {
+                }
 
                 ViewBag.ListName = selectedList.Name;
                 ViewBag.ListId = selectedList.Id;
@@ -290,15 +298,23 @@ namespace MVC.Controllers
                     return RedirectToAction(nameof(Details), new { id = listId });
                 }
 
+                var movies = await _movieService.GetMoviesAsync();
+                var movieMap = movies.ToDictionary(x => x.Id, x => x);
+
                 var newCart = items
                     .GroupBy(x => x.MovieId)
                     .Select(g => g.First())
-                    .Select(it => new CartItem
+                    .Select(it =>
                     {
-                        MovieId = it.MovieId,
-                        MovieTitle = it.MovieTitle ?? "Film",
-                        CoverImageUrl = "",
-                        ReleaseYear = 0
+                        movieMap.TryGetValue(it.MovieId, out var m);
+
+                        return new CartItem
+                        {
+                            MovieId = it.MovieId,
+                            MovieTitle = it.MovieTitle ?? m?.Title ?? "Film",
+                            CoverImageUrl = m?.CoverImageUrl ?? "",
+                            ReleaseYear = m?.ReleaseYear ?? 0
+                        };
                     })
                     .ToList();
 
@@ -313,7 +329,6 @@ namespace MVC.Controllers
                 return RedirectToAction(nameof(Details), new { id = listId });
             }
         }
-
 
         [HttpPost]
         [ValidateAntiForgeryToken]
