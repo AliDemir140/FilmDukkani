@@ -1,15 +1,16 @@
-﻿using System.Net.Http.Headers;
-using System.Net.Http.Json;
+﻿using Application.Constants;
 using Application.DTOs.DeliveryRequestDTOs;
 using Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 using MVC.Constants;
 using MVC.Filters;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 
 namespace MVC.Areas.DashBoard.Controllers
 {
     [Area("DashBoard")]
-    [RequireLogin]
+    [RequireRole(RoleNames.Admin, RoleNames.Warehouse)]
     public class ReturnsController : Controller
     {
         private readonly IHttpClientFactory _httpClientFactory;

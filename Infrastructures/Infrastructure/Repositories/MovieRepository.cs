@@ -22,7 +22,10 @@ namespace Infrastructure.Repositories
 
         public async Task<Movie> GetByIdAsync(int id)
         {
-            var movie = await _context.Set<Movie>().FirstOrDefaultAsync(x => x.ID == id);
+            var movie = await _context.Movies
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(x => x.ID == id);
+
             if (movie == null)
                 throw new InvalidOperationException("Movie not found.");
 
@@ -69,6 +72,7 @@ namespace Infrastructure.Repositories
         public async Task<Movie?> GetMovieWithCategoryAsync(int id)
         {
             return await _context.Movies
+                .IgnoreQueryFilters()
                 .Include(m => m.MovieCategories)
                     .ThenInclude(mc => mc.Category)
                 .Include(m => m.MovieActors)

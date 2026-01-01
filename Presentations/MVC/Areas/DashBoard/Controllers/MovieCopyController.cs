@@ -1,4 +1,5 @@
-﻿using Application.DTOs.MovieCopyDTOs;
+﻿using Application.Constants;
+using Application.DTOs.MovieCopyDTOs;
 using Application.ServiceManager;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -7,7 +8,7 @@ using MVC.Filters;
 namespace MVC.Areas.DashBoard.Controllers
 {
     [Area("DashBoard")]
-    [RequireAdmin]
+    [RequireRole(RoleNames.Admin, RoleNames.Warehouse)]
     public class MovieCopyController : Controller
     {
         private readonly MovieCopyServiceManager _movieCopyService;

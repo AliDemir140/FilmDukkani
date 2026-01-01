@@ -1,4 +1,5 @@
-﻿using Application.ServiceManager;
+﻿using Application.Constants;
+using Application.ServiceManager;
 using Microsoft.AspNetCore.Mvc;
 using MVC.Areas.DashBoard.Models;
 using MVC.Filters;
@@ -6,7 +7,7 @@ using MVC.Filters;
 namespace MVC.Areas.DashBoard.Controllers
 {
     [Area("DashBoard")]
-    [RequireAdmin]
+    [RequireRole(RoleNames.Admin, RoleNames.Accounting, RoleNames.Warehouse, RoleNames.Purchasing)]
     public class HomeController : DashBoardBaseController
     {
         private readonly MovieServiceManager _movieService;
@@ -65,5 +66,11 @@ namespace MVC.Areas.DashBoard.Controllers
 
             return View(model);
         }
+
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
+
     }
 }

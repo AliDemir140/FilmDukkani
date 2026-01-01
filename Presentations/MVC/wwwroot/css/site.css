@@ -959,3 +959,33 @@ body {
         box-shadow: 0 6px 20px rgba(0,0,0,.45);
         background: rgba(7, 10, 15, 0.90);
     }
+
+
+.acc-page .card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.acc-page .card-header {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.acc-page .card-body {
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.acc-page .text-muted {
+    color: rgba(255, 255, 255, 0.65) !important;
+}
+
+.acc-page pre {
+    color: rgba(255, 255, 255, 0.95);
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}

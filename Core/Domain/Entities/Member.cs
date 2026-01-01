@@ -6,12 +6,13 @@ namespace Domain.Entities
     {
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
+
         public string Email { get; set; } = string.Empty;
+        public string UserName { get; set; } = string.Empty;
 
         public string IdentityUserId { get; set; } = string.Empty;
 
         public string Password { get; set; } = string.Empty;
-
         public string? Phone { get; set; }
 
         public string AddressLine { get; set; } = string.Empty;
@@ -29,9 +30,11 @@ namespace Domain.Entities
         public DateTime MembershipStartDate { get; set; }
         public MemberStatus Status { get; set; } = MemberStatus.Active;
 
+        public bool IsDeleted { get; set; } = false;
+        public DateTime? DeletedAt { get; set; }
+
         public ICollection<DeliveryRequest> DeliveryRequests { get; set; } = new List<DeliveryRequest>();
         public ICollection<Review> Reviews { get; set; } = new List<Review>();
-
         public ICollection<BillingAttempt> BillingAttempts { get; set; } = new List<BillingAttempt>();
     }
 }

@@ -1,12 +1,14 @@
 ﻿using Application.DTOs.DeliveryRequestDTOs;
 using Application.ServiceManager;
 using Domain.Enums;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Policy = "WarehouseAccess")]
     public class DeliveryRequestController : ControllerBase
     {
         private readonly DeliveryRequestServiceManager _deliveryService;
@@ -23,6 +25,7 @@ namespace API.Controllers
             return Ok(list ?? new List<DeliveryRequestDto>());
         }
 
+        [AllowAnonymous]
         [HttpPost("create")]
         public async Task<IActionResult> Create([FromBody] CreateDeliveryRequestDto dto)
         {
@@ -57,6 +60,7 @@ namespace API.Controllers
             return Ok(request);
         }
 
+        [AllowAnonymous]
         [HttpPost("{id}/cancel-request")]
         public async Task<IActionResult> CancelRequestByUser(int id, int memberId, [FromQuery] string? reason)
         {
@@ -121,6 +125,7 @@ namespace API.Controllers
             return Ok("İade işlemi tamamlandı.");
         }
 
+        [AllowAnonymous]
         [HttpGet("member/{memberId}")]
         public async Task<IActionResult> GetByMember(int memberId)
         {
@@ -156,6 +161,5 @@ namespace API.Controllers
 
             return Ok("Teslimat kuryeye çıktı olarak işaretlendi.");
         }
-
     }
 }

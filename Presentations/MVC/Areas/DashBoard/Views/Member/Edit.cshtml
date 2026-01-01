@@ -4,6 +4,8 @@
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Üye Düzenle";
+
+    var roles = ViewBag.Roles as List<string> ?? new List<string>();
 }
 
 <h3>Üye Düzenle</h3>
@@ -12,6 +14,7 @@
     <div asp-validation-summary="All" class="text-danger mb-2"></div>
 
     <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="IdentityUserId" />
 
     <div class="mb-2">
         <label asp-for="FirstName" class="form-label"></label>
@@ -42,6 +45,16 @@
         <label asp-for="Phone" class="form-label"></label>
         <input asp-for="Phone" class="form-control" />
         <span asp-validation-for="Phone" class="text-danger"></span>
+    </div>
+
+    <div class="mb-2">
+        <label class="form-label">Rol</label>
+        <select asp-for="Role" class="form-select">
+            @foreach (var r in roles)
+            {
+                <option value="@r">@r</option>
+            }
+        </select>
     </div>
 
     <div class="mb-3">

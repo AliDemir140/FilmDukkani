@@ -1,12 +1,13 @@
 ﻿using Application.DTOs.ShelfDTOs;
 using Application.ServiceManager;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
 
 namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Policy = "WarehouseAccess")]
     public class ShelfController : ControllerBase
     {
         private readonly ShelfServiceManager _shelfService;
@@ -16,7 +17,6 @@ namespace API.Controllers
             _shelfService = shelfService;
         }
 
-        // GET api/Shelf/shelves
         [HttpGet("shelves")]
         public async Task<IActionResult> GetShelves()
         {
@@ -24,7 +24,6 @@ namespace API.Controllers
             return Ok(shelves);
         }
 
-        // GET api/Shelf/get-shelf?id=1
         [HttpGet("get-shelf")]
         public async Task<IActionResult> GetShelf(int id)
         {
@@ -35,7 +34,6 @@ namespace API.Controllers
             return Ok(shelf);
         }
 
-        // POST api/Shelf/add-shelf
         [HttpPost("add-shelf")]
         public async Task<IActionResult> AddShelf([FromBody] CreateShelfDto dto)
         {
@@ -46,7 +44,6 @@ namespace API.Controllers
             return Ok("Raf eklendi.");
         }
 
-        // PUT api/Shelf/update-shelf
         [HttpPut("update-shelf")]
         public async Task<IActionResult> UpdateShelf([FromBody] UpdateShelfDto dto)
         {
@@ -60,7 +57,6 @@ namespace API.Controllers
             return Ok("Raf güncellendi.");
         }
 
-        // DELETE api/Shelf/delete-shelf?id=1
         [HttpDelete("delete-shelf")]
         public async Task<IActionResult> DeleteShelf(int id)
         {
