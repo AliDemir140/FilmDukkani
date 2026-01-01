@@ -7,10 +7,9 @@ var builder = WebApplication.CreateBuilder(args);
 // MVC
 builder.Services.AddControllersWithViews();
 
-// HTTP CLIENT
-builder.Services.AddHttpClient<MovieApiService>();
+// Cache + Session
+builder.Services.AddDistributedMemoryCache();
 
-// SESSION
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(60);
@@ -18,10 +17,15 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-// Onion
+// HttpClient
+builder.Services.AddHttpClient();
+builder.Services.AddHttpClient<MovieApiService>();
+builder.Services.AddHttpClient<AuthApiService>();
+
+// Onion (ServiceManager / Repo / DbContext vs)
 DependencyResolver.RegisterServices(builder.Services, builder.Configuration);
 
-// FILTER
+// Filters
 builder.Services.AddScoped<RequireLoginAttribute>();
 
 var app = builder.Build();
@@ -37,17 +41,15 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// SESSION
+// Session (Authentication yok, Cookie yok)
 app.UseSession();
 
-app.UseAuthorization();
-
-// AREA
+// AREA route
 app.MapControllerRoute(
     name: "areas",
     pattern: "{area:exists}/{controller=Home}/{action=Index}/{id?}");
 
-// DEFAULT
+// Default route
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

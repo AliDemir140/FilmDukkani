@@ -1,11 +1,13 @@
 ﻿using Application.DTOs.MovieCopyDTOs;
 using Application.ServiceManager;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Policy = "WarehouseAccess")]
     public class MovieCopyController : ControllerBase
     {
         private readonly MovieCopyServiceManager _movieCopyService;

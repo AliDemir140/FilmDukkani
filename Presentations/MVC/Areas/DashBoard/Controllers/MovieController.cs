@@ -1,6 +1,4 @@
-﻿// DOSYA YOLU:
-// MVC/Areas/DashBoard/Controllers/MovieController.cs
-
+﻿using Application.Constants;
 using Application.DTOs.MovieDTOs;
 using Application.ServiceManager;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +8,7 @@ using MVC.Filters;
 namespace MVC.Areas.DashBoard.Controllers
 {
     [Area("DashBoard")]
-    [RequireAdmin]
+    [RequireRole(RoleNames.Admin, RoleNames.Warehouse)]
     public class MovieController : Controller
     {
         private readonly MovieServiceManager _movieService;

@@ -1,5 +1,6 @@
 ﻿using Application.DTOs.PurchaseRequestDTOs;
 using Application.ServiceManager;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
@@ -15,6 +16,7 @@ namespace API.Controllers
             _service = service;
         }
 
+        [AllowAnonymous]
         [HttpPost("create")]
         public async Task<IActionResult> Create([FromBody] CreatePurchaseRequestDto dto)
         {
@@ -28,6 +30,7 @@ namespace API.Controllers
             return Ok("Talep oluşturuldu.");
         }
 
+        [AllowAnonymous]
         [HttpGet("my")]
         public async Task<IActionResult> My([FromQuery] int memberId)
         {
@@ -38,6 +41,7 @@ namespace API.Controllers
             return Ok(list);
         }
 
+        [Authorize(Policy = "PurchasingAccess")]
         [HttpGet("pending")]
         public async Task<IActionResult> Pending()
         {
@@ -45,6 +49,7 @@ namespace API.Controllers
             return Ok(list);
         }
 
+        [Authorize(Policy = "PurchasingAccess")]
         [HttpPost("decide")]
         public async Task<IActionResult> Decide([FromBody] DecidePurchaseRequestDto dto)
         {

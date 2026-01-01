@@ -6,7 +6,7 @@ using System.Security.Claims;
 
 namespace API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/auth")]
     [ApiController]
     public class AuthController : ControllerBase
     {
@@ -60,5 +60,66 @@ namespace API.Controllers
                 role
             });
         }
+
+        [HttpPost("set-role")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> SetRole([FromBody] SetUserRoleDTO dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _userServiceManager.SetUserRoleAsync(dto.UserId, dto.Role);
+
+            if (!result.Success)
+                return BadRequest(new { message = result.Message });
+
+            return Ok(new { message = result.Message });
+        }
+
+        [HttpGet("roles")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> Roles()
+        {
+            var roles = await _userServiceManager.GetAllRolesAsync();
+            return Ok(roles);
+        }
+
+        [HttpGet("user-role")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> UserRole([FromQuery] string userId)
+        {
+            var role = await _userServiceManager.GetUserRoleAsync(userId);
+            if (string.IsNullOrWhiteSpace(role))
+                return Ok("User");
+
+            return Ok(role);
+        }
+
+        [HttpPost("create-employee")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> CreateEmployee([FromBody] CreateEmployeeDTO dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _userServiceManager.CreateEmployeeAsync(dto);
+
+            if (!result.Success)
+                return BadRequest(new { message = result.Message });
+
+            return Ok(new { message = result.Message, userId = result.UserId });
+        }
+
+        [HttpGet("user-name")]
+        [Authorize(Policy = "AdminOnly")]
+        public async Task<IActionResult> UserName([FromQuery] string userId)
+        {
+            var userName = await _userServiceManager.GetUserNameAsync(userId);
+            if (string.IsNullOrWhiteSpace(userName))
+                return Ok(string.Empty);
+
+            return Ok(userName);
+        }
+
     }
 }

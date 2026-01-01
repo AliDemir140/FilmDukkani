@@ -9,15 +9,6 @@
     <h2 class="mb-0">İade İşlemleri</h2>
 </div>
 
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success">@TempData["Success"]</div>
-}
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger">@TempData["Error"]</div>
-}
-
 @if (Model == null || !Model.Any())
 {
     <div class="card dark-card">

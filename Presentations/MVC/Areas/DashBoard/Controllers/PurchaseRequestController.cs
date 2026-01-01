@@ -1,4 +1,5 @@
-﻿using Application.DTOs.PurchaseRequestDTOs;
+﻿using Application.Constants;
+using Application.DTOs.PurchaseRequestDTOs;
 using Application.ServiceManager;
 using Microsoft.AspNetCore.Mvc;
 using MVC.Filters;
@@ -6,7 +7,7 @@ using MVC.Filters;
 namespace MVC.Areas.DashBoard.Controllers
 {
     [Area("DashBoard")]
-    [RequireAdmin]
+    [RequireRole(RoleNames.Admin, RoleNames.Purchasing)]
     public class PurchaseRequestController : Controller
     {
         private readonly PurchaseRequestServiceManager _purchaseService;

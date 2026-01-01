@@ -1,4 +1,5 @@
-﻿using Application.DTOs.MemberMovieListDTOs;
+﻿using Application.Constants;
+using Application.DTOs.MemberMovieListDTOs;
 using Application.ServiceManager;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -7,7 +8,7 @@ using MVC.Filters;
 namespace MVC.Areas.DashBoard.Controllers
 {
     [Area("DashBoard")]
-    [RequireAdmin]
+    [RequireRole(RoleNames.Admin, RoleNames.Warehouse, RoleNames.Purchasing)]
     public class MemberMovieListController : Controller
     {
         private readonly MemberMovieListServiceManager _listService;

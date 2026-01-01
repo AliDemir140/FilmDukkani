@@ -10,18 +10,17 @@ namespace Application.DTOs.MemberDTOs
 
         [Required(ErrorMessage = "Ad zorunludur.")]
         [MaxLength(50, ErrorMessage = "Ad en fazla 50 karakter olabilir.")]
-        public string FirstName { get; set; }
+        public string FirstName { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Soyad zorunludur.")]
         [MaxLength(50, ErrorMessage = "Soyad en fazla 50 karakter olabilir.")]
-        public string LastName { get; set; }
+        public string LastName { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Email zorunludur.")]
         [EmailAddress(ErrorMessage = "Geçerli bir email adresi giriniz.")]
         [MaxLength(100, ErrorMessage = "Email en fazla 100 karakter olabilir.")]
-        public string Email { get; set; }
+        public string Email { get; set; } = string.Empty;
 
-        // Edit ekranında boş bırakılabilir => nullable olmalı
         [MaxLength(200, ErrorMessage = "Şifre en fazla 200 karakter olabilir.")]
         public string? Password { get; set; }
 
@@ -33,5 +32,9 @@ namespace Application.DTOs.MemberDTOs
         public int MembershipPlanId { get; set; }
 
         public DateTime? MembershipStartDate { get; set; }
+
+        public string IdentityUserId { get; set; } = string.Empty;
+
+        public string Role { get; set; } = string.Empty;
     }
 }

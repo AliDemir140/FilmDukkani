@@ -1,4 +1,5 @@
 ﻿using Domain.Entities;
+using Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +16,14 @@ namespace Infrastructure.Persistence
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(FilmDukkaniDbContext).Assembly);
+
+            modelBuilder.Entity<Movie>()
+                .HasQueryFilter(m => m.Status != MovieStatus.Inactive);
+
+            modelBuilder.Entity<Member>()
+                .HasQueryFilter(m => !m.IsDeleted);
         }
 
         public DbSet<Movie> Movies { get; set; }
@@ -39,7 +47,6 @@ namespace Infrastructure.Persistence
         public DbSet<PurchaseRequest> PurchaseRequests { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Courier> Couriers { get; set; }
-
         public DbSet<BillingAttempt> BillingAttempts { get; set; }
     }
 }

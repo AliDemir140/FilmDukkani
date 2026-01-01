@@ -1,0 +1,93 @@
+﻿@using MVC.Areas.DashBoard.Models
+@model AccountingDashboardViewModel
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Muhasebe Raporları";
+}
+
+<div class="acc-page">
+    <h3 class="mb-3">Muhasebe Raporları</h3>
+
+    <form method="get" class="row g-2 align-items-end mb-3">
+        <div class="col-12 col-md-4">
+            <label class="form-label">Başlangıç</label>
+            <input type="date" name="startDate" class="form-control" value="@Model.StartDate.ToString("yyyy-MM-dd")" />
+        </div>
+
+        <div class="col-12 col-md-4">
+            <label class="form-label">Bitiş</label>
+            <input type="date" name="endDate" class="form-control" value="@Model.EndDate.ToString("yyyy-MM-dd")" />
+        </div>
+
+        <div class="col-12 col-md-4">
+            <button class="btn btn-primary w-100" type="submit">Raporları Getir</button>
+        </div>
+    </form>
+
+    <div class="row g-3">
+        <div class="col-12">
+            <div class="card shadow-sm rounded-3">
+                <div class="card-header fw-semibold">Kar / Zarar</div>
+                <div class="card-body">
+                    @if (string.IsNullOrWhiteSpace(Model.ProfitLossJson))
+                    {
+                        <div class="text-muted">Veri yok.</div>
+                    }
+                    else
+                    {
+                        <pre class="mb-0">@Model.ProfitLossJson</pre>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="card shadow-sm rounded-3">
+                <div class="card-header fw-semibold">Üye Raporu</div>
+                <div class="card-body">
+                    @if (string.IsNullOrWhiteSpace(Model.MemberReportJson))
+                    {
+                        <div class="text-muted">Veri yok.</div>
+                    }
+                    else
+                    {
+                        <pre class="mb-0">@Model.MemberReportJson</pre>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="card shadow-sm rounded-3">
+                <div class="card-header fw-semibold">Film Raporu</div>
+                <div class="card-body">
+                    @if (string.IsNullOrWhiteSpace(Model.MovieReportJson))
+                    {
+                        <div class="text-muted">Veri yok.</div>
+                    }
+                    else
+                    {
+                        <pre class="mb-0">@Model.MovieReportJson</pre>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="card shadow-sm rounded-3">
+                <div class="card-header fw-semibold">Kategori Raporu</div>
+                <div class="card-body">
+                    @if (string.IsNullOrWhiteSpace(Model.CategoryReportJson))
+                    {
+                        <div class="text-muted">Veri yok.</div>
+                    }
+                    else
+                    {
+                        <pre class="mb-0">@Model.CategoryReportJson</pre>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

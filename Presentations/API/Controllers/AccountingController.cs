@@ -1,10 +1,12 @@
 ﻿using Application.ServiceManager;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Policy = "AccountingAccess")]
     public class AccountingController : ControllerBase
     {
         private readonly AccountingServiceManager _accountingService;
@@ -14,7 +16,6 @@ namespace API.Controllers
             _accountingService = accountingService;
         }
 
-        // GET: api/accounting/profit-loss
         [HttpGet("profit-loss")]
         public async Task<IActionResult> GetProfitLoss(
             [FromQuery] DateTime startDate,
@@ -32,7 +33,6 @@ namespace API.Controllers
             return Ok(result);
         }
 
-        // GET: api/accounting/member-report
         [HttpGet("member-report")]
         public async Task<IActionResult> GetMemberReport(
             [FromQuery] DateTime startDate,
@@ -44,7 +44,6 @@ namespace API.Controllers
             return Ok(result);
         }
 
-        // GET: api/accounting/movie-report
         [HttpGet("movie-report")]
         public async Task<IActionResult> GetMovieReport(
             [FromQuery] DateTime startDate,
@@ -56,7 +55,6 @@ namespace API.Controllers
             return Ok(result);
         }
 
-        // GET: api/accounting/category-report
         [HttpGet("category-report")]
         public async Task<IActionResult> GetCategoryReport(
             [FromQuery] DateTime startDate,

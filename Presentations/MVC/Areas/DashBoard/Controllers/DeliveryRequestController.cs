@@ -1,4 +1,4 @@
-﻿using System.Net.Http.Json;
+﻿using Application.Constants;
 using Application.DTOs.CourierDTOs;
 using Application.DTOs.DeliveryRequestDTOs;
 using Application.ServiceManager;
@@ -6,11 +6,12 @@ using Domain.Enums;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using MVC.Filters;
+using System.Net.Http.Json;
 
 namespace MVC.Areas.DashBoard.Controllers
 {
     [Area("DashBoard")]
-    [RequireAdmin]
+    [RequireRole(RoleNames.Admin, RoleNames.Warehouse)]
     public class DeliveryRequestController : Controller
     {
         private readonly DeliveryRequestServiceManager _deliveryService;
