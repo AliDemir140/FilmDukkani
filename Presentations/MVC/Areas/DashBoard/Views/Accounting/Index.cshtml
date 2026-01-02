@@ -30,13 +30,44 @@
             <div class="card shadow-sm rounded-3">
                 <div class="card-header fw-semibold">Kar / Zarar</div>
                 <div class="card-body">
-                    @if (string.IsNullOrWhiteSpace(Model.ProfitLossJson))
+                    @if (Model.ProfitLoss == null)
                     {
                         <div class="text-muted">Veri yok.</div>
                     }
                     else
                     {
-                        <pre class="mb-0">@Model.ProfitLossJson</pre>
+                        <div class="row g-3">
+                            <div class="col-12 col-md-3">
+                                <div class="border rounded-3 p-3">
+                                    <div class="text-muted small">Başlangıç</div>
+                                    <div class="fw-semibold">@Model.ProfitLoss.StartDate.ToString("dd.MM.yyyy")</div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <div class="border rounded-3 p-3">
+                                    <div class="text-muted small">Bitiş</div>
+                                    <div class="fw-semibold">@Model.ProfitLoss.EndDate.ToString("dd.MM.yyyy")</div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-2">
+                                <div class="border rounded-3 p-3">
+                                    <div class="text-muted small">Gelir</div>
+                                    <div class="fw-semibold">@Model.ProfitLoss.TotalRevenue.ToString("0.00")</div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-2">
+                                <div class="border rounded-3 p-3">
+                                    <div class="text-muted small">Maliyet</div>
+                                    <div class="fw-semibold">@Model.ProfitLoss.TotalCost.ToString("0.00")</div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-2">
+                                <div class="border rounded-3 p-3">
+                                    <div class="text-muted small">Kar</div>
+                                    <div class="fw-semibold">@Model.ProfitLoss.Profit.ToString("0.00")</div>
+                                </div>
+                            </div>
+                        </div>
                     }
                 </div>
             </div>
@@ -46,13 +77,41 @@
             <div class="card shadow-sm rounded-3">
                 <div class="card-header fw-semibold">Üye Raporu</div>
                 <div class="card-body">
-                    @if (string.IsNullOrWhiteSpace(Model.MemberReportJson))
+                    @if (Model.MemberReport == null || !Model.MemberReport.Any())
                     {
                         <div class="text-muted">Veri yok.</div>
                     }
                     else
                     {
-                        <pre class="mb-0">@Model.MemberReportJson</pre>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Üye</th>
+                                        <th>Paket</th>
+                                        <th class="text-end">Teslim</th>
+                                        <th class="text-end">Hasar</th>
+                                        <th class="text-end">Gelir</th>
+                                        <th class="text-end">Maliyet</th>
+                                        <th class="text-end">Kar</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var x in Model.MemberReport)
+                                    {
+                                        <tr>
+                                            <td>@x.MemberFullName</td>
+                                            <td>@(x.MembershipPlanName ?? "-")</td>
+                                            <td class="text-end">@x.DeliveredMovieCount</td>
+                                            <td class="text-end">@x.DamagedMovieCount</td>
+                                            <td class="text-end">@x.TotalRevenue.ToString("0.00")</td>
+                                            <td class="text-end">@x.TotalCost.ToString("0.00")</td>
+                                            <td class="text-end fw-semibold">@x.Profit.ToString("0.00")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
                     }
                 </div>
             </div>
@@ -62,13 +121,37 @@
             <div class="card shadow-sm rounded-3">
                 <div class="card-header fw-semibold">Film Raporu</div>
                 <div class="card-body">
-                    @if (string.IsNullOrWhiteSpace(Model.MovieReportJson))
+                    @if (Model.MovieReport == null || !Model.MovieReport.Any())
                     {
                         <div class="text-muted">Veri yok.</div>
                     }
                     else
                     {
-                        <pre class="mb-0">@Model.MovieReportJson</pre>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Film</th>
+                                        <th>Kategori</th>
+                                        <th class="text-end">Teslim</th>
+                                        <th class="text-end">Hasar</th>
+                                        <th class="text-end">Kar</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var x in Model.MovieReport)
+                                    {
+                                        <tr>
+                                            <td>@x.MovieTitle</td>
+                                            <td>@(string.IsNullOrWhiteSpace(x.CategoryName) ? "-" : x.CategoryName)</td>
+                                            <td class="text-end">@x.DeliveredCount</td>
+                                            <td class="text-end">@x.DamagedCount</td>
+                                            <td class="text-end fw-semibold">@x.Profit.ToString("0.00")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
                     }
                 </div>
             </div>
@@ -78,16 +161,39 @@
             <div class="card shadow-sm rounded-3">
                 <div class="card-header fw-semibold">Kategori Raporu</div>
                 <div class="card-body">
-                    @if (string.IsNullOrWhiteSpace(Model.CategoryReportJson))
+                    @if (Model.CategoryReport == null || !Model.CategoryReport.Any())
                     {
                         <div class="text-muted">Veri yok.</div>
                     }
                     else
                     {
-                        <pre class="mb-0">@Model.CategoryReportJson</pre>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Kategori</th>
+                                        <th class="text-end">Teslim</th>
+                                        <th class="text-end">Hasar</th>
+                                        <th class="text-end">Kar</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var x in Model.CategoryReport)
+                                    {
+                                        <tr>
+                                            <td>@x.CategoryName</td>
+                                            <td class="text-end">@x.DeliveredCount</td>
+                                            <td class="text-end">@x.DamagedCount</td>
+                                            <td class="text-end fw-semibold">@x.Profit.ToString("0.00")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
                     }
                 </div>
             </div>
         </div>
+
     </div>
 </div>

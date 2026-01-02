@@ -184,7 +184,7 @@ namespace Application.ServiceManager
             var allItems = await _deliveryRequestItemRepository.GetAllAsync();
             var itemsInRange = allItems.Where(i => requestIds.Contains(i.DeliveryRequestId)).ToList();
 
-            var movies = await _movieRepository.GetAllAsync();
+            var movies = await _movieRepository.GetMoviesWithCategoryAsync();
 
             var categories = await _categoryRepository.GetAllAsync();
             var categoryById = categories.ToDictionary(c => c.ID, c => c.CategoryName);

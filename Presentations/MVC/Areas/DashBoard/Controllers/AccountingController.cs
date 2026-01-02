@@ -1,10 +1,11 @@
 ﻿using System.Net.Http.Headers;
-using System.Net.Http.Json;
+using System.Text.Json;
 using Application.Constants;
+using Application.DTOs.AccountingDTOs;
 using Microsoft.AspNetCore.Mvc;
+using MVC.Areas.DashBoard.Models;
 using MVC.Constants;
 using MVC.Filters;
-using MVC.Areas.DashBoard.Models;
 
 namespace MVC.Areas.DashBoard.Controllers
 {
@@ -33,7 +34,11 @@ namespace MVC.Areas.DashBoard.Controllers
             if (string.IsNullOrWhiteSpace(ApiBaseUrl))
             {
                 TempData["Error"] = "ApiSettings:BaseUrl bulunamadı.";
-                return View(new AccountingDashboardViewModel());
+                return View(new AccountingDashboardViewModel
+                {
+                    StartDate = DateTime.Today.AddDays(-30).Date,
+                    EndDate = DateTime.Today.Date
+                });
             }
 
             var s = (startDate ?? DateTime.Today.AddDays(-30)).Date;
@@ -42,8 +47,7 @@ namespace MVC.Areas.DashBoard.Controllers
             if (s > e)
             {
                 TempData["Error"] = "Başlangıç tarihi bitiş tarihinden büyük olamaz.";
-                var bad = new AccountingDashboardViewModel { StartDate = s, EndDate = e };
-                return View(bad);
+                return View(new AccountingDashboardViewModel { StartDate = s, EndDate = e });
             }
 
             var client = _httpClientFactory.CreateClient();
@@ -59,10 +63,17 @@ namespace MVC.Areas.DashBoard.Controllers
             {
                 var qs = $"startDate={s:yyyy-MM-dd}&endDate={e:yyyy-MM-dd}";
 
-                model.ProfitLossJson = await GetJsonAsync(client, $"{ApiBaseUrl}/api/accounting/profit-loss?{qs}");
-                model.MemberReportJson = await GetJsonAsync(client, $"{ApiBaseUrl}/api/accounting/member-report?{qs}");
-                model.MovieReportJson = await GetJsonAsync(client, $"{ApiBaseUrl}/api/accounting/movie-report?{qs}");
-                model.CategoryReportJson = await GetJsonAsync(client, $"{ApiBaseUrl}/api/accounting/category-report?{qs}");
+                model.ProfitLoss = await GetAsync<ProfitLossSummaryDto>(
+                    client, $"{ApiBaseUrl}/api/accounting/profit-loss?{qs}");
+
+                model.MemberReport = await GetAsync<List<MemberProfitReportDto>>(
+                    client, $"{ApiBaseUrl}/api/accounting/member-report?{qs}") ?? new();
+
+                model.MovieReport = await GetAsync<List<MovieProfitReportDto>>(
+                    client, $"{ApiBaseUrl}/api/accounting/movie-report?{qs}") ?? new();
+
+                model.CategoryReport = await GetAsync<List<CategoryProfitReportDto>>(
+                    client, $"{ApiBaseUrl}/api/accounting/category-report?{qs}") ?? new();
             }
             catch
             {
@@ -72,13 +83,20 @@ namespace MVC.Areas.DashBoard.Controllers
             return View(model);
         }
 
-        private static async Task<string> GetJsonAsync(HttpClient client, string url)
+        private static async Task<T?> GetAsync<T>(HttpClient client, string url)
         {
             using var res = await client.GetAsync(url);
             if (!res.IsSuccessStatusCode)
-                return string.Empty;
+                return default;
 
-            return await res.Content.ReadAsStringAsync();
+            var json = await res.Content.ReadAsStringAsync();
+            if (string.IsNullOrWhiteSpace(json))
+                return default;
+
+            return JsonSerializer.Deserialize<T>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
         }
     }
 }
