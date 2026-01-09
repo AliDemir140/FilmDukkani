@@ -175,7 +175,7 @@ Gelir yalnızca aboneliklerden elde edilmektedir.
 
 ```bash
 Update-Database
-
+```
 ## 👨‍💻 Geliştirici
 
 Ali Demir
