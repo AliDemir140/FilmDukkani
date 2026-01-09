@@ -94,6 +94,8 @@ FilmDukkani
 │   └── Views
 │
 └── FilmDukkani.sln
+```md
+
 ## 👤 Roller ve Yetkilendirme
 
 Sistem rol bazlı çalışır ve JWT + Policy Authorization kullanır.
