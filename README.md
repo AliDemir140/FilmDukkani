@@ -94,7 +94,7 @@ FilmDukkani
 │   └── Views
 │
 └── FilmDukkani.sln
-
+```
 
 ## 👤 Roller ve Yetkilendirme
 
