@@ -357,7 +357,7 @@ namespace Application.ServiceManager
         }
 
 
-        public async Task PrepareTomorrowDeliveriesAsync()
+        public async Task<int> PrepareTomorrowDeliveriesAsync()
         {
             DateTime tomorrow = DateTime.Today.AddDays(1);
 
@@ -365,7 +365,7 @@ namespace Application.ServiceManager
                 .GetAllAsync(r => r.DeliveryDate.Date == tomorrow.Date && r.Status == DeliveryStatus.Pending);
 
             if (requests == null || !requests.Any())
-                return;
+                return 0;
 
             requests = requests
                 .OrderBy(r => r.ID)
@@ -385,13 +385,16 @@ namespace Application.ServiceManager
                     continue;
 
                 var member = await _memberRepository.GetByIdAsync(request.MemberId);
-                if (member == null) continue;
+                if (member == null)
+                    continue;
 
                 var plan = await _membershipPlanRepository.GetByIdAsync(member.MembershipPlanId);
-                if (plan == null) continue;
+                if (plan == null)
+                    continue;
 
                 int quota = plan.MaxChangePerMonth;
-                if (quota <= 0) continue;
+                if (quota <= 0)
+                    continue;
 
                 quotaByRequestId[request.ID] = quota;
                 assignedCountByRequestId[request.ID] = 0;
@@ -423,14 +426,14 @@ namespace Application.ServiceManager
             }
 
             if (!candidates.Any())
-                return;
+                return 0;
 
             var movieIds = candidates.Select(c => c.MovieId).Distinct().ToList();
 
             var allCopies = await _movieCopyRepository.GetAllAsync(c =>
                 movieIds.Contains(c.MovieId) && c.IsAvailable && !c.IsDamaged);
 
-            var copyQueues = allCopies
+            var copyQueues = (allCopies ?? new List<MovieCopy>())
                 .GroupBy(c => c.MovieId)
                 .ToDictionary(g => g.Key, g => new Queue<MovieCopy>(g.OrderBy(x => x.ID)));
 
@@ -475,6 +478,8 @@ namespace Application.ServiceManager
                 anyItemAddedByRequestId[cand.RequestId] = true;
             }
 
+            int preparedCount = 0;
+
             foreach (var pair in anyItemAddedByRequestId)
             {
                 if (!pair.Value)
@@ -487,8 +492,13 @@ namespace Application.ServiceManager
                 await _deliveryRequestRepository.UpdateAsync(req);
 
                 await SendTomorrowEmailAsync(req.ID);
+
+                preparedCount++;
             }
+
+            return preparedCount;
         }
+
 
         public async Task<DeliveryRequestDto?> GetRequestDetailAsync(int requestId)
         {

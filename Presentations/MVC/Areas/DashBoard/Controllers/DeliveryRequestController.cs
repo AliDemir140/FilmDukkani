@@ -78,7 +78,19 @@ namespace MVC.Areas.DashBoard.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> PrepareTomorrow()
         {
-            await _deliveryService.PrepareTomorrowDeliveriesAsync();
+            var preparedCount = await _deliveryService.PrepareTomorrowDeliveriesAsync();
+
+            if (preparedCount == 0)
+            {
+                TempData["Error"] =
+                    "Yarın için hazırlanacak uygun teslimat bulunamadı. " +
+                    "Film kopyası eklenmemiş olabilir veya tüm kopyalar kullanımda/bozuk olabilir.";
+            }
+            else
+            {
+                TempData["Success"] = $"Yarın için {preparedCount} adet teslimat hazırlandı.";
+            }
+
             return RedirectToAction(nameof(Index));
         }
 
